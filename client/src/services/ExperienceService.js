@@ -48,40 +48,60 @@ class ExperienceService {
     /**
      * CU-014: Paso 9
      * Calcula la puntuación en estrellas basada en el desempeño
-     * Métrica: tiempo, intentos, pares encontrados
+     * Soporta Memorama clásico y Memoria Rápida
      */
     calculateStarRating(gameStats) {
+        // Memoria Rápida — usa correctCards, totalCards, maxCombo
+        if ('correctCards' in gameStats) {
+            const { correctCards, totalCards, maxCombo = 0 } = gameStats;
+
+            const accuracy = totalCards > 0 ? (correctCards / totalCards) * 100 : 0;
+            const comboScore = Math.min(100, maxCombo * 10);
+
+            // Fórmula: 50% precisión, 30% combo, 20% volumen de cartas
+            const volumeScore = Math.min(100, totalCards * 5);
+            const score = (accuracy * 0.5) + (comboScore * 0.3) + (volumeScore * 0.2);
+
+            let stars = 0;
+            if (score >= 80) stars = 5;
+            else if (score >= 65) stars = 4;
+            else if (score >= 50) stars = 3;
+            else if (score >= 35) stars = 2;
+            else if (score >= 20) stars = 1;
+
+            return {
+                score: Math.round(score),
+                stars,
+                successRate: Math.round(accuracy),
+                comboScore: Math.round(comboScore),
+                volumeScore: Math.round(volumeScore)
+            };
+        }
+
+        // Memorama clásico — usa totalAttempts, correctMatches, totalPairs
         const {
             totalTime,
             totalAttempts,
             correctMatches,
             totalPairs,
-            timeLimit = 300 // 5 minutos
+            timeLimit = 300
         } = gameStats;
 
-        // Calcular porcentaje de éxito
         const successRate = (correctMatches / totalPairs) * 100;
-
-        // Calcular eficiencia de tiempo
         const timeEfficiency = Math.max(0, 1 - (totalTime / timeLimit));
-
-        // Calcular eficiencia de intentos
         const minAttempts = totalPairs;
         const attemptsEfficiency = Math.max(0, 1 - ((totalAttempts - minAttempts) / totalPairs));
 
-        // Fórmula: 40% éxito, 30% tiempo, 30% intentos
         const score = (successRate * 0.4) +
             (timeEfficiency * 100 * 0.3) +
             (attemptsEfficiency * 100 * 0.3);
 
-        // Convertir a estrellas (0-5)
         let stars = 0;
         if (score >= 80) stars = 5;
         else if (score >= 65) stars = 4;
         else if (score >= 50) stars = 3;
         else if (score >= 35) stars = 2;
         else if (score >= 20) stars = 1;
-        else stars = 0;
 
         return {
             score: Math.round(score),

@@ -1,9 +1,12 @@
 // server/controllers/authController.js
-// Controlador de autenticación — reemplaza la lógica de register.php y auth PHP
+// Controlador de autenticación con mock de usuarios
 
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { findTeacher, findStudent, findVisitor, findVisitorByUsernameOrEmail } = require('../data/mockUsers');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'mazahua_default_secret';
 
 /**
  * Login de usuario
@@ -13,22 +16,24 @@ const jwt = require('jsonwebtoken');
 exports.login = async (req, res) => {
     const { username, password, userType, grade } = req.body;
 
+    if (!username || !password || !userType) {
+        return res.status(400).json({ message: 'Username, password y userType son requeridos' });
+    }
+
     try {
+        // Primero intentar con la base de datos real
         let rows;
 
         if (userType === 'STUDENT') {
-            // Estudiante: username = nombre, password = número mágico
             [rows] = await db.query(
                 'SELECT * FROM students WHERE full_name = ? AND magic_number = ?',
                 [username, password]
             );
         } else if (userType === 'TEACHER') {
-            // Maestro: login con username y password
             [rows] = await db.query(
                 'SELECT * FROM teachers WHERE username = ?',
                 [username]
             );
-
             if (rows.length > 0) {
                 const validPassword = await bcrypt.compare(password, rows[0].password_hash);
                 if (!validPassword) {
@@ -36,12 +41,10 @@ exports.login = async (req, res) => {
                 }
             }
         } else {
-            // Visitante: login con email y password
             [rows] = await db.query(
                 'SELECT * FROM visitors WHERE email = ?',
                 [username]
             );
-
             if (rows.length > 0) {
                 const validPassword = await bcrypt.compare(password, rows[0].password_hash);
                 if (!validPassword) {
@@ -55,19 +58,12 @@ exports.login = async (req, res) => {
         }
 
         const user = rows[0];
-
-        // Generar JWT
         const token = jwt.sign(
-            {
-                id: user.id || user.student_id,
-                username: username,
-                role: userType
-            },
-            process.env.JWT_SECRET || 'mazahua_default_secret',
-            { expiresIn: '24h' }
+            { id: user.id || user.student_id, username, role: userType },
+            JWT_SECRET, { expiresIn: '24h' }
         );
 
-        res.json({
+        return res.json({
             success: true,
             token,
             user: {
@@ -79,22 +75,66 @@ exports.login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en login:', error.message);
-        // Fallback: si no hay DB, usar mock para desarrollo
-        const token = jwt.sign(
-            { id: 1, username, role: userType },
-            process.env.JWT_SECRET || 'mazahua_default_secret',
-            { expiresIn: '24h' }
-        );
-
-        res.json({
-            success: true,
-            token,
-            user: { id: 1, name: username, role: userType, grade: grade || null },
-            mock: true
-        });
+        // ============ FALLBACK: USAR MOCK DE USUARIOS ============
+        console.log('⚠️  DB no disponible, usando mock de usuarios...');
+        return loginWithMock(req, res, username, password, userType, grade);
     }
 };
+
+/**
+ * Login usando datos mock (sin base de datos)
+ */
+function loginWithMock(req, res, username, password, userType, grade) {
+    let user = null;
+
+    if (userType === 'STUDENT') {
+        // Estudiante: username = nombre, password = número mágico
+        user = findStudent(username, password);
+        if (!user) {
+            return res.status(401).json({ message: 'Nombre o número mágico incorrecto' });
+        }
+    } else if (userType === 'TEACHER') {
+        // Maestro: username + contraseña
+        user = findTeacher(username);
+        if (!user) {
+            return res.status(401).json({ message: 'Usuario no encontrado' });
+        }
+        const validPassword = bcrypt.compareSync(password, user.password_hash);
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Contraseña incorrecta' });
+        }
+    } else {
+        // Visitante: email + contraseña
+        user = findVisitor(username);
+        if (!user) {
+            return res.status(401).json({ message: 'Email no registrado' });
+        }
+        const validPassword = bcrypt.compareSync(password, user.password_hash);
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Contraseña incorrecta' });
+        }
+    }
+
+    // Generar JWT
+    const token = jwt.sign(
+        { id: user.id || user.student_id, username, role: userType },
+        JWT_SECRET, { expiresIn: '24h' }
+    );
+
+    return res.json({
+        success: true,
+        token,
+        user: {
+            id: user.id || user.student_id,
+            name: user.full_name || username,
+            role: userType,
+            grade: grade || user.grade || null,
+            xp: user.xp || 0,
+            level: user.level || 1
+        },
+        mock: true
+    });
+}
 
 /**
  * Registro de visitante
@@ -109,7 +149,6 @@ exports.registerVisitor = async (req, res) => {
     }
 
     try {
-        // Verificar si el email ya existe
         const [existing] = await db.query(
             'SELECT id FROM visitors WHERE email = ? OR username = ?',
             [email, username]
@@ -119,10 +158,7 @@ exports.registerVisitor = async (req, res) => {
             return res.status(409).json({ message: 'El correo o usuario ya está registrado' });
         }
 
-        // Hash del password
         const passwordHash = await bcrypt.hash(password, 10);
-
-        // Insertar visitante
         const fullName = `${firstname} ${lastname}`.trim();
         const [result] = await db.query(
             'INSERT INTO visitors (full_name, username, email, password_hash) VALUES (?, ?, ?, ?)',
@@ -136,8 +172,13 @@ exports.registerVisitor = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en registro:', error.message);
-        // Fallback mock para desarrollo sin DB
+        // Fallback: verificar en mock si ya existe
+        console.log('⚠️  DB no disponible, verificando en mock...');
+        const existing = findVisitorByUsernameOrEmail(username, email);
+        if (existing) {
+            return res.status(409).json({ message: 'El correo o usuario ya está registrado (mock)' });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Usuario registrado (modo desarrollo)',

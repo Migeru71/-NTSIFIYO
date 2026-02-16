@@ -1,4 +1,5 @@
 // client/src/components/Games/Memorama/ResultadoJuegoView.js
+// Pantalla de resultado para Memoria Rápida
 import React from 'react';
 import './Memorama.css';
 
@@ -13,21 +14,21 @@ const ResultadoJuegoView = ({ result, activity }) => {
 
     const getStarMessage = (stars) => {
         const messages = {
-            5: '🏆 ¡Excelente! Dominaste completamente',
-            4: '🎉 ¡Muy bien! Gran desempeño',
-            3: '👍 ¡Bueno! Sigue practicando',
-            2: '💪 Necesitas más práctica',
+            5: '🏆 ¡Increíble! ¡Reflejos perfectos!',
+            4: '🎉 ¡Excelente ritmo!',
+            3: '👍 ¡Bien hecho! Sigue practicando',
+            2: '💪 Necesitas más velocidad',
             1: '📚 Sigue intentando',
-            0: '❌ Inténtalo nuevamente'
+            0: '❌ Inténtalo de nuevo'
         };
         return messages[stars] || 'Gracias por jugar';
     };
 
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}m ${secs}s`;
-    };
+    const correctCards = result.gameStats?.correctCards || 0;
+    const totalCards = result.gameStats?.totalCards || 0;
+    const maxCombo = result.gameStats?.maxCombo || 0;
+    const gameScore = result.gameStats?.score || 0;
+    const accuracy = totalCards > 0 ? Math.round((correctCards / totalCards) * 100) : 0;
 
     return (
         <div className="resultado-juego-container">
@@ -35,7 +36,7 @@ const ResultadoJuegoView = ({ result, activity }) => {
 
                 {/* 1. Encabezado */}
                 <div className="resultado-header">
-                    <h1>Actividad Completada</h1>
+                    <h1>🎉 ¡Tiempo!</h1>
                     <p className="activity-name">{activity.name}</p>
                 </div>
 
@@ -45,55 +46,60 @@ const ResultadoJuegoView = ({ result, activity }) => {
                     <p className="star-message">{getStarMessage(result.stars)}</p>
                 </div>
 
-                {/* 3. Estadísticas del Juego */}
+                {/* 3. Estadísticas */}
                 <div className="stats-grid">
-                    <div className="stat-card">
-                        <div className="stat-icon">⏱️</div>
-                        <div className="stat-content">
-                            <span className="stat-label">Tiempo Total</span>
-                            <span className="stat-value">{formatTime(result.gameStats.totalTime)}</span>
-                        </div>
-                    </div>
                     <div className="stat-card">
                         <div className="stat-icon">🎯</div>
                         <div className="stat-content">
-                            <span className="stat-label">Intentos</span>
-                            <span className="stat-value">{result.gameStats.totalAttempts}</span>
+                            <span className="stat-label">Puntaje</span>
+                            <span className="stat-value">{gameScore.toLocaleString()}</span>
                         </div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-icon">✅</div>
                         <div className="stat-content">
-                            <span className="stat-label">Parejas Encontradas</span>
-                            <span className="stat-value">{`${result.gameStats.correctMatches} / ${result.gameStats.totalPairs}`}</span>
+                            <span className="stat-label">Correctas</span>
+                            <span className="stat-value">{correctCards} / {totalCards}</span>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">🔥</div>
+                        <div className="stat-content">
+                            <span className="stat-label">Combo Máximo</span>
+                            <span className="stat-value">{maxCombo}x</span>
                         </div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-icon">📊</div>
                         <div className="stat-content">
                             <span className="stat-label">Precisión</span>
-                            <span className="stat-value">{`${result.successRate}%`}</span>
+                            <span className="stat-value">{accuracy}%</span>
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Desglose de Puntuación */}
+                {/* 4. Desglose */}
                 <div className="scoring-breakdown">
-                    <h3>📈 Análisis de Puntuación</h3>
+                    <h3>📈 Análisis de Desempeño</h3>
                     <div className="breakdown-item">
-                        <span className="breakdown-label">Éxito en Emparejamiento (40%)</span>
+                        <span className="breakdown-label">Precisión ({accuracy}%)</span>
                         <div className="breakdown-bar">
-                            <div className="breakdown-fill success" style={{ width: `${result.successRate}%` }} />
+                            <div className="breakdown-fill success" style={{ width: `${accuracy}%` }} />
                         </div>
-                        <span className="breakdown-value">{`${result.successRate}%`}</span>
+                    </div>
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">Combo ({maxCombo}x)</span>
+                        <div className="breakdown-bar">
+                            <div className="breakdown-fill warning" style={{ width: `${Math.min(100, maxCombo * 10)}%` }} />
+                        </div>
                     </div>
                     <div className="breakdown-total">
                         <span className="breakdown-label">Puntuación General</span>
-                        <span className="breakdown-score">{`${result.score}/100`}</span>
+                        <span className="breakdown-score">{result.score}/100</span>
                     </div>
                 </div>
 
-                {/* 5. Sección XP */}
+                {/* 5. XP */}
                 <div className="xp-section">
                     <div className="xp-card">
                         <div className="xp-recommended">
@@ -112,16 +118,16 @@ const ResultadoJuegoView = ({ result, activity }) => {
                 {/* 6. Retroalimentación */}
                 <div className="feedback-section">
                     <h3>💡 Retroalimentación</h3>
-                    {result.successRate === 100 ? (
-                        <p>🎊 ¡Perfecto! Encontraste todos los pares sin errores.</p>
-                    ) : result.stars >= 3 ? (
-                        <p>🌟 Buen trabajo. Si reduces el tiempo y aumentas la precisión, alcanzarás 5 estrellas.</p>
+                    {accuracy >= 90 ? (
+                        <p>🎊 ¡Perfecto! Tus reflejos y vocabulario son excelentes. ¡Intenta en dificultad más alta!</p>
+                    ) : accuracy >= 60 ? (
+                        <p>🌟 Buen trabajo. Practica más para mejorar tu velocidad de reconocimiento de palabras mazahua.</p>
                     ) : (
-                        <p>📚 Necesitas más práctica. Intenta memorizar mejor la ubicación de las cartas.</p>
+                        <p>📚 Repasa el vocabulario y vuelve a intentarlo. La práctica hace al maestro.</p>
                     )}
                 </div>
 
-                {/* 7. Botones de Acción */}
+                {/* 7. Botones */}
                 <div className="action-buttons">
                     <button className="btn btn-primary" onClick={() => window.location.reload()}>
                         🔄 Jugar de Nuevo
@@ -131,7 +137,7 @@ const ResultadoJuegoView = ({ result, activity }) => {
                     </button>
                 </div>
 
-                {/* 8. Info de Guardado */}
+                {/* 8. Info */}
                 <div className="save-info">
                     <p>✅ Tu resultado ha sido guardado correctamente</p>
                     <small>{`Completado el: ${new Date(result.completedAt).toLocaleString()}`}</small>

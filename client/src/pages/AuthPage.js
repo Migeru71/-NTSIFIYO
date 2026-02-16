@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 import UserService from '../services/UserService';
 
 const AuthPage = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [authMode, setAuthMode] = useState(location.state?.mode || 'login');
     const [userType, setUserType] = useState('student');
     const [isLoading, setIsLoading] = useState(false);
@@ -316,7 +317,8 @@ const AuthPage = () => {
 
                                         if (response.success) {
                                             await UserService.startSession();
-                                            window.location.href = '/estudiante/dashboard';
+                                            window.dispatchEvent(new Event('authChanged'));
+                                            navigate('/estudiante/dashboard');
                                         } else {
                                             setNameError(response.error || 'Error al iniciar sesión');
                                         }
@@ -335,7 +337,8 @@ const AuthPage = () => {
 
                                         if (response.success) {
                                             await UserService.startSession();
-                                            window.location.href = '/maestro/dashboard';
+                                            window.dispatchEvent(new Event('authChanged'));
+                                            navigate('/maestro/dashboard');
                                         } else {
                                             setNameError(response.error || 'Credenciales incorrectas');
                                         }
@@ -354,7 +357,8 @@ const AuthPage = () => {
 
                                         if (response.success) {
                                             await UserService.startSession();
-                                            window.location.href = '/estudiante/dashboard';
+                                            window.dispatchEvent(new Event('authChanged'));
+                                            navigate('/estudiante/dashboard');
                                         } else {
                                             setNameError(response.error || 'Credenciales incorrectas');
                                         }

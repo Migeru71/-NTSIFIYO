@@ -11,14 +11,14 @@ const TeacherSidebar = ({ user }) => {
     const navItems = [
         { id: 'groups', label: 'Mis Grupos', mazahua: "Nu'u jñatjo", icon: 'groups', path: '/maestro/dashboard' },
         { id: 'students', label: 'Estudiantes', mazahua: "Yomu", icon: 'school', path: '/maestro/estudiantes' },
-        { id: 'resources', label: 'Recursos', mazahua: "Jña'a", icon: 'library_books', path: '/maestro/recursos' },
+        { id: 'resources', label: 'Recursos', mazahua: "Jña'a", icon: 'library_books', path: '/estudiante/actividades' },
         { id: 'settings', label: 'Configuración', mazahua: "Ts'ike", icon: 'settings', path: '/maestro/configuracion' },
     ];
 
     const isActive = (path) => location.pathname === path;
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col z-40">
+        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-100 flex flex-col z-30">
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link to="/" className="flex items-center gap-3">

@@ -46,18 +46,25 @@ const defaultCategories = [
     }
 ];
 
-// Actividad de prueba por defecto
+// Actividad de prueba por defecto — Memoria Rápida
 const defaultActivities = [
     {
         id: 12345,
-        name: "Frutas de Prueba",
-        description: "Aprende los nombres de frutas en mazahua",
+        name: "Vocabulario Básico",
+        description: "Practica vocabulario mazahua con Memoria Rápida — desliza si coincide",
         difficulty: "fácil",
-        activityMode: "wordPairs",
+        activityMode: "memoriaRapida",
         pairs: [
-            { id: 1, spanish: "Manzana", mazahua: "Xanua", image: "/images/apple.jpg" },
-            { id: 2, spanish: "Plátano", mazahua: "Jamba", image: "/images/banana.jpg" },
-            { id: 3, spanish: "Naranja", mazahua: "Nalanja", image: "/images/orange.jpg" }
+            { id: 1, spanish: "Perro", mazahua: "Ts'i'yo", image: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop" },
+            { id: 2, spanish: "Gato", mazahua: "Mixi", image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop" },
+            { id: 3, spanish: "Manzana", mazahua: "Xanua", image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop" },
+            { id: 4, spanish: "Plátano", mazahua: "Jamba", image: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop" },
+            { id: 5, spanish: "Sol", mazahua: "Hyadi", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=400&fit=crop" },
+            { id: 6, spanish: "Luna", mazahua: "Zänä", image: "https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=400&h=400&fit=crop" },
+            { id: 7, spanish: "Agua", mazahua: "Deje", image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&h=400&fit=crop" },
+            { id: 8, spanish: "Flor", mazahua: "Doni", image: "https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=400&h=400&fit=crop" },
+            { id: 9, spanish: "Casa", mazahua: "Ngu", image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400&h=400&fit=crop" },
+            { id: 10, spanish: "Pájaro", mazahua: "Ts'ints'ü", image: "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=400&h=400&fit=crop" }
         ],
         recommendedXP: 100
     }
