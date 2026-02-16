@@ -3,17 +3,13 @@ import React from 'react';
 import './Memorama.css';
 
 const ResultadoJuegoView = ({ result, activity }) => {
-    // Función auxiliar para renderizar estrellas
-    const renderStars = (stars) => {
-        return React.createElement('div', { className: 'stars' },
-            Array.from({ length: 5 }).map((_, i) =>
-                React.createElement('span', {
-                    key: i,
-                    className: `star ${i < stars ? 'filled' : ''}`
-                }, '⭐')
-            )
-        );
-    };
+    const renderStars = (stars) => (
+        <div className="stars">
+            {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={`star ${i < stars ? 'filled' : ''}`}>⭐</span>
+            ))}
+        </div>
+    );
 
     const getStarMessage = (stars) => {
         const messages = {
@@ -33,123 +29,115 @@ const ResultadoJuegoView = ({ result, activity }) => {
         return `${mins}m ${secs}s`;
     };
 
-    // --- RENDERIZADO PRINCIPAL ---
-    return React.createElement('div', { className: 'resultado-juego-container' },
-        React.createElement('div', { className: 'resultado-content' },
+    return (
+        <div className="resultado-juego-container">
+            <div className="resultado-content">
 
-            // 1. Encabezado
-            React.createElement('div', { className: 'resultado-header' },
-                React.createElement('h1', null, 'Actividad Completada'),
-                React.createElement('p', { className: 'activity-name' }, activity.name)
-            ),
+                {/* 1. Encabezado */}
+                <div className="resultado-header">
+                    <h1>Actividad Completada</h1>
+                    <p className="activity-name">{activity.name}</p>
+                </div>
 
-            // 2. Calificación
-            React.createElement('div', { className: 'rating-section' },
-                React.createElement('div', { className: 'stars-display' }, renderStars(result.stars)),
-                React.createElement('p', { className: 'star-message' }, getStarMessage(result.stars))
-            ),
+                {/* 2. Calificación */}
+                <div className="rating-section">
+                    <div className="stars-display">{renderStars(result.stars)}</div>
+                    <p className="star-message">{getStarMessage(result.stars)}</p>
+                </div>
 
-            // 3. Estadísticas del Juego (Grid)
-            React.createElement('div', { className: 'stats-grid' },
-                // Tiempo
-                React.createElement('div', { className: 'stat-card' },
-                    React.createElement('div', { className: 'stat-icon' }, '⏱️'),
-                    React.createElement('div', { className: 'stat-content' },
-                        React.createElement('span', { className: 'stat-label' }, 'Tiempo Total'),
-                        React.createElement('span', { className: 'stat-value' }, formatTime(result.gameStats.totalTime))
-                    )
-                ),
-                // Intentos
-                React.createElement('div', { className: 'stat-card' },
-                    React.createElement('div', { className: 'stat-icon' }, '🎯'),
-                    React.createElement('div', { className: 'stat-content' },
-                        React.createElement('span', { className: 'stat-label' }, 'Intentos'),
-                        React.createElement('span', { className: 'stat-value' }, result.gameStats.totalAttempts)
-                    )
-                ),
-                // Parejas
-                React.createElement('div', { className: 'stat-card' },
-                    React.createElement('div', { className: 'stat-icon' }, '✅'),
-                    React.createElement('div', { className: 'stat-content' },
-                        React.createElement('span', { className: 'stat-label' }, 'Parejas Encontradas'),
-                        React.createElement('span', { className: 'stat-value' }, `${result.gameStats.correctMatches} / ${result.gameStats.totalPairs}`)
-                    )
-                ),
-                // Precisión
-                React.createElement('div', { className: 'stat-card' },
-                    React.createElement('div', { className: 'stat-icon' }, '📊'),
-                    React.createElement('div', { className: 'stat-content' },
-                        React.createElement('span', { className: 'stat-label' }, 'Precisión'),
-                        React.createElement('span', { className: 'stat-value' }, `${result.successRate}%`)
-                    )
-                )
-            ),
+                {/* 3. Estadísticas del Juego */}
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <div className="stat-icon">⏱️</div>
+                        <div className="stat-content">
+                            <span className="stat-label">Tiempo Total</span>
+                            <span className="stat-value">{formatTime(result.gameStats.totalTime)}</span>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">🎯</div>
+                        <div className="stat-content">
+                            <span className="stat-label">Intentos</span>
+                            <span className="stat-value">{result.gameStats.totalAttempts}</span>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">✅</div>
+                        <div className="stat-content">
+                            <span className="stat-label">Parejas Encontradas</span>
+                            <span className="stat-value">{`${result.gameStats.correctMatches} / ${result.gameStats.totalPairs}`}</span>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">📊</div>
+                        <div className="stat-content">
+                            <span className="stat-label">Precisión</span>
+                            <span className="stat-value">{`${result.successRate}%`}</span>
+                        </div>
+                    </div>
+                </div>
 
-            // 4. Desglose de Puntuación
-            React.createElement('div', { className: 'scoring-breakdown' },
-                React.createElement('h3', null, '📈 Análisis de Puntuación'),
-                // Barra: Éxito
-                React.createElement('div', { className: 'breakdown-item' },
-                    React.createElement('span', { className: 'breakdown-label' }, 'Éxito en Emparejamiento (40%)'),
-                    React.createElement('div', { className: 'breakdown-bar' },
-                        React.createElement('div', {
-                            className: 'breakdown-fill success',
-                            style: { width: `${result.successRate}%` }
-                        })
-                    ),
-                    React.createElement('span', { className: 'breakdown-value' }, `${result.successRate}%`)
-                ),
-                // Puntuación General
-                React.createElement('div', { className: 'breakdown-total' },
-                    React.createElement('span', { className: 'breakdown-label' }, 'Puntuación General'),
-                    React.createElement('span', { className: 'breakdown-score' }, `${result.score}/100`)
-                )
-            ),
+                {/* 4. Desglose de Puntuación */}
+                <div className="scoring-breakdown">
+                    <h3>📈 Análisis de Puntuación</h3>
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">Éxito en Emparejamiento (40%)</span>
+                        <div className="breakdown-bar">
+                            <div className="breakdown-fill success" style={{ width: `${result.successRate}%` }} />
+                        </div>
+                        <span className="breakdown-value">{`${result.successRate}%`}</span>
+                    </div>
+                    <div className="breakdown-total">
+                        <span className="breakdown-label">Puntuación General</span>
+                        <span className="breakdown-score">{`${result.score}/100`}</span>
+                    </div>
+                </div>
 
-            // 5. Sección XP
-            React.createElement('div', { className: 'xp-section' },
-                React.createElement('div', { className: 'xp-card' },
-                    React.createElement('div', { className: 'xp-recommended' },
-                        React.createElement('span', { className: 'xp-label' }, 'XP Recomendado'),
-                        React.createElement('span', { className: 'xp-value' }, result.recommendedXP)
-                    ),
-                    React.createElement('div', { className: 'xp-arrow' }, '→'),
-                    React.createElement('div', { className: 'xp-earned' },
-                        React.createElement('span', { className: 'xp-label' }, 'XP Obtenido'),
-                        React.createElement('span', { className: 'xp-value highlight' }, result.finalXP)
-                    )
-                ),
-                React.createElement('p', { className: 'xp-info' }, `Ganaste ${result.finalXP} XP basado en ${result.stars} ⭐`)
-            ),
+                {/* 5. Sección XP */}
+                <div className="xp-section">
+                    <div className="xp-card">
+                        <div className="xp-recommended">
+                            <span className="xp-label">XP Recomendado</span>
+                            <span className="xp-value">{result.recommendedXP}</span>
+                        </div>
+                        <div className="xp-arrow">→</div>
+                        <div className="xp-earned">
+                            <span className="xp-label">XP Obtenido</span>
+                            <span className="xp-value highlight">{result.finalXP}</span>
+                        </div>
+                    </div>
+                    <p className="xp-info">{`Ganaste ${result.finalXP} XP basado en ${result.stars} ⭐`}</p>
+                </div>
 
-            // 6. Retroalimentación (Lógica condicional)
-            React.createElement('div', { className: 'feedback-section' },
-                React.createElement('h3', null, '💡 Retroalimentación'),
-                result.successRate === 100
-                    ? React.createElement('p', null, '🎊 ¡Perfecto! Encontraste todos los pares sin errores.')
-                    : result.stars >= 3
-                        ? React.createElement('p', null, '🌟 Buen trabajo. Si reduces el tiempo y aumentas la precisión, alcanzarás 5 estrellas.')
-                        : React.createElement('p', null, '📚 Necesitas más práctica. Intenta memorizar mejor la ubicación de las cartas.')
-            ),
+                {/* 6. Retroalimentación */}
+                <div className="feedback-section">
+                    <h3>💡 Retroalimentación</h3>
+                    {result.successRate === 100 ? (
+                        <p>🎊 ¡Perfecto! Encontraste todos los pares sin errores.</p>
+                    ) : result.stars >= 3 ? (
+                        <p>🌟 Buen trabajo. Si reduces el tiempo y aumentas la precisión, alcanzarás 5 estrellas.</p>
+                    ) : (
+                        <p>📚 Necesitas más práctica. Intenta memorizar mejor la ubicación de las cartas.</p>
+                    )}
+                </div>
 
-            // 7. Botones de Acción
-            React.createElement('div', { className: 'action-buttons' },
-                React.createElement('button', {
-                    className: 'btn btn-primary',
-                    onClick: () => window.location.reload()
-                }, '🔄 Jugar de Nuevo'),
-                React.createElement('button', {
-                    className: 'btn btn-secondary',
-                    onClick: () => window.history.back()
-                }, '← Volver al Menú')
-            ),
+                {/* 7. Botones de Acción */}
+                <div className="action-buttons">
+                    <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                        🔄 Jugar de Nuevo
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => window.history.back()}>
+                        ← Volver al Menú
+                    </button>
+                </div>
 
-            // 8. Info de Guardado
-            React.createElement('div', { className: 'save-info' },
-                React.createElement('p', null, '✅ Tu resultado ha sido guardado correctamente'),
-                React.createElement('small', null, `Completado el: ${new Date(result.completedAt).toLocaleString()}`)
-            )
-        )
+                {/* 8. Info de Guardado */}
+                <div className="save-info">
+                    <p>✅ Tu resultado ha sido guardado correctamente</p>
+                    <small>{`Completado el: ${new Date(result.completedAt).toLocaleString()}`}</small>
+                </div>
+            </div>
+        </div>
     );
 };
 

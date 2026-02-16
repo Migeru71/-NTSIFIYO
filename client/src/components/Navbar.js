@@ -60,11 +60,4 @@ const Navbar = () => {
     );
 };
 
-// En tu Navbar
-React.createElement(
-    'a',
-    { href: '/games/memorama', className: 'nav-link' },
-    '🎮 Memorama'
-);
-
 export default Navbar;

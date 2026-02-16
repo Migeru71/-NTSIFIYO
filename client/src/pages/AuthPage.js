@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import AuthService from '../services/AuthService';
+import UserService from '../services/UserService';
 
 const AuthPage = () => {
     const location = useLocation();
     const [authMode, setAuthMode] = useState(location.state?.mode || 'login');
     const [userType, setUserType] = useState('student');
+    const [isLoading, setIsLoading] = useState(false);
 
     // Estados para el login del estudiante
     const [studentName, setStudentName] = useState('');
     const [magicNumber, setMagicNumber] = useState('');
     const [grade, setGrade] = useState('');
     const [nameError, setNameError] = useState('');
+
+    // Estados para login de maestro/visitante
+    const [teacherUsername, setTeacherUsername] = useState('');
+    const [guestEmail, setGuestEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    // Estados para registro de visitante
+    const [registerName, setRegisterName] = useState('');
+    const [registerUsername, setRegisterUsername] = useState('');
 
     // Grados disponibles
     const grades = [
@@ -201,15 +213,36 @@ const AuthPage = () => {
                             </div>
                         ) : (
                             /* --- LOGIN / REGISTRO ESTÁNDAR --- */
-                            <form className="flex flex-col gap-4">
+                            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
                                 {authMode === 'register' && (
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium text-primary-dark">Nombre Completo</label>
-                                        <div className="relative">
-                                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">badge</span>
-                                            <input className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Ej. Maria Gonzalez" type="text" />
+                                    <>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-primary-dark">Nombre Completo</label>
+                                            <div className="relative">
+                                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">badge</span>
+                                                <input
+                                                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                    placeholder="Ej. Maria Gonzalez"
+                                                    type="text"
+                                                    value={registerName}
+                                                    onChange={(e) => setRegisterName(e.target.value)}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-primary-dark">Nombre de Usuario</label>
+                                            <div className="relative">
+                                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
+                                                <input
+                                                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                    placeholder="Ej. maria_gonzalez"
+                                                    type="text"
+                                                    value={registerUsername}
+                                                    onChange={(e) => setRegisterUsername(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 {/* Usuario para Maestro, Email para Visitante */}
@@ -218,7 +251,13 @@ const AuthPage = () => {
                                         <label className="text-sm font-medium text-primary-dark">Usuario</label>
                                         <div className="relative">
                                             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
-                                            <input className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="Ej. maestro.gonzalez" type="text" />
+                                            <input
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                placeholder="Ej. maestro.gonzalez"
+                                                type="text"
+                                                value={teacherUsername}
+                                                onChange={(e) => setTeacherUsername(e.target.value)}
+                                            />
                                         </div>
                                     </div>
                                 ) : (
@@ -226,7 +265,13 @@ const AuthPage = () => {
                                         <label className="text-sm font-medium text-primary-dark">Correo Electrónico</label>
                                         <div className="relative">
                                             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">mail</span>
-                                            <input className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="nombre@ejemplo.com" type="email" />
+                                            <input
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                placeholder="nombre@ejemplo.com"
+                                                type="email"
+                                                value={guestEmail}
+                                                onChange={(e) => setGuestEmail(e.target.value)}
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -235,7 +280,13 @@ const AuthPage = () => {
                                     <label className="text-sm font-medium text-primary-dark">Contraseña</label>
                                     <div className="relative">
                                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">lock</span>
-                                        <input className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="••••••••" type="password" />
+                                        <input
+                                            className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                            placeholder="••••••••"
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
                                     </div>
                                 </div>
                             </form>
@@ -243,29 +294,115 @@ const AuthPage = () => {
 
                         <button
                             type="button"
-                            onClick={() => {
-                                // Si es estudiante y está haciendo login
-                                if (authMode === 'login' && userType === 'student') {
-                                    // TODO: Reactivar validación cuando esté listo
-                                    // if (handleStudentLogin()) {
-                                    //     window.location.href = '/estudiante/dashboard';
-                                    // }
-                                    window.location.href = '/estudiante/dashboard';
-                                } else if (authMode === 'login' && userType === 'teacher') {
-                                    // Redirigir al dashboard del maestro
-                                    window.location.href = '/maestro/dashboard';
-                                } else if (authMode === 'login') {
-                                    // Para visitantes u otros tipos de usuario
-                                    console.log('Login para', userType);
-                                } else {
-                                    // Registro
-                                    console.log('Registro de nueva cuenta');
+                            disabled={isLoading}
+                            onClick={async () => {
+                                setIsLoading(true);
+                                setNameError('');
+
+                                try {
+                                    // Si es estudiante y está haciendo login
+                                    if (authMode === 'login' && userType === 'student') {
+                                        if (!handleStudentLogin()) {
+                                            setIsLoading(false);
+                                            return;
+                                        }
+
+                                        const response = await AuthService.login({
+                                            username: studentName,
+                                            password: magicNumber,
+                                            userType: 'STUDENT',
+                                            grade: parseInt(grade)
+                                        });
+
+                                        if (response.success) {
+                                            await UserService.startSession();
+                                            window.location.href = '/estudiante/dashboard';
+                                        } else {
+                                            setNameError(response.error || 'Error al iniciar sesión');
+                                        }
+                                    } else if (authMode === 'login' && userType === 'teacher') {
+                                        if (!teacherUsername || !password) {
+                                            setNameError('Por favor completa todos los campos');
+                                            setIsLoading(false);
+                                            return;
+                                        }
+
+                                        const response = await AuthService.login({
+                                            username: teacherUsername,
+                                            password: password,
+                                            userType: 'TEACHER'
+                                        });
+
+                                        if (response.success) {
+                                            await UserService.startSession();
+                                            window.location.href = '/maestro/dashboard';
+                                        } else {
+                                            setNameError(response.error || 'Credenciales incorrectas');
+                                        }
+                                    } else if (authMode === 'login' && userType === 'guest') {
+                                        if (!guestEmail || !password) {
+                                            setNameError('Por favor completa todos los campos');
+                                            setIsLoading(false);
+                                            return;
+                                        }
+
+                                        const response = await AuthService.login({
+                                            username: guestEmail,
+                                            password: password,
+                                            userType: 'VISITOR'
+                                        });
+
+                                        if (response.success) {
+                                            await UserService.startSession();
+                                            window.location.href = '/estudiante/dashboard';
+                                        } else {
+                                            setNameError(response.error || 'Credenciales incorrectas');
+                                        }
+                                    } else if (authMode === 'register') {
+                                        // Registro de visitante
+                                        if (!registerName || !guestEmail || !password || !registerUsername) {
+                                            setNameError('Por favor completa todos los campos');
+                                            setIsLoading(false);
+                                            return;
+                                        }
+
+                                        const nameParts = registerName.trim().split(' ');
+                                        const response = await AuthService.registerVisitor({
+                                            firstname: nameParts[0] || '',
+                                            lastname: nameParts.slice(1).join(' ') || '',
+                                            email: guestEmail,
+                                            password: password,
+                                            username: registerUsername
+                                        });
+
+                                        if (response.success) {
+                                            setAuthMode('login');
+                                            setNameError('');
+                                            alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
+                                        } else {
+                                            setNameError(response.error || 'Error al crear cuenta');
+                                        }
+                                    }
+                                } catch (error) {
+                                    setNameError('Error de conexión. Intenta de nuevo.');
+                                    console.error('Login error:', error);
+                                } finally {
+                                    setIsLoading(false);
                                 }
                             }}
-                            className="w-full mt-4 py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 text-lg"
+                            className={`w-full mt-4 py-4 text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 text-lg ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'}`}
                         >
-                            <span>{authMode === 'login' ? '¡Entrar a Clase!' : 'Crear Cuenta'}</span>
-                            <span className="material-symbols-outlined">rocket_launch</span>
+                            {isLoading ? (
+                                <>
+                                    <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                    <span>Cargando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{authMode === 'login' ? '¡Entrar a Clase!' : 'Crear Cuenta'}</span>
+                                    <span className="material-symbols-outlined">rocket_launch</span>
+                                </>
+                            )}
                         </button>
                     </div>
 

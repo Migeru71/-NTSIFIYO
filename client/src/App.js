@@ -30,171 +30,108 @@ function App() {
         }
     };
 
-    return React.createElement(
-        Router,
-        null,
-        React.createElement(
-            'div',
-            { className: 'min-h-screen bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark' },
-            React.createElement(Navbar),
-            React.createElement(
-                Routes,
-                null,
-                // Ruta Raíz: Página de inicio
-                React.createElement(
-                    Route,
-                    { path: '/', element: React.createElement(Home, { stats: mockStats }) }
-                ),
+    return (
+        <Router>
+            <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark">
+                <Navbar />
+                <Routes>
+                    {/* Ruta Raíz: Página de inicio */}
+                    <Route path="/" element={<Home stats={mockStats} />} />
 
-                // Ruta de autenticación
-                React.createElement(
-                    Route,
-                    { path: '/auth', element: React.createElement(AuthPage) }
-                ),
+                    {/* Ruta de autenticación */}
+                    <Route path="/auth" element={<AuthPage />} />
 
-                // Ruta alternativa de registro
-                React.createElement(
-                    Route,
-                    { path: '/registro', element: React.createElement(AuthPage) }
-                ),
+                    {/* Ruta alternativa de registro */}
+                    <Route path="/registro" element={<AuthPage />} />
 
-                // ==========================================
-                // RUTAS DEL ESTUDIANTE
-                // ==========================================
+                    {/* ==========================================
+                        RUTAS DEL ESTUDIANTE
+                        ========================================== */}
 
-                // Dashboard del estudiante
-                React.createElement(
-                    Route,
-                    {
-                        path: '/estudiante/dashboard',
-                        element: React.createElement(StudentDashboard)
-                    }
-                ),
+                    <Route path="/estudiante/dashboard" element={<StudentDashboard />} />
+                    <Route path="/estudiante/actividades" element={<StudentActivities />} />
 
-                // Actividades del estudiante
-                React.createElement(
-                    Route,
-                    {
-                        path: '/estudiante/actividades',
-                        element: React.createElement(StudentActivities)
-                    }
-                ),
+                    {/* ==========================================
+                        RUTAS DEL MAESTRO
+                        ========================================== */}
 
-                // ==========================================
-                // RUTAS DEL MAESTRO
-                // ==========================================
+                    <Route path="/maestro/dashboard" element={<TeacherDashboard />} />
 
-                // Dashboard del maestro
-                React.createElement(
-                    Route,
-                    {
-                        path: '/maestro/dashboard',
-                        element: React.createElement(TeacherDashboard)
-                    }
-                ),
+                    {/* ==========================================
+                        RUTAS DEL MEMORAMA
+                        ========================================== */}
 
-                // ==========================================
-                // RUTAS DEL MEMORAMA
-                // ==========================================
+                    <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
 
-                // Ruta principal del Memorama (Panel de Acceso)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/memorama',
-                        element: React.createElement(MemoramaAccessPanel)
-                    }
-                ),
+                    <Route
+                        path="/games/memorama/crear"
+                        element={
+                            <ConfiguracionActividadView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad creada:', activity);
+                                    window.location.href = `/games/memorama/jugar/${activity.id}`;
+                                }}
+                            />
+                        }
+                    />
 
-                // Ruta para crear actividades (Vista Docente - Memorama)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/memorama/crear',
-                        element: React.createElement(ConfiguracionActividadView, {
-                            onActivityCreated: function (activity) {
-                                console.log('✅ Actividad creada:', activity);
-                                window.location.href = `/games/memorama/jugar/${activity.id}`;
-                            }
-                        })
-                    }
-                ),
+                    <Route
+                        path="/games/memorama/editar/:editId"
+                        element={
+                            <ConfiguracionActividadView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad actualizada:', activity);
+                                    window.location.href = `/games/memorama`;
+                                }}
+                            />
+                        }
+                    />
 
-                // Ruta para editar actividades (Vista Docente - Memorama)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/memorama/editar/:editId',
-                        element: React.createElement(ConfiguracionActividadView, {
-                            onActivityCreated: function (activity) {
-                                console.log('✅ Actividad actualizada:', activity);
-                                window.location.href = `/games/memorama`;
-                            }
-                        })
-                    }
-                ),
+                    <Route
+                        path="/games/memorama/jugar/:activityId"
+                        element={
+                            <MemoramaGameView
+                                studentId={localStorage.getItem('currentStudentId') || 'student_001'}
+                            />
+                        }
+                    />
 
-                // Ruta para jugar (Vista Alumno)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/memorama/jugar/:activityId',
-                        element: React.createElement(MemoramaGameView, {
-                            studentId: localStorage.getItem('currentStudentId') || 'student_001'
-                        })
-                    }
-                ),
+                    {/* ==========================================
+                        RUTAS DEL QUIZ
+                        ========================================== */}
 
-                // ==========================================
-                // RUTAS DEL QUIZ
-                // ==========================================
+                    <Route path="/games/quiz" element={<QuizAccessPanel />} />
 
-                // Ruta principal del Quiz (Panel de Acceso)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/quiz',
-                        element: React.createElement(QuizAccessPanel)
-                    }
-                ),
+                    <Route
+                        path="/games/quiz/crear"
+                        element={
+                            <QuizConfigView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Quiz creado:', activity);
+                                }}
+                            />
+                        }
+                    />
 
-                // Ruta para crear quiz (Vista Docente)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/quiz/crear',
-                        element: React.createElement(QuizConfigView, {
-                            onActivityCreated: function (activity) {
-                                console.log('✅ Quiz creado:', activity);
-                            }
-                        })
-                    }
-                ),
+                    <Route
+                        path="/games/quiz/editar/:editId"
+                        element={
+                            <ConfiguracionActividadView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Quiz actualizado:', activity);
+                                    window.location.href = `/games/quiz`;
+                                }}
+                            />
+                        }
+                    />
 
-                // Ruta para EDITAR quiz (Apuntando al Editor Unificado como solicitó el usuario)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/quiz/editar/:editId',
-                        element: React.createElement(ConfiguracionActividadView, {
-                            onActivityCreated: function (activity) {
-                                console.log('✅ Quiz actualizado:', activity);
-                                window.location.href = `/games/quiz`;
-                            }
-                        })
-                    }
-                ),
-
-                // Ruta para jugar quiz (Vista Alumno)
-                React.createElement(
-                    Route,
-                    {
-                        path: '/games/quiz/jugar/:activityId',
-                        element: React.createElement(QuizGameView)
-                    }
-                )
-            )
-        )
+                    <Route
+                        path="/games/quiz/jugar/:activityId"
+                        element={<QuizGameView />}
+                    />
+                </Routes>
+            </div>
+        </Router>
     );
 }
 

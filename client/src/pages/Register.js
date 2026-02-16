@@ -41,15 +41,14 @@ const Register = () => {
     };
 
     /**
-     * Maneja el envío de datos al backend PHP de forma asíncrona.
+     * Maneja el envío de datos al backend Node.js de forma asíncrona.
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (validateForm()) {
             try {
-                // FETCH: Conecta con el servidor PHP (Ajusta la URL según tu carpeta)
-                const response = await fetch('http://localhost/server/api/register_mock.php', {
+                const response = await fetch('http://localhost:8080/api/auth/visitor', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -68,7 +67,7 @@ const Register = () => {
                 }
             } catch (error) {
                 console.error("Error de conexión:", error);
-                alert("No se pudo conectar con el servidor PHP. Verifica que XAMPP esté corriendo.");
+                alert("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
             }
         }
     };

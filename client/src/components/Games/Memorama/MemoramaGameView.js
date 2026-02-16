@@ -8,7 +8,6 @@ import './Memorama.css';
 import { useParams } from 'react-router-dom';
 
 const MemoramaGameView = ({ studentId = 'student_001' }) => {
-
     const { activityId } = useParams();
 
     const [activity, setActivity] = useState(null);
@@ -26,9 +25,7 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
 
     useEffect(() => {
         const loadActivity = async () => {
-            // AJUSTE: Convertimos activityId a número antes de enviarlo al servicio
             const idToSearch = parseInt(activityId);
-
             const response = await ActivityService.getActivityForPlay(idToSearch);
 
             if (!response.success) {
@@ -47,7 +44,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
     }, [activityId]);
 
     const initializeGame = (activity) => {
-        // Lógica de pares: Imagen + Palabra en Mazahua
         const cardPairs = activity.pairs.map((pair, index) => [
             { id: `image-${index}`, type: 'image', content: pair.image, pairId: index, label: pair.spanish },
             { id: `word-${index}`, type: 'word', content: pair.mazahua, pairId: index, label: pair.mazahua }
@@ -63,7 +59,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         setAttempts(0);
     };
 
-    // Cronómetro del juego
     useEffect(() => {
         if (gameState !== 'playing') return;
         const timer = setInterval(() => {
@@ -151,71 +146,74 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
     // --- RENDERIZADO ---
 
     if (gameState === 'error') {
-        return React.createElement('div', { className: 'game-error-container' },
-            React.createElement('div', { className: 'error-box' },
-                React.createElement('h2', null, '❌ Error'),
-                React.createElement('p', null, error),
-                React.createElement('button', {
-                    className: 'btn btn-secondary',
-                    onClick: () => window.history.back()
-                }, 'Volver Atrás')
-            )
+        return (
+            <div className="game-error-container">
+                <div className="error-box">
+                    <h2>❌ Error</h2>
+                    <p>{error}</p>
+                    <button className="btn btn-secondary" onClick={() => window.history.back()}>
+                        Volver Atrás
+                    </button>
+                </div>
+            </div>
         );
     }
 
-
-
     if (gameState === 'loading' || !activity) {
-        return React.createElement('div', { className: 'game-loading-container' },
-            React.createElement('div', { className: 'spinner' }),
-            React.createElement('p', null, 'Cargando actividad...')
+        return (
+            <div className="game-loading-container">
+                <div className="spinner" />
+                <p>Cargando actividad...</p>
+            </div>
         );
     }
 
     if (gameState === 'completed' && gameResult) {
-        return React.createElement(ResultadoJuegoView, { result: gameResult, activity: activity });
+        return <ResultadoJuegoView result={gameResult} activity={activity} />;
     }
 
-    return React.createElement('div', { className: 'memorama-game-container' },
-        React.createElement('div', { className: 'game-header' },
-            React.createElement('h1', null, activity.name),
-            React.createElement('div', { className: 'game-info' },
-                React.createElement('div', { className: 'info-item' },
-                    React.createElement('span', { className: 'label' }, 'Tiempo:'),
-                    React.createElement('span', { className: `timer ${timeLeft < 60 ? 'warning' : ''}` }, formatTime(timeLeft))
-                ),
-                React.createElement('div', { className: 'info-item' },
-                    React.createElement('span', { className: 'label' }, 'Intentos:'),
-                    React.createElement('span', { className: 'attempts' }, attempts)
-                ),
-                React.createElement('div', { className: 'info-item' },
-                    React.createElement('span', { className: 'label' }, 'Parejas:'),
-                    React.createElement('span', { className: 'progress' }, `${matched.size / 2} / ${cards.length / 2}`)
-                )
-            )
-        ),
-        React.createElement('div', { className: 'progress-bar-container' },
-            React.createElement('div', { className: 'progress-bar' },
-                React.createElement('div', {
-                    className: 'progress-fill',
-                    style: { width: `${(matched.size / cards.length) * 100}%` }
-                })
-            )
-        ),
-        React.createElement('div', { className: 'game-board' },
-            cards.map(card =>
-                React.createElement(GameCard, {
-                    key: card.id,
-                    card: card,
-                    isFlipped: flipped.has(card.id),
-                    isMatched: matched.has(card.id),
-                    onClick: () => handleCardClick(card.id)
-                })
-            )
-        ),
-        React.createElement('div', { className: 'game-instructions' },
-            React.createElement('p', null, `🎮 Empareja las imágenes con sus palabras en Mazahua. Tienes ${formatTime(timeLeft)} y ${attempts} intentos.`)
-        )
+    return (
+        <div className="memorama-game-container">
+            <div className="game-header">
+                <h1>{activity.name}</h1>
+                <div className="game-info">
+                    <div className="info-item">
+                        <span className="label">Tiempo:</span>
+                        <span className={`timer ${timeLeft < 60 ? 'warning' : ''}`}>{formatTime(timeLeft)}</span>
+                    </div>
+                    <div className="info-item">
+                        <span className="label">Intentos:</span>
+                        <span className="attempts">{attempts}</span>
+                    </div>
+                    <div className="info-item">
+                        <span className="label">Parejas:</span>
+                        <span className="progress">{`${matched.size / 2} / ${cards.length / 2}`}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="progress-bar-container">
+                <div className="progress-bar">
+                    <div
+                        className="progress-fill"
+                        style={{ width: `${(matched.size / cards.length) * 100}%` }}
+                    />
+                </div>
+            </div>
+            <div className="game-board">
+                {cards.map(card => (
+                    <GameCard
+                        key={card.id}
+                        card={card}
+                        isFlipped={flipped.has(card.id)}
+                        isMatched={matched.has(card.id)}
+                        onClick={() => handleCardClick(card.id)}
+                    />
+                ))}
+            </div>
+            <div className="game-instructions">
+                <p>{`🎮 Empareja las imágenes con sus palabras en Mazahua. Tienes ${formatTime(timeLeft)} y ${attempts} intentos.`}</p>
+            </div>
+        </div>
     );
 };
 
