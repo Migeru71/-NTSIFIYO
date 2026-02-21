@@ -1,0 +1,242 @@
+/* client/src/components/Games/Intruso/Intruso.css */
+/* Estilos para Encuentra al Intruso */
+
+:root {
+    --primary-orange: #E65100;
+    --primary-blue: #1E3A8A;
+    --background-start: #A8E6CF;
+    --background-end: #FFF9C4;
+    --card-bg: #FFFFFF;
+    --text-primary: #374151;
+    --text-secondary: #6B7280;
+    --success: #10B981;
+    --error: #EF4444;
+    --warning: #F59E0B;
+}
+
+.intruso-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: calc(100vh - 64px);
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+    background: linear-gradient(180deg, #b8f0d5 0%, #e8f5c8 40%, #fef9c3 100%);
+    padding: 1rem;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+/* Top Bar */
+.intruso-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 420px;
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+}
+
+.intruso-pause-btn {
+    background: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s;
+}
+
+.intruso-score-badge {
+    background: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Timer Bar */
+.intruso-timer-container {
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 1.5rem;
+}
+
+.intruso-timer-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.intruso-timer-bar-bg {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.intruso-timer-fill {
+    height: 100%;
+    background: var(--primary-orange);
+    border-radius: 6px;
+    transition: width 1s linear;
+}
+
+/* Question / Category Header */
+.intruso-question-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.intruso-category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--primary-orange);
+    color: var(--primary-orange);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.intruso-title {
+    font-size: 28px;
+    line-height: 1.2;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.intruso-title span {
+    color: var(--primary-orange);
+    display: block;
+}
+
+/* Grid Layout */
+.intruso-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 2rem;
+}
+
+.intruso-option-card {
+    background: white;
+    border-radius: 20px;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 3px solid transparent;
+}
+
+.intruso-option-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.intruso-option-card:active {
+    transform: scale(0.95);
+}
+
+.intruso-option-card.correct {
+    border-color: var(--success);
+    background-color: #ecfdf5;
+}
+
+.intruso-option-card.incorrect {
+    border-color: var(--error);
+    background-color: #fef2f2;
+}
+
+.intruso-option-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #fff7ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--primary-orange);
+    margin-bottom: 12px;
+}
+
+.intruso-option-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+}
+
+/* Feedback Overlay */
+.intruso-feedback {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.intruso-instructions {
+    position: absolute;
+    bottom: 2rem;
+    width: 100%;
+    text-align: center;
+    max-width: 420px;
+}
+
+.intruso-instruction-pill {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    color: var(--primary-blue);
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Animations */
+@keyframes popIn {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-pop {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

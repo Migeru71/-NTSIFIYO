@@ -10,6 +10,9 @@ import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel
 import QuizAccessPanel from './components/Games/Quiz/QuizAccessPanel';
 import QuizConfigView from './components/Games/Quiz/QuizConfigView';
 import QuizGameView from './components/Games/Quiz/QuizGameView';
+// Intruso imports
+import IntrusoAccessPanel from './components/Games/Intruso/IntrusoAccessPanel';
+import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
 // Student Dashboard
 import StudentDashboard from './pages/StudentDashboard';
 import StudentActivities from './pages/StudentActivities';
@@ -129,6 +132,13 @@ function App() {
                         path="/games/quiz/jugar/:activityId"
                         element={<QuizGameView />}
                     />
+
+                    {/* ==========================================
+                        RUTAS DEL INTRUSO
+                        ========================================== */}
+
+                    <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
+                    <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
                 </Routes>
             </div>
         </Router>

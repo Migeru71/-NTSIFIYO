@@ -7,6 +7,7 @@ const STORAGE_KEY_RESULTS = 'mazahua_game_results';
 const STORAGE_KEY_CATEGORIES = 'mazahua_categories';
 const STORAGE_KEY_MEDIA = 'mazahua_media';
 
+
 // Categorías por defecto
 const defaultCategories = [
     {

@@ -56,6 +56,23 @@ const StudentActivities = () => {
                 { icon: 'psychology', label: 'Conocimiento' },
                 { icon: 'emoji_events', label: 'XP' }
             ]
+        },
+        {
+            id: 'intruso',
+            title: 'El Intruso',
+            subtitle: 'Encuentra al Intruso',
+            description: 'Identifica qué palabra no pertenece al grupo. Mejora tu vocabulario y capacidad de categorización.',
+            icon: '🕵️',
+            iconBg: 'bg-gradient-to-br from-green-100 to-emerald-100',
+            borderColor: 'border-green-200',
+            accentColor: 'text-green-600',
+            btnColor: 'bg-green-500 hover:bg-green-600',
+            path: '/games/intruso',
+            stats: [
+                { icon: 'search', label: 'Atención' },
+                { icon: 'category', label: 'Lógica' },
+                { icon: 'emoji_events', label: 'XP' }
+            ]
         }
     ];
 
