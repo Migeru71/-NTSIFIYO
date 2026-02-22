@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ActivityService from '../../../services/ActivityService';
 import mockGames from '../../../data/mockGames';
-import './MemoramaAccessPanel.css';
+import '../GameAccessPanel.css';
 
 function MemoramaAccessPanel() {
     const navigate = useNavigate();
@@ -67,10 +67,10 @@ function MemoramaAccessPanel() {
     }
 
     return (
-        <div className="memorama-access-panel">
+        <div className="game-access-panel">
 
             {/* Encabezado */}
-            <div className="panel-header">
+            <div className="gap-header">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                     <span style={{ fontSize: '48px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>⚡</span>
                 </div>
@@ -80,7 +80,7 @@ function MemoramaAccessPanel() {
 
             {/* Botón de crear (solo para maestros) */}
             {userRole === 'teacher' && (
-                <div className="teacher-section" style={{ marginBottom: '2rem' }}>
+                <div className="gap-teacher-section">
                     <div style={{
                         width: '80px', height: '80px', borderRadius: '50%',
                         background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
@@ -90,7 +90,7 @@ function MemoramaAccessPanel() {
                     <h2>Crear Nueva Actividad</h2>
                     <p>Diseña actividades personalizadas de Memorama para tus alumnos usando el nuevo editor visual.</p>
                     <button
-                        className="btn btn-primary"
+                        className="gap-btn gap-btn-primary"
                         onClick={handleCreateActivity}
                         style={{ maxWidth: '300px', margin: '0 auto' }}
                     >
@@ -100,11 +100,11 @@ function MemoramaAccessPanel() {
             )}
 
             {/* Actividades disponibles */}
-            <div className="role-content">
-                <div className="student-section">
-                    <h2>🎮 Actividades Disponibles</h2>
+            <div className="gap-role-content">
+                <div>
+                    <h2 className="gap-section-title">🎮 Actividades Disponibles</h2>
                     {loading ? (
-                        <div className="loading-text">
+                        <div className="gap-loading">
                             <div style={{
                                 width: '40px', height: '40px', border: '4px solid #e5e7eb',
                                 borderTopColor: '#E65100', borderRadius: '50%',
@@ -113,43 +113,32 @@ function MemoramaAccessPanel() {
                             <p>Cargando actividades...</p>
                         </div>
                     ) : activities.length === 0 ? (
-                        <div className="no-activities">
+                        <div className="gap-no-activities">
                             <span style={{ fontSize: '64px', display: 'block', marginBottom: '16px' }}>🎒</span>
                             <p style={{ fontSize: '18px', color: '#374151', marginBottom: '8px' }}>No hay actividades disponibles</p>
                             <p>Pide a tu maestro que cree una actividad para ti</p>
                         </div>
                     ) : (
-                        <div className="activities-grid">
+                        <div className="gap-activities-grid">
                             {activities.map((activity) => (
-                                <div key={activity.id} className="activity-card" style={{ position: 'relative' }}>
+                                <div key={activity.id} className="gap-activity-card" style={{ position: 'relative' }}>
                                     {/* Botones editar/eliminar (solo maestro) */}
                                     {userRole === 'teacher' && (
-                                        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                                        <div className="gap-teacher-actions">
                                             <button
+                                                className="gap-btn-edit"
                                                 onClick={(e) => { e.stopPropagation(); handleEditActivity(activity.id); }}
                                                 title="Editar"
-                                                style={{
-                                                    padding: '6px 8px', background: '#fff7ed', border: '1px solid #fed7aa',
-                                                    borderRadius: '6px', cursor: 'pointer', fontSize: '14px'
-                                                }}
                                             >✏️</button>
                                             <button
+                                                className="gap-btn-delete"
                                                 onClick={(e) => { e.stopPropagation(); handleDeleteActivity(activity.id, activity.name); }}
                                                 title="Eliminar"
-                                                style={{
-                                                    padding: '6px 8px', background: '#fef2f2', border: '1px solid #fecaca',
-                                                    borderRadius: '6px', cursor: 'pointer', fontSize: '14px'
-                                                }}
                                             >🗑️</button>
                                         </div>
                                     )}
                                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                                        <div style={{
-                                            width: '48px', height: '48px', borderRadius: '12px',
-                                            background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '24px', flexShrink: 0, border: '2px solid #fed7aa'
-                                        }}>🎴</div>
+                                        <div className="gap-card-icon">🎴</div>
                                         <div>
                                             <h3 style={{ paddingRight: userRole === 'teacher' ? '80px' : '0' }}>{activity.name}</h3>
                                             <span style={{
@@ -162,13 +151,13 @@ function MemoramaAccessPanel() {
                                             </span>
                                         </div>
                                     </div>
-                                    <p className="description">{activity.description}</p>
-                                    <div className="activity-info">
+                                    <p className="gap-card-description">{activity.description}</p>
+                                    <div className="gap-card-stats">
                                         <span>{'⭐ ' + activity.recommendedXP + ' XP'}</span>
                                         <span>{'🎯 ' + (activity.pairs ? activity.pairs.length : 0) + ' pares'}</span>
                                         <span>{'⏱️ ~' + (activity.pairs ? activity.pairs.length * 30 : 60) + 's'}</span>
                                     </div>
-                                    <button className="btn btn-play" onClick={() => handlePlayGame(activity.id)}>
+                                    <button className="gap-btn gap-btn-play" onClick={() => handlePlayGame(activity.id)}>
                                         ▶️ ¡Jugar Ahora!
                                     </button>
                                 </div>
@@ -179,7 +168,7 @@ function MemoramaAccessPanel() {
             </div>
 
             {/* Footer */}
-            <div className="panel-footer">
+            <div className="gap-footer">
                 <small>
                     💡 Tip: {userRole === 'teacher'
                         ? 'Crea actividades personalizadas y tus alumnos podrán jugarlas'

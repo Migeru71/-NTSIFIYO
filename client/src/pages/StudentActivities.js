@@ -120,7 +120,7 @@ const StudentActivities = () => {
                                                 <span className={`material-symbols-outlined text-lg ${game.accentColor}`}>
                                                     {stat.icon}
                                                 </span>
-                                                <span className="text-xs text-gray-500 font-medium">{stat.label}</span>
+                                                <span className="text-xs text-gray-500 font-medium min-w-[60px] text-center">{stat.label}</span>
                                             </div>
                                         ))}
                                     </div>

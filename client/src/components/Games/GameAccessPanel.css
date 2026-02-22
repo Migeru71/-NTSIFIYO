@@ -1,45 +1,34 @@
-/* client/src/components/Games/Intruso/IntrusoAccessPanel.css */
+/* client/src/components/Games/GameAccessPanel.css */
+/* Estilos compartidos para todos los paneles de acceso a juegos */
 
-:root {
-    --primary-orange: #E65100;
-    --primary-blue: #1E3A8A;
-    --background-start: #A8E6CF;
-    --background-end: #FFF9C4;
-    --card-bg: #FFFFFF;
-    --text-primary: #374151;
-    --text-secondary: #6B7280;
-    --success: #10B981;
-    --warning: #F59E0B;
-}
-
-.intruso-access-panel {
-    background: linear-gradient(135deg, var(--background-start), var(--background-end));
+.game-access-panel {
+    background: linear-gradient(135deg, #A8E6CF, #FFF9C4);
     min-height: 100vh;
     padding: 2rem 1rem;
     font-family: 'PublicSans', sans-serif;
 }
 
-/* Encabezado del Panel */
-.intruso-access-panel .panel-header {
+/* ── Header ── */
+.gap-header {
     text-align: center;
     margin-bottom: 2rem;
 }
 
-.intruso-access-panel .panel-header h1 {
-    color: var(--primary-blue);
+.gap-header h1 {
+    color: #1E3A8A;
     font-family: 'Poppins', sans-serif;
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 0.5rem;
-    animation: intruso-slideDown 0.5s ease-out;
+    animation: gap-slideDown 0.5s ease-out;
 }
 
-.intruso-access-panel .panel-header p {
-    color: var(--text-secondary);
+.gap-header p {
+    color: #6B7280;
     font-size: 16px;
 }
 
-@keyframes intruso-slideDown {
+@keyframes gap-slideDown {
     from {
         opacity: 0;
         transform: translateY(-20px);
@@ -57,40 +46,40 @@
     }
 }
 
-/* Contenido del Rol */
-.intruso-access-panel .role-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    gap: 2rem;
-}
-
-/* Sección Docente */
-.intruso-access-panel .teacher-section {
+/* ── Teacher Create Section ── */
+.gap-teacher-section {
     background: white;
     padding: 2rem;
     border-radius: 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
+    margin-bottom: 2rem;
 }
 
-.intruso-access-panel .teacher-section h2 {
-    color: var(--primary-blue);
+.gap-teacher-section h2 {
+    color: #1E3A8A;
     font-family: 'Poppins', sans-serif;
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 1rem;
 }
 
-.intruso-access-panel .teacher-section p {
-    color: var(--text-secondary);
+.gap-teacher-section p {
+    color: #6B7280;
     margin-bottom: 1.5rem;
     font-size: 16px;
 }
 
-/* Sección Alumno */
-.intruso-access-panel .student-section h2 {
-    color: var(--primary-blue);
+/* ── Activities Section ── */
+.gap-role-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    gap: 2rem;
+}
+
+.gap-section-title {
+    color: #1E3A8A;
     font-family: 'Poppins', sans-serif;
     font-size: 28px;
     font-weight: bold;
@@ -98,8 +87,8 @@
     text-align: center;
 }
 
-/* Grid de Actividades */
-.intruso-access-panel .activities-grid {
+/* ── Activities Grid ── */
+.gap-activities-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
@@ -107,7 +96,8 @@
     margin: 0 auto;
 }
 
-.intruso-access-panel .activity-card {
+/* ── Activity Card ── */
+.gap-activity-card {
     background: white;
     border-radius: 15px;
     padding: 1.5rem;
@@ -118,39 +108,79 @@
     gap: 1rem;
 }
 
-.intruso-access-panel .activity-card:hover {
+.gap-activity-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.intruso-access-panel .activity-card h3 {
-    color: var(--primary-blue);
+.gap-activity-card h3 {
+    color: #1E3A8A;
     font-family: 'Poppins', sans-serif;
     font-size: 18px;
     font-weight: bold;
     margin: 0;
 }
 
-.intruso-access-panel .activity-card .description {
-    color: var(--text-secondary);
+.gap-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    border: 2px solid #fed7aa;
+}
+
+.gap-card-description {
+    color: #6B7280;
     font-size: 14px;
     margin: 0;
     flex-grow: 1;
 }
 
-.intruso-access-panel .activity-info {
+.gap-card-stats {
     display: flex;
     justify-content: space-around;
     padding: 1rem;
     background: #F3F4F6;
     border-radius: 8px;
     font-size: 13px;
-    color: var(--text-primary);
+    color: #374151;
     font-weight: 600;
 }
 
-/* Botones */
-.intruso-access-panel .btn {
+/* ── Teacher Action Buttons (edit/delete) ── */
+.gap-teacher-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.gap-btn-edit {
+    padding: 6px 8px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.gap-btn-delete {
+    padding: 6px 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* ── Buttons ── */
+.gap-btn {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 8px;
@@ -161,46 +191,46 @@
     font-size: 15px;
 }
 
-.intruso-access-panel .btn-primary {
-    background-color: var(--primary-orange);
+.gap-btn-primary {
+    background-color: #E65100;
     color: white;
     width: 100%;
 }
 
-.intruso-access-panel .btn-primary:hover {
+.gap-btn-primary:hover {
     background-color: #D84315;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
 }
 
-.intruso-access-panel .btn-play {
-    background-color: var(--primary-orange);
+.gap-btn-play {
+    background-color: #E65100;
     color: white;
     width: 100%;
 }
 
-.intruso-access-panel .btn-play:hover {
+.gap-btn-play:hover {
     background-color: #D84315;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
 }
 
-/* Estados */
-.intruso-access-panel .no-activities {
+/* ── States ── */
+.gap-no-activities {
     text-align: center;
-    color: var(--text-secondary);
+    color: #6B7280;
     padding: 2rem;
     font-style: italic;
 }
 
-.intruso-access-panel .loading-text {
+.gap-loading {
     text-align: center;
-    color: var(--text-secondary);
+    color: #6B7280;
     padding: 2rem;
 }
 
-/* Footer */
-.intruso-access-panel .panel-footer {
+/* ── Footer ── */
+.gap-footer {
     text-align: center;
     margin-top: 3rem;
     padding: 1.5rem;
@@ -211,22 +241,22 @@
     margin-right: auto;
 }
 
-.intruso-access-panel .panel-footer small {
-    color: var(--text-secondary);
+.gap-footer small {
+    color: #6B7280;
     font-size: 13px;
 }
 
-/* Responsive */
+/* ── Responsive ── */
 @media (max-width: 768px) {
-    .intruso-access-panel .panel-header h1 {
+    .gap-header h1 {
         font-size: 24px;
     }
 
-    .intruso-access-panel .activities-grid {
+    .gap-activities-grid {
         grid-template-columns: 1fr;
     }
 
-    .intruso-access-panel .activity-info {
+    .gap-card-stats {
         flex-direction: column;
         gap: 0.5rem;
         text-align: center;
