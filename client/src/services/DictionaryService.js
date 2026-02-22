@@ -89,6 +89,26 @@ class DictionaryService {
             };
         }
     }
+    /**
+     * Obtener todas las palabras minimamente (id y texto en español) para cache/búsqueda rápida
+     * GET /api/dictionary/words/all
+     * @returns {Promise<Object>}
+     */
+    async getAllWords() {
+        try {
+            const response = await apiConfig.get(`/api/dictionary/words/all`);
+            return {
+                success: true,
+                data: response || []
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
 }
 
 export default new DictionaryService();

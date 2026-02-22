@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
-import ConfiguracionActividadView from './components/Games/Memorama/ConfiguracionActividadView';
+import ConfigurationGameView from './components/Teacher/ConfigurationGameView';
 import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
 import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
 // Quiz imports
@@ -18,6 +18,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import StudentActivities from './pages/StudentActivities';
 // Teacher Dashboard
 import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherResources from './pages/TeacherResources';
 
 function App() {
     // Datos simulados (Mock) actualizados para coincidir con la estructura del Hero
@@ -59,6 +60,31 @@ function App() {
                         ========================================== */}
 
                     <Route path="/maestro/dashboard" element={<TeacherDashboard />} />
+                    <Route path="/maestro/recursos" element={<TeacherResources />} />
+
+                    <Route
+                        path="/maestro/recursos/crear"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad creada desde Recursos:', activity);
+                                    window.location.href = '/maestro/recursos';
+                                }}
+                            />
+                        }
+                    />
+
+                    <Route
+                        path="/maestro/recursos/editar/:editId"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad actualizada:', activity);
+                                    window.location.href = '/maestro/recursos';
+                                }}
+                            />
+                        }
+                    />
 
                     {/* ==========================================
                         RUTAS DEL MEMORAMA
@@ -69,7 +95,7 @@ function App() {
                     <Route
                         path="/games/memorama/crear"
                         element={
-                            <ConfiguracionActividadView
+                            <ConfigurationGameView
                                 onActivityCreated={(activity) => {
                                     console.log('✅ Actividad creada:', activity);
                                     window.location.href = `/games/memorama/jugar/${activity.id}`;
@@ -81,7 +107,7 @@ function App() {
                     <Route
                         path="/games/memorama/editar/:editId"
                         element={
-                            <ConfiguracionActividadView
+                            <ConfigurationGameView
                                 onActivityCreated={(activity) => {
                                     console.log('✅ Actividad actualizada:', activity);
                                     window.location.href = `/games/memorama`;
@@ -119,7 +145,7 @@ function App() {
                     <Route
                         path="/games/quiz/editar/:editId"
                         element={
-                            <ConfiguracionActividadView
+                            <ConfigurationGameView
                                 onActivityCreated={(activity) => {
                                     console.log('✅ Quiz actualizado:', activity);
                                     window.location.href = `/games/quiz`;
