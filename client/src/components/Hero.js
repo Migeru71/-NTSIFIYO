@@ -7,12 +7,6 @@ const Hero = ({ stats }) => {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                     <div className="flex flex-col gap-6 max-w-2xl">
-                        {/* Badge de Novedades */}
-                        <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary-dark dark:text-primary w-fit">
-                            <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-                            Nuevo Curso Interactivo Disponible
-                        </div>
-
                         <h1 className="text-4xl font-black tracking-tighter sm:text-5xl lg:text-6xl text-text-main-light dark:text-white leading-[1.1]">
                             Revitaliza tus Raíces: <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-dark to-primary">Aprende Mazahua</span> hoy
                         </h1>
@@ -32,10 +26,6 @@ const Hero = ({ stats }) => {
                             </Link>
                         </div>
 
-                        {/* Estadísticas dinámicas del Backend */}
-                        <div className="flex items-center gap-4 pt-4 text-sm text-text-sub-light dark:text-text-sub-dark">
-                            <p>Únete a más de <span className="font-bold text-text-main-light dark:text-white">{stats.active_learners}+</span> aprendices activos hoy.</p>
-                        </div>
                     </div>
 
                     {/* Tarjeta de Frase Diaria */}
@@ -47,9 +37,18 @@ const Hero = ({ stats }) => {
                                     <span className="material-symbols-outlined">translate</span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold">Frase del día</p>
-                                    <p className="text-lg font-medium text-primary-dark">"{stats.daily_phrase.mazahua}"</p>
-                                    <p className="text-xs text-text-sub-light">Significa "{stats.daily_phrase.spanish}"</p>
+                                    <p className="text-sm font-bold">Palabra del día</p>
+                                    {stats ? (
+                                        <>
+                                            <p className="text-lg font-medium text-primary-dark">"{stats.mazahuaText}"</p>
+                                            <p className="text-xs text-text-sub-light">Significa "{stats.spanishText}"</p>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                                            <span className="text-xs text-text-sub-light">Cargando palabra...</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

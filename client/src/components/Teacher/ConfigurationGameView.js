@@ -57,16 +57,47 @@ const SwitchToggle = ({ label, icon, checked, onChange }) => (
 );
 
 /* ─────────────── Config Card ─────────────── */
-const ConfigCard = ({ title, dotClass, config, setConfig }) => (
-    <div className="cfg-config-card">
-        <h3><span className={`cfg-dot ${dotClass}`}></span>{title}</h3>
-        <div className="cfg-config-options">
-            <SwitchToggle label="Imagen" icon="🖼️" checked={config.showImage} onChange={v => setConfig({ ...config, showImage: v })} />
-            <SwitchToggle label="Texto" icon="📝" checked={config.showText} onChange={v => setConfig({ ...config, showText: v })} />
-            <SwitchToggle label="Audio" icon="🔊" checked={config.playAudio} onChange={v => setConfig({ ...config, playAudio: v })} />
-            <SwitchToggle label="Mazahua" icon="🗣️" checked={config.isMazahua} onChange={v => setConfig({ ...config, isMazahua: v })} />
+const ConfigCard = ({ title, dotClass, config, setConfig }) => {
+    const handleMazahua = (v) => {
+        // If mazahua is ON, text must be ON (mazahua defines the language of text)
+        if (v) {
+            setConfig({ ...config, isMazahua: true, showText: true });
+        } else {
+            setConfig({ ...config, isMazahua: false });
+        }
+    };
+
+    const handleText = (v) => {
+        // If turning text OFF, also turn mazahua OFF
+        if (!v) {
+            setConfig({ ...config, showText: false, isMazahua: false });
+        } else {
+            setConfig({ ...config, showText: v });
+        }
+    };
+
+    return (
+        <div className="cfg-config-card">
+            <h3><span className={`cfg-dot ${dotClass}`}></span>{title}</h3>
+            <div className="cfg-config-options">
+                <SwitchToggle label="Imagen" icon="🖼️" checked={config.showImage} onChange={v => setConfig({ ...config, showImage: v })} />
+                <SwitchToggle label="Texto" icon="📝" checked={config.showText} onChange={handleText} />
+                <SwitchToggle label="Audio" icon="🔊" checked={config.playAudio} onChange={v => setConfig({ ...config, playAudio: v })} />
+                <SwitchToggle label="Mazahua" icon="🗣️" checked={config.isMazahua} onChange={handleMazahua} />
+            </div>
         </div>
-    </div>
+    );
+};
+
+/* ─────────────── Config Badges (inline in labels) ─────────────── */
+const ConfigBadges = ({ config, hasWord }) => (
+    <span className="cfg-badges">
+        {config.showImage && <span className={`cfg-mini-badge ${hasWord ? 'active' : ''}`}>🖼️</span>}
+        {config.playAudio && <span className={`cfg-mini-badge ${hasWord ? 'active' : ''}`}>🔊</span>}
+        {config.showText && (
+            <span className="cfg-lang-badge">{config.isMazahua ? 'MAZ' : 'ESP'}</span>
+        )}
+    </span>
 );
 
 /* ═══════════════ MAIN COMPONENT ═══════════════ */
@@ -270,7 +301,7 @@ const ConfigurationGameView = () => {
                                     <div className="cfg-row">
                                         <div className="cfg-field">
                                             <span className="cfg-field-label">
-                                                Estímulo <span className="cfg-lang-badge">ESP</span>
+                                                Estímulo <ConfigBadges config={config1} hasWord={hasWord(pair.elem1.wordId)} />
                                             </span>
                                             <input
                                                 className="cfg-input"
@@ -285,18 +316,10 @@ const ConfigurationGameView = () => {
                                                 onChangeText={t => updatePairElem(pair.id, 'elem1', { sw: t, wordId: null })}
                                                 onSelectWord={w => updatePairElem(pair.id, 'elem1', { sw: w.spanishWord, wordId: w.id })}
                                             />
-                                            <div className="cfg-media-row">
-                                                <div className={`cfg-media-btn ${hasWord(pair.elem1.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🖼️</span> Imagen
-                                                </div>
-                                                <div className={`cfg-media-btn ${hasWord(pair.elem1.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🎤</span> Audio
-                                                </div>
-                                            </div>
                                         </div>
                                         <div className="cfg-field">
                                             <span className="cfg-field-label">
-                                                Respuesta <span className="cfg-lang-badge">MAZ</span>
+                                                Respuesta <ConfigBadges config={config2} hasWord={hasWord(pair.elem2.wordId)} />
                                             </span>
                                             <input
                                                 className="cfg-input"
@@ -311,14 +334,6 @@ const ConfigurationGameView = () => {
                                                 onChangeText={t => updatePairElem(pair.id, 'elem2', { sw: t, wordId: null })}
                                                 onSelectWord={w => updatePairElem(pair.id, 'elem2', { sw: w.spanishWord, wordId: w.id })}
                                             />
-                                            <div className="cfg-media-row">
-                                                <div className={`cfg-media-btn ${hasWord(pair.elem2.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🖼️</span> Imagen
-                                                </div>
-                                                <div className={`cfg-media-btn ${hasWord(pair.elem2.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🎤</span> Audio
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -346,7 +361,7 @@ const ConfigurationGameView = () => {
                                     <div className="cfg-row">
                                         <div className="cfg-field">
                                             <span className="cfg-field-label">
-                                                ❓ Estímulo de Pregunta <span className="cfg-lang-badge">Español</span>
+                                                ❓ Estímulo de Pregunta <ConfigBadges config={config1} hasWord={hasWord(q.wordId)} />
                                             </span>
                                             <input
                                                 className="cfg-input"
@@ -361,17 +376,9 @@ const ConfigurationGameView = () => {
                                                 onChangeText={t => updateQ(q.id, { sw: t, wordId: null })}
                                                 onSelectWord={w => updateQ(q.id, { sw: w.spanishWord, wordId: w.id })}
                                             />
-                                            <div className="cfg-media-row">
-                                                <div className={`cfg-media-btn ${hasWord(q.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🖼️</span> Imagen
-                                                </div>
-                                                <div className={`cfg-media-btn ${hasWord(q.wordId) ? 'has-word' : ''}`}>
-                                                    <span className="media-icon">🎤</span> Audio
-                                                </div>
-                                            </div>
                                         </div>
                                         <div className="cfg-field" style={{ alignSelf: 'flex-start' }}>
-                                            {/* Empty right column for spacing, or could be used for preview later */}
+                                            {/* Empty right column for spacing */}
                                         </div>
                                     </div>
 
@@ -381,7 +388,7 @@ const ConfigurationGameView = () => {
                                         {q.responseList.map((ans, aIdx) => (
                                             <div key={ans.id} className={`cfg-answer-cell ${ans.isCorrect ? 'is-correct' : ''}`}>
                                                 <div className="cfg-answer-top">
-                                                    <span className="cfg-answer-label">Opción {aIdx + 1}</span>
+                                                    <span className="cfg-answer-label">Opción {aIdx + 1} <ConfigBadges config={config2} hasWord={hasWord(ans.wordId)} /></span>
                                                     <div className="cfg-answer-actions">
                                                         <span className="cfg-correct-text">Correcta</span>
                                                         <label className="cfg-correct-switch">

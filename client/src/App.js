@@ -8,7 +8,6 @@ import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
 import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
 // Quiz imports
 import QuizAccessPanel from './components/Games/Quiz/QuizAccessPanel';
-import QuizConfigView from './components/Games/Quiz/QuizConfigView';
 import QuizGameView from './components/Games/Quiz/QuizGameView';
 // Intruso imports
 import IntrusoAccessPanel from './components/Games/Intruso/IntrusoAccessPanel';
@@ -130,17 +129,6 @@ function App() {
                         ========================================== */}
 
                     <Route path="/games/quiz" element={<QuizAccessPanel />} />
-
-                    <Route
-                        path="/games/quiz/crear"
-                        element={
-                            <QuizConfigView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Quiz creado:', activity);
-                                }}
-                            />
-                        }
-                    />
 
                     <Route
                         path="/games/quiz/editar/:editId"

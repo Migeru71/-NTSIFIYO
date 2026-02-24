@@ -48,7 +48,7 @@ const Register = () => {
 
         if (validateForm()) {
             try {
-                const response = await fetch('http://localhost:8080/api/auth/visitor', {
+                const response = await fetch('https://mild-donella-daniel7g-b3e46241.koyeb.app/api/auth/visitor', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
