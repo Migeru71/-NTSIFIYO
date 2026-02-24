@@ -18,6 +18,9 @@ import StudentActivities from './pages/StudentActivities';
 // Teacher Dashboard
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherResources from './pages/TeacherResources';
+// Admin
+import AdminLogin from './pages/Admin/AdminLogin';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 import apiConfig from './services/apiConfig';
 
 function App() {
@@ -67,6 +70,18 @@ function App() {
 
                     {/* Ruta alternativa de registro */}
                     <Route path="/registro" element={<AuthPage />} />
+
+                    {/* ==========================================
+                        RUTAS DE ADMINISTRADOR
+                        ========================================== */}
+
+                    <Route path="/admin" element={<AdminLogin />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/grupos" element={<AdminDashboard />} />
+                    <Route path="/admin/estudiantes" element={<AdminDashboard />} />
+                    <Route path="/admin/maestros" element={<AdminDashboard />} />
+                    <Route path="/admin/palabras" element={<AdminDashboard />} />
+                    <Route path="/admin/actividades" element={<AdminDashboard />} />
 
                     {/* ==========================================
                         RUTAS DEL ESTUDIANTE
