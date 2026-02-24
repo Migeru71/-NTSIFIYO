@@ -12,16 +12,15 @@ class AuthService {
      */
     async login(credentials) {
         try {
-            const response = await apiConfig.post('/api/auth/login', {
+            const response = await apiConfig.post(`/api/auth/login/${credentials.userType.toLowerCase()}`, {
                 username: credentials.username,
                 password: credentials.password,
-                userType: credentials.userType, // STUDENT, TEACHER, ADMIN, VISITOR
                 grade: credentials.grade || null
             });
 
             // Guardar token si viene en la respuesta
-            if (response.token) {
-                localStorage.setItem('authToken', response.token);
+            if (response.jwtToken) {
+                localStorage.setItem('authToken', response.jwtToken);
             }
 
             // Guardar información del usuario

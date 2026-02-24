@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -18,8 +18,29 @@ import StudentActivities from './pages/StudentActivities';
 // Teacher Dashboard
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherResources from './pages/TeacherResources';
+import apiConfig from './services/apiConfig';
 
 function App() {
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Use fetch with keepalive to ensure it fires when the tab/window is closed
+                fetch(`${apiConfig.baseUrl}/api/user/session/end`, {
+                    method: 'PUT',
+                    headers: apiConfig.getHeaders(),
+                    keepalive: true
+                }).catch(console.error);
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     // Datos simulados (Mock) actualizados para coincidir con la estructura del Hero
     const mockStats = {
         hero: {

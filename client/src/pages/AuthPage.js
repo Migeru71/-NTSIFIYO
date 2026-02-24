@@ -18,6 +18,7 @@ const AuthPage = () => {
 
     // Estados para login de maestro/visitante
     const [teacherUsername, setTeacherUsername] = useState('');
+    const [guestUsername, setGuestUsername] = useState('');
     const [guestEmail, setGuestEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -246,18 +247,18 @@ const AuthPage = () => {
                                     </>
                                 )}
 
-                                {/* Usuario para Maestro, Email para Visitante */}
-                                {userType === 'teacher' ? (
+                                {/* Usuario para Login (Maestro/Visitante), Email para Registro (Visitante) */}
+                                {authMode === 'login' ? (
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-primary-dark">Usuario</label>
                                         <div className="relative">
                                             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
                                             <input
                                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                                                placeholder="Ej. maestro.gonzalez"
+                                                placeholder={userType === 'teacher' ? "Ej. maestro.gonzalez" : "Ej. visitante123"}
                                                 type="text"
-                                                value={teacherUsername}
-                                                onChange={(e) => setTeacherUsername(e.target.value)}
+                                                value={userType === 'teacher' ? teacherUsername : guestUsername}
+                                                onChange={(e) => userType === 'teacher' ? setTeacherUsername(e.target.value) : setGuestUsername(e.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -343,14 +344,14 @@ const AuthPage = () => {
                                             setNameError(response.error || 'Credenciales incorrectas');
                                         }
                                     } else if (authMode === 'login' && userType === 'guest') {
-                                        if (!guestEmail || !password) {
+                                        if (!guestUsername || !password) {
                                             setNameError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
 
                                         const response = await AuthService.login({
-                                            username: guestEmail,
+                                            username: guestUsername,
                                             password: password,
                                             userType: 'VISITOR'
                                         });

@@ -48,11 +48,17 @@ const apiConfig = {
     /**
      * Realiza una petición POST
      */
-    post: async (endpoint, body = {}) => {
+    post: async (endpoint, body = null) => {
+        const headers = apiConfig.getHeaders();
+        if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+            delete headers['Content-Type'];
+            body = null;
+        }
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: apiConfig.getHeaders(),
-            body: JSON.stringify(body)
+            headers,
+            ...(body && { body: JSON.stringify(body) })
         });
         return apiConfig.handleResponse(response);
     },
@@ -60,11 +66,17 @@ const apiConfig = {
     /**
      * Realiza una petición PUT
      */
-    put: async (endpoint, body = {}) => {
+    put: async (endpoint, body = null) => {
+        const headers = apiConfig.getHeaders();
+        if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+            delete headers['Content-Type'];
+            body = null;
+        }
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'PUT',
-            headers: apiConfig.getHeaders(),
-            body: JSON.stringify(body)
+            headers,
+            ...(body && { body: JSON.stringify(body) })
         });
         return apiConfig.handleResponse(response);
     },
@@ -72,11 +84,17 @@ const apiConfig = {
     /**
      * Realiza una petición PATCH
      */
-    patch: async (endpoint, body = {}) => {
+    patch: async (endpoint, body = null) => {
+        const headers = apiConfig.getHeaders();
+        if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+            delete headers['Content-Type'];
+            body = null;
+        }
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'PATCH',
-            headers: apiConfig.getHeaders(),
-            body: JSON.stringify(body)
+            headers,
+            ...(body && { body: JSON.stringify(body) })
         });
         return apiConfig.handleResponse(response);
     },

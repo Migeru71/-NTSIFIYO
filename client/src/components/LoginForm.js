@@ -47,7 +47,7 @@ const LoginForm = () => {
 
                 {userType === 'guest' && (
                     <>
-                        <input className="w-full p-3 rounded-lg border border-[#cfe7cf]" placeholder="Email Address" type="email" />
+                        <input className="w-full p-3 rounded-lg border border-[#cfe7cf]" placeholder="Username" type="text" />
                         <input className="w-full p-3 rounded-lg border border-[#cfe7cf]" placeholder="Password" type="password" />
                     </>
                 )}
