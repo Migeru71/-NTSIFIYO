@@ -12,6 +12,10 @@ class AuthService {
      */
     async login(credentials) {
         try {
+            // Limpiar cualquier token existente antes de hacer login para evitar errores CORS/403
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+
             let payload = {};
             if (credentials.userType === 'STUDENT') {
                 payload = {
@@ -59,6 +63,10 @@ class AuthService {
      */
     async registerVisitor(visitorData) {
         try {
+            // Limpiar cualquier token existente antes de registrarse
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+
             const response = await apiConfig.post('/api/auth/visitor', {
                 firstname: visitorData.firstname,
                 lastname: visitorData.lastname,
