@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import TeacherSidebar from '../components/Dashboard/TeacherSidebar';
+import SideBar from '../components/Dashboard/SideBar';
 
 /**
  * Dashboard principal del maestro
@@ -204,7 +204,20 @@ const TeacherDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Sidebar */}
-            <TeacherSidebar user={user} />
+            <SideBar
+                menuItems={[
+                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/maestro/dashboard' },
+                    { id: 'students', label: 'Estudiantes', icon: 'school', path: '/maestro/estudiantes' },
+                    { id: 'resources', label: 'Recursos', icon: 'library_books', path: '/maestro/recursos' },
+                    { id: 'content', label: 'Contenido', icon: 'article', path: '/maestro/contenido' },
+                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/maestro/diccionario' },
+                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/maestro/asignaciones' },
+                ]}
+                roleLabel="Maestro"
+                userName={user?.name || 'Maestro'}
+                accentColor="green"
+                homePath="/maestro/dashboard"
+            />
 
             {/* Main Content */}
             <main className="pl-64 min-h-screen">
