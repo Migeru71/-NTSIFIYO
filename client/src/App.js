@@ -12,6 +12,9 @@ import QuizGameView from './components/Games/Quiz/QuizGameView';
 // Intruso imports
 import IntrusoAccessPanel from './components/Games/Intruso/IntrusoAccessPanel';
 import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
+// Rompecabezas imports
+import RompecabezasAccessPanel from './components/Games/Rompecabezas/RompecabezasAccessPanel';
+import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGameView';
 // Student Dashboard
 import StudentDashboard from './pages/StudentDashboard';
 import StudentActivities from './pages/StudentActivities';
@@ -191,6 +194,13 @@ function App() {
 
                     <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
                     <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
+
+                    {/* ==========================================
+                        RUTAS DEL ROMPECABEZAS
+                        ========================================== */}
+
+                    <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
+                    <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
                 </Routes>
             </div>
         </Router>

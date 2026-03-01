@@ -73,6 +73,23 @@ const StudentActivities = () => {
                 { icon: 'category', label: 'Lógica' },
                 { icon: 'emoji_events', label: 'XP' }
             ]
+        },
+        {
+            id: 'rompecabezas',
+            title: 'Rompecabezas',
+            subtitle: 'Completa la Frase',
+            description: 'Selecciona la pieza correcta para completar la frase. Aprende vocabulario mazahua a través de frases contextuales en 5 ejercicios por lección.',
+            icon: '🧩',
+            iconBg: 'bg-gradient-to-br from-blue-100 to-cyan-100',
+            borderColor: 'border-blue-200',
+            accentColor: 'text-blue-600',
+            btnColor: 'bg-blue-500 hover:bg-blue-600',
+            path: '/games/rompecabezas',
+            stats: [
+                { icon: 'extension', label: 'Frases' },
+                { icon: 'lightbulb', label: 'Contexto' },
+                { icon: 'emoji_events', label: 'XP' }
+            ]
         }
     ];
 
