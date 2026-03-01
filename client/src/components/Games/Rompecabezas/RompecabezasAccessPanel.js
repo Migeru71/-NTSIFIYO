@@ -1,7 +1,8 @@
 // client/src/components/Games/Rompecabezas/RompecabezasAccessPanel.js
-// Panel de acceso al Rompecabezas — rol determinado por la sesión del usuario
+// Panel de acceso al Rompecabezas — obtiene actividades de la API
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import RompecabezasService from '../../../services/RompecabezasService';
 import mockRompecabezas from '../../../data/mockRompecabezas';
 import '../GameAccessPanel.css';
 
@@ -9,6 +10,7 @@ function RompecabezasAccessPanel() {
     const navigate = useNavigate();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Detectar rol desde localStorage
     const getUserRole = () => {
@@ -25,12 +27,50 @@ function RompecabezasAccessPanel() {
         loadActivities();
     }, []);
 
-    function loadActivities() {
+    async function loadActivities() {
         setLoading(true);
-        setTimeout(() => {
-            setActivities(mockRompecabezas);
-            setLoading(false);
-        }, 300);
+        setError(null);
+
+        const result = await RompecabezasService.getActivities();
+
+        if (result.success && result.data.length > 0) {
+            // Mapear DTO del servidor al formato interno
+            setActivities(result.data.map(item => ({
+                id: item.id,
+                name: item.title,
+                description: item.description,
+                difficulty: mapDifficulty(item.difficult),
+                experience: item.experience,
+                totalQuestions: item.totalQuestions,
+                gameType: item.gameType,
+                gameConfigs: item.assignActivityGameConfigDTO || [],
+                teacher: item.teacherDTO
+                    ? `${item.teacherDTO.firstName} ${item.teacherDTO.lastName}`
+                    : null
+            })));
+        } else {
+            // Fallback a datos mock si la API falla o no devuelve datos
+            console.warn('API no disponible, usando datos de ejemplo:', result.error);
+            setActivities(mockRompecabezas.map(a => ({
+                id: a.id,
+                name: a.name,
+                description: a.description,
+                difficulty: a.difficulty,
+                experience: a.recommendedXP,
+                totalQuestions: a.totalQuestions || a.questions?.length || 5,
+                gameType: a.gameType,
+                gameConfigs: a.gameConfigs || [],
+                teacher: null
+            })));
+        }
+
+        setLoading(false);
+    }
+
+    /** Convierte la dificultad del servidor ('EASY', 'MEDIUM', 'HARD') al label local */
+    function mapDifficulty(difficult) {
+        const map = { 'EASY': 'fácil', 'MEDIUM': 'medio', 'HARD': 'difícil' };
+        return map[difficult] || 'fácil';
     }
 
     function handlePlayGame(activityId) {
@@ -83,6 +123,18 @@ function RompecabezasAccessPanel() {
             <div className="gap-role-content">
                 <div>
                     <h2 className="gap-section-title">🎮 Actividades Disponibles</h2>
+
+                    {/* Error banner (no bloquea — ya hay fallback a mock) */}
+                    {error && (
+                        <div style={{
+                            background: '#FEF2F2', border: '1px solid #FECACA',
+                            borderRadius: '12px', padding: '12px 16px',
+                            marginBottom: '16px', fontSize: '13px', color: '#B91C1C'
+                        }}>
+                            ⚠️ {error} — Mostrando datos de ejemplo.
+                        </div>
+                    )}
+
                     {loading ? (
                         <div className="gap-loading">
                             <div style={{
@@ -118,9 +170,9 @@ function RompecabezasAccessPanel() {
                                     </div>
                                     <p className="gap-card-description">{activity.description}</p>
                                     <div className="gap-card-stats">
-                                        <span>{'⭐ ' + activity.recommendedXP + ' XP'}</span>
-                                        <span>{'🧩 ' + (activity.questions ? activity.questions.length : 0) + ' frases'}</span>
-                                        <span>{'⏱️ ~' + (activity.questions ? activity.questions.length * 20 : 60) + 's'}</span>
+                                        <span>{'⭐ ' + (activity.experience || 0) + ' XP'}</span>
+                                        <span>{'🧩 ' + (activity.totalQuestions || 5) + ' frases'}</span>
+                                        {activity.teacher && <span>{'👤 ' + activity.teacher}</span>}
                                     </div>
                                     <button
                                         className="gap-btn gap-btn-play"
