@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import AdminSidebar from '../../components/Dashboard/AdminSidebar';
+import SideBar from '../../components/Dashboard/SideBar';
 import apiConfig from '../../services/apiConfig';
 
 const AdminDashboard = () => {
@@ -2378,7 +2378,21 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
-            <AdminSidebar />
+            <SideBar
+                menuItems={[
+                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin/dashboard' },
+                    { id: 'groups', label: 'Grupos', icon: 'groups', path: '/admin/grupos' },
+                    { id: 'students', label: 'Estudiantes', icon: 'school', path: '/admin/estudiantes' },
+                    { id: 'teachers', label: 'Maestros', icon: 'person', path: '/admin/maestros' },
+                    { id: 'dictionary', label: 'Diccionario', icon: 'library_books', path: '/admin/palabras' },
+                    { id: 'activities', label: 'Actividades', icon: 'extension', path: '/admin/actividades' },
+                    { id: 'content', label: 'Contenido', icon: 'article', path: '/admin/contenido' },
+                ]}
+                roleLabel="Administrador"
+                userName="Administrador"
+                accentColor="primary"
+                homePath="/admin/dashboard"
+            />
             <main className="flex-1 ml-64 p-8 min-h-screen">
                 <nav className="text-sm text-gray-500 mb-6 flex items-center gap-2">
                     <Link to="/admin/dashboard" className="hover:text-primary transition-colors font-medium">Admin Panel</Link>

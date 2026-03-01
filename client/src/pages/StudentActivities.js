@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import DashboardSidebar from '../components/Dashboard/DashboardSidebar';
+import SideBar from '../components/Dashboard/SideBar';
 
 /**
  * Página de actividades de aprendizaje
@@ -79,7 +79,19 @@ const StudentActivities = () => {
     return (
         <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">
             {/* Sidebar */}
-            <DashboardSidebar user={user} />
+            <SideBar
+                menuItems={[
+                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/estudiante/dashboard' },
+                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/estudiante/asignaciones' },
+                    { id: 'activities', label: 'Actividades', icon: 'sports_esports', path: '/estudiante/actividades' },
+                    { id: 'content', label: 'Contenido', icon: 'article', path: '/estudiante/contenido' },
+                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/estudiante/diccionario' },
+                ]}
+                roleLabel="Estudiante"
+                userName={user?.name || 'Estudiante'}
+                accentColor="amber"
+                homePath="/estudiante/dashboard"
+            />
 
             {/* Main Content */}
             <main className="pl-64 min-h-screen">
