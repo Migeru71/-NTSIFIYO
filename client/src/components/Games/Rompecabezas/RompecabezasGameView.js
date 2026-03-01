@@ -46,7 +46,6 @@ const RompecabezasGameView = () => {
             clearInterval(timerRef.current);
             clearTimeout(feedbackTimeout.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activityId]);
 
     async function initGame() {
