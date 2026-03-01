@@ -18,6 +18,7 @@ import StudentActivities from './pages/StudentActivities';
 // Teacher Dashboard
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherResources from './pages/TeacherResources';
+import TeacherStudents from './pages/TeacherStudents';
 // Admin
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -95,6 +96,7 @@ function App() {
                         ========================================== */}
 
                     <Route path="/maestro/dashboard" element={<TeacherDashboard />} />
+                    <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
                     <Route path="/maestro/recursos" element={<TeacherResources />} />
 
                     <Route

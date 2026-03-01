@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import './configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
@@ -18,7 +19,7 @@ const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words
 
     const filtered = useMemo(() => {
         if (!value || value.length < 1) return [];
-        return words.filter(w => w.spanishWord?.toLowerCase().includes(value.toLowerCase())).slice(0, 8);
+        return words.filter(w => w.text?.toLowerCase().includes(value.toLowerCase())).slice(0, 8);
     }, [value, words]);
 
     return (
@@ -35,8 +36,7 @@ const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words
                 <div className="cfg-word-results">
                     {filtered.map(w => (
                         <div key={w.id} className="cfg-word-option" onClick={() => { onSelectWord(w); setOpen(false); }}>
-                            <span>{w.spanishWord}</span>
-                            <span className="maz-hint">{w.mazahuaWord}</span>
+                            <span>{w.text}</span>
                         </div>
                     ))}
                 </div>
@@ -100,9 +100,30 @@ const ConfigBadges = ({ config, hasWord }) => (
     </span>
 );
 
+/* ─────────────── Game type constants ─────────────── */
+const QUESTIONNAIRE_TYPES = [
+    { value: 'QUESTIONNAIRE', label: '❓ Quiz', desc: 'Preguntas de opción múltiple' },
+    { value: 'FAST_MEMORY', label: '⚡ Memoria Rápida', desc: 'Recuerda con rapidez' },
+    { value: 'INTRUDER', label: '🕵️ Intruso', desc: 'Encuentra el que no pertenece' },
+    { value: 'FIND_THE_WORD', label: '🔍 Encuentra Palabra', desc: 'Localiza la palabra correcta' },
+    { value: 'MEDIA_SONG', label: '🎵 Canción', desc: 'Actividad con canción' },
+    { value: 'MEDIA_ANECDOTE', label: '📖 Anécdota', desc: 'Actividad con anécdota' },
+    { value: 'MEDIA_LEGEND', label: '🗺️ Leyenda', desc: 'Actividad con leyenda' },
+    { value: 'PUZZLE', label: '🧩 Rompecabezas', desc: 'Arma la imagen o palabra' },
+];
+
+const PAIR_TYPES = [
+    { value: 'MEMORY_GAME', label: '🎴 Memory Game', desc: 'Voltea y empareja pares' },
+];
+
 /* ═══════════════ MAIN COMPONENT ═══════════════ */
-const ConfigurationGameView = () => {
-    const [gameType, setGameType] = useState('PAIRS');
+const ConfigurationGameView = ({ onActivityCreated }) => {
+    const { editId } = useParams();
+    const isEditMode = !!editId;
+
+    const [loadingEdit, setLoadingEdit] = useState(isEditMode);
+    const [interactionType, setInteractionType] = useState('QUESTIONNAIRE');
+    const [gameType, setGameType] = useState('QUESTIONNAIRE');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [experience, setExperience] = useState(0);
@@ -116,16 +137,104 @@ const ConfigurationGameView = () => {
     const [questions, setQuestions] = useState([]);
     const [pairs, setPairs] = useState([]);
 
+    // When interaction type changes, reset gameType to the first subtype of that interaction
+    const handleInteractionChange = (type) => {
+        setInteractionType(type);
+        if (type === 'PAIRS') {
+            setGameType(PAIR_TYPES[0].value);
+        } else {
+            setGameType(QUESTIONNAIRE_TYPES[0].value);
+        }
+    };
+
+    // Always load dictionary words for word search inputs
     useEffect(() => {
         DictionaryService.getAllWords().then(r => { if (r.success && Array.isArray(r.data)) setWords(r.data); });
-        setPairs([makePair()]);
-        setQuestions([makeQuestion()]);
-    }, []);
+        if (!isEditMode) {
+            setPairs([makePair()]);
+            setQuestions([makeQuestion()]);
+        }
+    }, []); // eslint-disable-line
+
+    // If edit mode: fetch game AND dictionary words, then pre-fill form
+    useEffect(() => {
+        if (!isEditMode) return;
+        setLoadingEdit(true);
+
+        // Load both the game and the word dictionary in parallel
+        Promise.all([
+            apiConfig.get(`/api/games/${editId}`),
+            DictionaryService.getAllWords().then(r => (r.success && Array.isArray(r.data)) ? r.data : [])
+        ])
+            .then(([game, wordList]) => {
+                // Build a lookup map: wordId -> word text
+                const wordMap = {};
+                wordList.forEach(w => { wordMap[w.id] = w.text || ''; });
+                // Also update words state so search inputs work
+                if (wordList.length > 0) setWords(wordList);
+
+                const isPairs = PAIR_TYPES.some(t => t.value === game.gameType);
+                const iType = isPairs ? 'PAIRS' : 'QUESTIONNAIRE';
+                setInteractionType(iType);
+                setGameType(game.gameType || (isPairs ? PAIR_TYPES[0].value : QUESTIONNAIRE_TYPES[0].value));
+                setTitle(game.title || '');
+                setDescription(game.description || '');
+                setExperience(game.experience || 0);
+                setDifficult(game.difficult || 'EASY');
+
+                // Config cards — sorted by order
+                const cfgs = Array.isArray(game.gameConfigs) ? [...game.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) : [];
+                if (cfgs[0]) setConfig1({ showImage: cfgs[0].showImage, showText: cfgs[0].showText, playAudio: cfgs[0].playAudio, isMazahua: cfgs[0].isMazahua, order: 1 });
+                if (cfgs[1]) setConfig2({ showImage: cfgs[1].showImage, showText: cfgs[1].showText, playAudio: cfgs[1].playAudio, isMazahua: cfgs[1].isMazahua, order: 2 });
+
+                // Pairs mode: rebuild pairs from wordIds and resolve word text
+                if (isPairs && Array.isArray(game.wordIds) && game.wordIds.length > 0) {
+                    const builtPairs = [];
+                    for (let i = 0; i < game.wordIds.length; i += 2) {
+                        const wId1 = game.wordIds[i] ?? null;
+                        const wId2 = game.wordIds[i + 1] ?? null;
+                        builtPairs.push({
+                            id: generateId(),
+                            elem1: { text: wordMap[wId1] || String(wId1 ?? ''), wordId: wId1, sw: wordMap[wId1] || '' },
+                            elem2: { text: wordMap[wId2] || String(wId2 ?? ''), wordId: wId2, sw: wordMap[wId2] || '' }
+                        });
+                    }
+                    setPairs(builtPairs.length > 0 ? builtPairs : [makePair()]);
+                    setQuestions([makeQuestion()]);
+
+                    // Quiz mode: rebuild questions from game.questions (API returns `answers` not `answers`)
+                } else if (!isPairs && Array.isArray(game.questions) && game.questions.length > 0) {
+                    const builtQuestions = game.questions.map(q => ({
+                        id: generateId(),
+                        question: q.question || '',
+                        wordId: q.wordId ?? null,
+                        sw: q.wordId ? (wordMap[q.wordId] || '') : '',
+                        answers: (q.answers || q.answers || []).map(a => ({
+                            id: generateId(),
+                            answerText: a.answerText || '',
+                            wordId: a.wordId ?? null,
+                            sw: a.wordId ? (wordMap[a.wordId] || '') : '',
+                            isCorrect: !!a.isCorrect
+                        }))
+                    }));
+                    setQuestions(builtQuestions);
+                    setPairs([makePair()]);
+                } else {
+                    setPairs([makePair()]);
+                    setQuestions([makeQuestion()]);
+                }
+            })
+            .catch(err => {
+                console.error('Error loading game for edit:', err);
+                alert('Error al cargar la actividad: ' + err.message);
+            })
+            .finally(() => setLoadingEdit(false));
+    }, [editId]); // eslint-disable-line
 
     const makePair = () => ({ id: generateId(), elem1: { text: '', wordId: null, sw: '' }, elem2: { text: '', wordId: null, sw: '' } });
     const makeQuestion = () => ({
         id: generateId(), question: '', wordId: null, sw: '',
-        responseList: [
+        answers: [
             { id: generateId(), answerText: '', wordId: null, sw: '', isCorrect: true },
             { id: generateId(), answerText: '', wordId: null, sw: '', isCorrect: false },
             { id: generateId(), answerText: '', wordId: null, sw: '', isCorrect: false },
@@ -133,7 +242,7 @@ const ConfigurationGameView = () => {
         ]
     });
 
-    const totalItems = gameType === 'PAIRS' ? pairs.length : questions.length;
+    const totalItems = interactionType === 'PAIRS' ? pairs.length : questions.length;
     const recXP = totalItems * (difficult === 'EASY' ? 10 : difficult === 'MEDIUM' ? 15 : 20);
 
     /* ── Pair helpers ── */
@@ -145,28 +254,62 @@ const ConfigurationGameView = () => {
     const removeQ = id => { if (questions.length > 1) setQuestions(qs => qs.filter(q => q.id !== id)); };
 
     const addAnswer = qId => setQuestions(qs => qs.map(q =>
-        q.id === qId && q.responseList.length < 6
-            ? { ...q, responseList: [...q.responseList, { id: generateId(), answerText: '', wordId: null, sw: '', isCorrect: false }] }
+        q.id === qId && q.answers.length < 6
+            ? { ...q, answers: [...q.answers, { id: generateId(), answerText: '', wordId: null, sw: '', isCorrect: false }] }
             : q
     ));
 
     const removeAnswer = (qId, aId) => setQuestions(qs => qs.map(q => {
-        if (q.id !== qId || q.responseList.length <= 2) return q;
-        const list = q.responseList.filter(a => a.id !== aId);
+        if (q.id !== qId || q.answers.length <= 2) return q;
+        const list = q.answers.filter(a => a.id !== aId);
         if (!list.some(a => a.isCorrect)) list[0].isCorrect = true;
-        return { ...q, responseList: list };
+        return { ...q, answers: list };
     }));
 
     const setCorrectAnswer = (qId, aId) => setQuestions(qs => qs.map(q =>
-        q.id !== qId ? q : { ...q, responseList: q.responseList.map(a => ({ ...a, isCorrect: a.id === aId })) }
+        q.id !== qId ? q : { ...q, answers: q.answers.map(a => ({ ...a, isCorrect: a.id === aId })) }
     ));
 
     const updateAnswer = (qId, aId, data) => setQuestions(qs => qs.map(q =>
-        q.id !== qId ? q : { ...q, responseList: q.responseList.map(a => a.id === aId ? { ...a, ...data } : a) }
+        q.id !== qId ? q : { ...q, answers: q.answers.map(a => a.id === aId ? { ...a, ...data } : a) }
     ));
+
+    const validateForm = () => {
+        if (interactionType === 'PAIRS') {
+            for (let i = 0; i < pairs.length; i++) {
+                const pair = pairs[i];
+                if ((config1.showImage || config1.playAudio) && !pair.elem1.wordId) {
+                    return `El Elemento 1 del par ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
+                }
+                if ((config2.showImage || config2.playAudio) && !pair.elem2.wordId) {
+                    return `El Elemento 2 del par ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
+                }
+            }
+        } else {
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                if ((config1.showImage || config1.playAudio) && !q.wordId) {
+                    return `El estímulo de la pregunta ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
+                }
+                for (let j = 0; j < q.answers.length; j++) {
+                    const a = q.answers[j];
+                    if ((config2.showImage || config2.playAudio) && !a.wordId) {
+                        return `La opción ${j + 1} de la pregunta ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
+                    }
+                }
+            }
+        }
+        return null;
+    };
 
     /* ── Submit ── */
     const handleSubmit = async () => {
+        const validationError = validateForm();
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
+
         const dto = {
             gameType, title, description,
             experience: experience || recXP,
@@ -178,7 +321,7 @@ const ConfigurationGameView = () => {
             gameConfigs: [config1, config2]
         };
 
-        if (gameType === 'PAIRS') {
+        if (interactionType === 'PAIRS') {
             const ids = new Set();
             pairs.forEach(p => { if (p.elem1.wordId) ids.add(p.elem1.wordId); if (p.elem2.wordId) ids.add(p.elem2.wordId); });
             dto.wordIds = Array.from(ids);
@@ -186,35 +329,44 @@ const ConfigurationGameView = () => {
             dto.questions = questions.map(q => ({
                 question: q.question,
                 wordId: q.wordId,
-                responseList: q.responseList.map(a => ({ answerText: a.answerText, isCorrect: a.isCorrect, wordId: a.wordId }))
+                answers: q.answers.map(a => ({ answerText: a.answerText, isCorrect: a.isCorrect, wordId: a.wordId }))
             }));
         }
 
         try {
-            await apiConfig.post('/api/games', dto);
-            alert('✅ Juego creado con éxito!');
+            let result;
+            if (isEditMode) {
+                result = await apiConfig.put(`/api/games/${editId}`, dto);
+                alert('Juego actualizado con exito!');
+            } else {
+                result = await apiConfig.post('/api/games', dto);
+                alert('Juego creado con exito!');
+            }
+            if (onActivityCreated) onActivityCreated(result || dto);
         } catch (err) {
-            alert('Error al crear el juego: ' + err.message);
+            alert(`Error al ${isEditMode ? 'actualizar' : 'crear'} el juego: ` + err.message);
         }
     };
 
     const hasWord = wId => wId !== null && wId !== undefined;
 
     /* ═══════════════ RENDER ═══════════════ */
+    if (loadingEdit) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f9fafb' }}>
+                <div style={{ textAlign: 'center', padding: '4rem' }}>
+                    <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
+                    <p style={{ color: '#6b7280', fontFamily: 'inherit' }}>Cargando actividad para editar...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="cfg-game-root">
             {/* ─── SIDEBAR ─── */}
             <aside className="cfg-sidebar">
                 <p className="cfg-sidebar-title">General</p>
-
-                <div className="cfg-sidebar-section">
-                    <label>Tipo de Juego</label>
-                    <div className="cfg-toggle-group">
-                        <button className={`cfg-toggle-btn ${gameType === 'PAIRS' ? 'active' : ''}`} onClick={() => setGameType('PAIRS')}>🃏 Pares</button>
-                        <button className={`cfg-toggle-btn ${gameType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => setGameType('QUESTIONNAIRE')}>❓ Quiz</button>
-                    </div>
-                </div>
-
                 <div className="cfg-sidebar-section">
                     <label>Nombre</label>
                     <input className="cfg-input" placeholder="Nombre del juego" value={title} onChange={e => setTitle(e.target.value)} />
@@ -246,20 +398,47 @@ const ConfigurationGameView = () => {
                     <span className="cfg-xp-hint">⭐ Recomendado: {recXP} XP</span>
                 </div>
 
-                <button className="cfg-btn-publish" onClick={handleSubmit}>🚀 Publicar</button>
+                <div className="cfg-sidebar-section">
+                    <label>Tipo de Interacción</label>
+                    <div className="cfg-toggle-group">
+                        <button className={`cfg-toggle-btn ${interactionType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => handleInteractionChange('QUESTIONNAIRE')}>❓ Quiz</button>
+                        <button className={`cfg-toggle-btn ${interactionType === 'PAIRS' ? 'active' : ''}`} onClick={() => handleInteractionChange('PAIRS')}>🃏 Pares</button>
+                    </div>
+                </div>
+
+                <div className="cfg-sidebar-section">
+                    <label>Tipo de Juego</label>
+                    <div className="cfg-game-type-list">
+                        {(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).map(gt => (
+                            <button
+                                key={gt.value}
+                                className={`cfg-game-type-btn ${gameType === gt.value ? 'active' : ''}`}
+                                onClick={() => setGameType(gt.value)}
+                                title={gt.desc}
+                            >
+                                {gt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <button className="cfg-btn-publish" onClick={handleSubmit}>
+                    {isEditMode ? '💾 Actualizar' : '🚀 Publicar'}
+                </button>
             </aside>
 
             {/* ─── MAIN CONTENT ─── */}
             <main className="cfg-main">
                 <div className="cfg-section-heading">
-                    <h2>{gameType === 'PAIRS' ? 'Configuración de Contenido' : 'Configuración de Quiz'}</h2>
-                    <p>{gameType === 'PAIRS' ? 'Configura tus pares de palabras y recursos multimedia.' : 'Diseña tus preguntas y define las opciones de respuesta.'}</p>
+                    <h2>{interactionType === 'PAIRS' ? 'Configuración de Contenido' : 'Configuración de Quiz'}</h2>
+                    <p>{interactionType === 'PAIRS' ? 'Configura tus pares de palabras y recursos multimedia.' : 'Diseña tus preguntas y define las opciones de respuesta.'}</p>
+                    <span className="cfg-game-type-badge">{(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).find(g => g.value === gameType)?.label}</span>
                 </div>
 
                 {/* Mode pill */}
-                <div className={`cfg-mode-pill ${gameType === 'PAIRS' ? 'pairs' : 'quiz'}`}>
-                    <span className="pill-icon">{gameType === 'PAIRS' ? '🃏' : '⚠️'}</span>
-                    {gameType === 'PAIRS'
+                <div className={`cfg-mode-pill ${interactionType === 'PAIRS' ? 'pairs' : 'quiz'}`}>
+                    <span className="pill-icon">{interactionType === 'PAIRS' ? '🃏' : '⚠️'}</span>
+                    {interactionType === 'PAIRS'
                         ? 'Modo Pares — Cada item consiste en dos elementos que se emparejan.'
                         : 'Modo Quiz — Cada item consiste en una pregunta y múltiples opciones de respuesta.'}
                 </div>
@@ -267,13 +446,13 @@ const ConfigurationGameView = () => {
                 {/* Configs row */}
                 <div className="cfg-configs-row">
                     <ConfigCard
-                        title={gameType === 'PAIRS' ? 'Configuración Elemento 1' : 'Configuración Pregunta'}
+                        title={interactionType === 'PAIRS' ? 'Configuración Elemento 1' : 'Configuración Pregunta'}
                         dotClass="dot-1"
                         config={config1}
                         setConfig={setConfig1}
                     />
                     <ConfigCard
-                        title={gameType === 'PAIRS' ? 'Configuración Elemento 2' : 'Configuración Respuestas'}
+                        title={interactionType === 'PAIRS' ? 'Configuración Elemento 2' : 'Configuración Respuestas'}
                         dotClass="dot-2"
                         config={config2}
                         setConfig={setConfig2}
@@ -282,7 +461,7 @@ const ConfigurationGameView = () => {
 
                 {/* ─── ITEMS LIST ─── */}
                 <div className="cfg-items-list">
-                    {gameType === 'PAIRS' ? (
+                    {interactionType === 'PAIRS' ? (
                         <>
                             {pairs.map((pair, idx) => (
                                 <div key={pair.id} className="cfg-item-card">
@@ -314,7 +493,7 @@ const ConfigurationGameView = () => {
                                                 value={pair.elem1.sw}
                                                 placeholder="Buscar palabra conocida..."
                                                 onChangeText={t => updatePairElem(pair.id, 'elem1', { sw: t, wordId: null })}
-                                                onSelectWord={w => updatePairElem(pair.id, 'elem1', { sw: w.spanishWord, wordId: w.id })}
+                                                onSelectWord={w => updatePairElem(pair.id, 'elem1', { sw: w.text, wordId: w.id })}
                                             />
                                         </div>
                                         <div className="cfg-field">
@@ -332,7 +511,7 @@ const ConfigurationGameView = () => {
                                                 value={pair.elem2.sw}
                                                 placeholder="Buscar palabra conocida..."
                                                 onChangeText={t => updatePairElem(pair.id, 'elem2', { sw: t, wordId: null })}
-                                                onSelectWord={w => updatePairElem(pair.id, 'elem2', { sw: w.spanishWord, wordId: w.id })}
+                                                onSelectWord={w => updatePairElem(pair.id, 'elem2', { sw: w.text, wordId: w.id })}
                                             />
                                         </div>
                                     </div>
@@ -374,7 +553,7 @@ const ConfigurationGameView = () => {
                                                 value={q.sw}
                                                 placeholder="Buscar palabra base..."
                                                 onChangeText={t => updateQ(q.id, { sw: t, wordId: null })}
-                                                onSelectWord={w => updateQ(q.id, { sw: w.spanishWord, wordId: w.id })}
+                                                onSelectWord={w => updateQ(q.id, { sw: w.text, wordId: w.id })}
                                             />
                                         </div>
                                         <div className="cfg-field" style={{ alignSelf: 'flex-start' }}>
@@ -385,7 +564,7 @@ const ConfigurationGameView = () => {
                                     {/* Answers */}
                                     <p className="cfg-answers-label">Configuración de Respuestas</p>
                                     <div className="cfg-answers-grid">
-                                        {q.responseList.map((ans, aIdx) => (
+                                        {q.answers.map((ans, aIdx) => (
                                             <div key={ans.id} className={`cfg-answer-cell ${ans.isCorrect ? 'is-correct' : ''}`}>
                                                 <div className="cfg-answer-top">
                                                     <span className="cfg-answer-label">Opción {aIdx + 1} <ConfigBadges config={config2} hasWord={hasWord(ans.wordId)} /></span>
@@ -399,7 +578,7 @@ const ConfigurationGameView = () => {
                                                             />
                                                             <span className="cfg-correct-slider"></span>
                                                         </label>
-                                                        {q.responseList.length > 2 && (
+                                                        {q.answers.length > 2 && (
                                                             <button className="cfg-btn-remove-ans" onClick={() => removeAnswer(q.id, ans.id)}>✕</button>
                                                         )}
                                                     </div>
@@ -415,12 +594,12 @@ const ConfigurationGameView = () => {
                                                     value={ans.sw}
                                                     placeholder="Palabra (opcional)..."
                                                     onChangeText={t => updateAnswer(q.id, ans.id, { sw: t, wordId: null })}
-                                                    onSelectWord={w => updateAnswer(q.id, ans.id, { sw: w.spanishWord, wordId: w.id })}
+                                                    onSelectWord={w => updateAnswer(q.id, ans.id, { sw: w.text, wordId: w.id })}
                                                 />
                                             </div>
                                         ))}
                                     </div>
-                                    {q.responseList.length < 6 && (
+                                    {q.answers.length < 6 && (
                                         <button className="cfg-btn-add-answer" onClick={() => addAnswer(q.id)}>
                                             + Añadir Respuesta
                                         </button>

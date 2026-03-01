@@ -12,11 +12,22 @@ class AuthService {
      */
     async login(credentials) {
         try {
-            const response = await apiConfig.post(`/api/auth/login/${credentials.userType.toLowerCase()}`, {
-                username: credentials.username,
-                password: credentials.password,
-                grade: credentials.grade || null
-            });
+            let payload = {};
+            if (credentials.userType === 'STUDENT') {
+                payload = {
+                    listNumber: credentials.listNumber,
+                    password: credentials.password,
+                    grade: credentials.grade
+                };
+            } else {
+                payload = {
+                    username: credentials.username,
+                    password: credentials.password,
+                    grade: credentials.grade || null
+                };
+            }
+
+            const response = await apiConfig.post(`/api/auth/login/${credentials.userType.toLowerCase()}`, payload);
 
             // Guardar token si viene en la respuesta
             if (response.jwtToken) {

@@ -11,10 +11,10 @@ const AuthPage = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     // Estados para el login del estudiante
-    const [studentName, setStudentName] = useState('');
-    const [magicNumber, setMagicNumber] = useState('');
+    const [listNumber, setListNumber] = useState('');
+    const [studentPassword, setStudentPassword] = useState('');
     const [grade, setGrade] = useState('');
-    const [nameError, setNameError] = useState('');
+    const [loginError, setLoginError] = useState('');
 
     // Estados para login de maestro/visitante
     const [teacherUsername, setTeacherUsername] = useState('');
@@ -36,63 +36,18 @@ const AuthPage = () => {
         { value: '6', label: '6º Sexto' }
     ];
 
-    // Función para validar y formatear el nombre
-    const formatName = (name) => {
-        return name
-            .split(' ')
-            .map(word => {
-                if (word.length === 0) return '';
-                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-            })
-            .join(' ');
-    };
-
-    // Función para validar el nombre
-    const validateName = (name) => {
-        if (!name.trim()) {
-            return 'Por favor ingresa tu nombre';
-        }
-
-        const words = name.trim().split(/\s+/);
-        for (const word of words) {
-            if (word.length === 0) continue;
-
-            // Verificar que la primera letra sea mayúscula
-            if (word.charAt(0) !== word.charAt(0).toUpperCase()) {
-                return 'La primera letra de cada nombre debe ser mayúscula';
-            }
-
-            // Verificar que el resto sean minúsculas
-            const rest = word.slice(1);
-            if (rest !== rest.toLowerCase()) {
-                return 'Las demás letras deben ser minúsculas';
-            }
-        }
-
-        return '';
-    };
-
-    // Manejar cambio de nombre con formateo automático
-    const handleNameChange = (e) => {
-        const value = e.target.value;
-        const formatted = formatName(value);
-        setStudentName(formatted);
-        setNameError('');
-    };
-
     // Validar antes de enviar
     const handleStudentLogin = () => {
-        const error = validateName(studentName);
-        if (error) {
-            setNameError(error);
+        if (!listNumber.trim()) {
+            setLoginError('Por favor ingresa tu número de lista');
             return false;
         }
-        if (!magicNumber.trim()) {
-            setNameError('Por favor ingresa tu número mágico');
+        if (!studentPassword.trim()) {
+            setLoginError('Por favor ingresa tu contraseña');
             return false;
         }
         if (!grade) {
-            setNameError('Por favor selecciona tu grado');
+            setLoginError('Por favor selecciona tu grado');
             return false;
         }
         return true;
@@ -131,7 +86,7 @@ const AuthPage = () => {
 
                     <div className="flex flex-col gap-2 text-center lg:text-left">
                         <h2 className="text-3xl font-bold text-primary-dark tracking-tight">{authMode === 'login' ? '¡Hola de nuevo!' : 'Crea una cuenta'}</h2>
-                        <p className="text-gray-500">{userType === 'student' ? 'Escribe tu nombre y número mágico para entrar.' : 'Nos alegra verte otra vez.'}</p>
+                        <p className="text-gray-500">{userType === 'student' ? 'Ingresa tu número de lista y contraseña para entrar.' : 'Nos alegra verte otra vez.'}</p>
                     </div>
 
                     {authMode === 'login' && (
@@ -153,37 +108,37 @@ const AuthPage = () => {
                         {userType === 'student' && authMode === 'login' ? (
                             /* --- LOGIN DEL ESTUDIANTE --- */
                             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                {/* Campo de Nombre */}
+                                {/* Campo de Número de Lista */}
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Nombre Completo</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">person</span>
-                                        <input
-                                            className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${nameError ? 'border-red-300' : 'border-orange-100'}`}
-                                            placeholder="Ej. Maria Gonzalez"
-                                            value={studentName}
-                                            onChange={handleNameChange}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-gray-400 pl-1">Primera letra mayúscula, el resto minúsculas</p>
-                                </div>
-
-                                {/* Campo de Número Mágico */}
-                                <div className="space-y-1">
-                                    <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Número Mágico</label>
+                                    <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Número de Lista</label>
                                     <div className="relative">
                                         <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">tag</span>
                                         <input
                                             type="number"
-                                            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-orange-100 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300"
+                                            className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${loginError ? 'border-red-300' : 'border-orange-100'}`}
                                             placeholder="Ej. 15"
-                                            value={magicNumber}
-                                            onChange={(e) => setMagicNumber(e.target.value)}
+                                            value={listNumber}
+                                            onChange={(e) => setListNumber(e.target.value)}
                                             min="1"
                                             max="99"
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-400 pl-1">Tu número de lista o número asignado</p>
+                                    <p className="text-xs text-gray-400 pl-1">Tu número asignado en el grupo</p>
+                                </div>
+
+                                {/* Campo de Contraseña */}
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Contraseña</label>
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">lock</span>
+                                        <input
+                                            type="password"
+                                            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-orange-100 rounded-2xl text-lg font-medium text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300"
+                                            placeholder="••••••••"
+                                            value={studentPassword}
+                                            onChange={(e) => setStudentPassword(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Selector de Grado */}
@@ -206,10 +161,10 @@ const AuthPage = () => {
                                 </div>
 
                                 {/* Mensaje de Error */}
-                                {nameError && (
+                                {loginError && (
                                     <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                                         <span className="material-symbols-outlined text-lg">error</span>
-                                        <span>{nameError}</span>
+                                        <span>{loginError}</span>
                                     </div>
                                 )}
                             </div>
@@ -299,7 +254,7 @@ const AuthPage = () => {
                             disabled={isLoading}
                             onClick={async () => {
                                 setIsLoading(true);
-                                setNameError('');
+                                setLoginError('');
 
                                 try {
                                     // Si es estudiante y está haciendo login
@@ -310,8 +265,8 @@ const AuthPage = () => {
                                         }
 
                                         const response = await AuthService.login({
-                                            username: studentName,
-                                            password: magicNumber,
+                                            listNumber: parseInt(listNumber),
+                                            password: studentPassword,
                                             userType: 'STUDENT',
                                             grade: parseInt(grade)
                                         });
@@ -321,11 +276,11 @@ const AuthPage = () => {
                                             window.dispatchEvent(new Event('authChanged'));
                                             navigate('/estudiante/dashboard');
                                         } else {
-                                            setNameError(response.error || 'Error al iniciar sesión');
+                                            setLoginError(response.error || 'Error al iniciar sesión');
                                         }
                                     } else if (authMode === 'login' && userType === 'teacher') {
                                         if (!teacherUsername || !password) {
-                                            setNameError('Por favor completa todos los campos');
+                                            setLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -341,11 +296,11 @@ const AuthPage = () => {
                                             window.dispatchEvent(new Event('authChanged'));
                                             navigate('/maestro/dashboard');
                                         } else {
-                                            setNameError(response.error || 'Credenciales incorrectas');
+                                            setLoginError(response.error || 'Credenciales incorrectas');
                                         }
                                     } else if (authMode === 'login' && userType === 'guest') {
                                         if (!guestUsername || !password) {
-                                            setNameError('Por favor completa todos los campos');
+                                            setLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -361,12 +316,12 @@ const AuthPage = () => {
                                             window.dispatchEvent(new Event('authChanged'));
                                             navigate('/estudiante/dashboard');
                                         } else {
-                                            setNameError(response.error || 'Credenciales incorrectas');
+                                            setLoginError(response.error || 'Credenciales incorrectas');
                                         }
                                     } else if (authMode === 'register') {
                                         // Registro de visitante
                                         if (!registerName || !guestEmail || !password || !registerUsername) {
-                                            setNameError('Por favor completa todos los campos');
+                                            setLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -382,14 +337,14 @@ const AuthPage = () => {
 
                                         if (response.success) {
                                             setAuthMode('login');
-                                            setNameError('');
+                                            setLoginError('');
                                             alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
                                         } else {
-                                            setNameError(response.error || 'Error al crear cuenta');
+                                            setLoginError(response.error || 'Error al crear cuenta');
                                         }
                                     }
                                 } catch (error) {
-                                    setNameError('Error de conexión. Intenta de nuevo.');
+                                    setLoginError('Error de conexión. Intenta de nuevo.');
                                     console.error('Login error:', error);
                                 } finally {
                                     setIsLoading(false);
