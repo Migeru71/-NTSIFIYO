@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
@@ -15,24 +15,27 @@ import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
 // Rompecabezas imports
 import RompecabezasAccessPanel from './components/Games/Rompecabezas/RompecabezasAccessPanel';
 import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGameView';
-// Student Dashboard
-import StudentDashboard from './pages/StudentDashboard';
-import StudentActivities from './pages/StudentActivities';
-// Teacher Dashboard
-import TeacherDashboard from './pages/TeacherDashboard';
-import TeacherResources from './pages/TeacherResources';
-import TeacherStudents from './pages/TeacherStudents';
-// Admin
+
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import StudentActivities from './pages/StudentActivities';
+import TeacherStudents from './pages/TeacherStudents';
+import TeacherResources from './pages/TeacherResources';
 import apiConfig from './services/apiConfig';
 
+import { useAuth } from './context/AuthContext';
+import MainLayout from './components/Layout/MainLayout';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
+import Roles from './utils/roles';
+
 function App() {
+    const { user, isAuthenticated } = useAuth();
+
     useEffect(() => {
         const handleBeforeUnload = () => {
             const token = localStorage.getItem('authToken');
             if (token) {
-                // Use fetch with keepalive to ensure it fires when the tab/window is closed
                 fetch(`${apiConfig.baseUrl}/api/user/session/end`, {
                     method: 'PUT',
                     headers: apiConfig.getHeaders(),
@@ -48,159 +51,102 @@ function App() {
         };
     }, []);
 
-    // Datos simulados (Mock) actualizados para coincidir con la estructura del Hero
-    const mockStats = {
-        hero: {
-            badge: "Nuevo Curso Interactivo Disponible",
-            student_count: "500+"
-        },
-        daily_phrase: {
-            phrase: "Ki jñaa kjo",
-            translation: "Habla bien / Saludo",
-            context: "Frase de cortesía tradicional."
-        }
-    };
-
     return (
         <Router>
             <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark">
                 <Navbar />
                 <Routes>
-                    {/* Ruta Raíz: Página de inicio */}
-                    <Route path="/" element={<Home stats={mockStats} />} />
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/auth" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
+                    <Route path="/registro" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
+                    <Route path="/admin" element={!isAuthenticated ? <AdminLogin /> : <Navigate to="/dashboard" replace />} />
 
-                    {/* Ruta de autenticación */}
-                    <Route path="/auth" element={<AuthPage />} />
+                    {/* Authenticated Layout */}
+                    <Route element={<MainLayout user={user} />}>
 
-                    {/* Ruta alternativa de registro */}
-                    <Route path="/registro" element={<AuthPage />} />
+                        {/* Dynamic Dashboard */}
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <ProtectedRoute isAllowed={isAuthenticated}>
+                                    <DashboardSwitcher role={user?.userType} />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    {/* ==========================================
-                        RUTAS DE ADMINISTRADOR
-                        ========================================== */}
+                        {/* Admin Routes */}
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.ADMIN} />}>
+                            <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/admin/grupos" element={<AdminDashboard />} />
+                            <Route path="/admin/estudiantes" element={<AdminDashboard />} />
+                            <Route path="/admin/maestros" element={<AdminDashboard />} />
+                            <Route path="/admin/palabras" element={<AdminDashboard />} />
+                            <Route path="/admin/actividades" element={<AdminDashboard />} />
+                            <Route path="/admin/contenido" element={<AdminDashboard />} />
+                        </Route>
 
-                    <Route path="/admin" element={<AdminLogin />} />
-                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                    <Route path="/admin/grupos" element={<AdminDashboard />} />
-                    <Route path="/admin/estudiantes" element={<AdminDashboard />} />
-                    <Route path="/admin/maestros" element={<AdminDashboard />} />
-                    <Route path="/admin/palabras" element={<AdminDashboard />} />
-                    <Route path="/admin/actividades" element={<AdminDashboard />} />
+                        {/* Teacher Routes */}
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} />}>
+                            <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
+                            <Route path="/maestro/recursos" element={<TeacherResources />} />
 
-                    {/* ==========================================
-                        RUTAS DEL ESTUDIANTE
-                        ========================================== */}
+                            <Route path="/maestro/recursos/crear" element={
+                                <ConfigurationGameView
+                                    onActivityCreated={(activity) => {
+                                        window.location.href = '/maestro/recursos';
+                                    }}
+                                />
+                            } />
+                            <Route path="/maestro/recursos/editar/:editId" element={
+                                <ConfigurationGameView
+                                    onActivityCreated={(activity) => {
+                                        window.location.href = '/maestro/recursos';
+                                    }}
+                                />
+                            } />
+                        </Route>
 
-                    <Route path="/estudiante/dashboard" element={<StudentDashboard />} />
-                    <Route path="/estudiante/actividades" element={<StudentActivities />} />
+                        {/* Student Routes */}
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} />}>
+                            <Route path="/estudiante/dashboard" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/estudiante/actividades" element={<StudentActivities />} />
+                            <Route path="/estudiante/asignaciones" element={<StudentActivities />} />
+                            <Route path="/estudiante/contenido" element={<StudentActivities />} />
+                            <Route path="/estudiante/diccionario" element={<StudentActivities />} />
+                        </Route>
 
-                    {/* ==========================================
-                        RUTAS DEL MAESTRO
-                        ========================================== */}
+                        {/* Games/Global Authenticated Routes */}
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated} />}>
+                            {/* Memorama */}
+                            <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
+                            <Route path="/games/memorama/crear" element={
+                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/memorama/jugar/${activity.id}`} />
+                            } />
+                            <Route path="/games/memorama/editar/:editId" element={
+                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/memorama`} />
+                            } />
+                            <Route path="/games/memorama/jugar/:activityId" element={
+                                <MemoramaGameView studentId={localStorage.getItem('app_user') ? JSON.parse(localStorage.getItem('app_user')).id : 'student_001'} />
+                            } />
 
-                    <Route path="/maestro/dashboard" element={<TeacherDashboard />} />
-                    <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
-                    <Route path="/maestro/recursos" element={<TeacherResources />} />
+                            {/* Quiz */}
+                            <Route path="/games/quiz" element={<QuizAccessPanel />} />
+                            <Route path="/games/quiz/editar/:editId" element={
+                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/quiz`} />
+                            } />
+                            <Route path="/games/quiz/jugar/:activityId" element={<QuizGameView />} />
 
-                    <Route
-                        path="/maestro/recursos/crear"
-                        element={
-                            <ConfigurationGameView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Actividad creada desde Recursos:', activity);
-                                    window.location.href = '/maestro/recursos';
-                                }}
-                            />
-                        }
-                    />
+                            {/* Intruso */}
+                            <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
+                            <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
 
-                    <Route
-                        path="/maestro/recursos/editar/:editId"
-                        element={
-                            <ConfigurationGameView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Actividad actualizada:', activity);
-                                    window.location.href = '/maestro/recursos';
-                                }}
-                            />
-                        }
-                    />
-
-                    {/* ==========================================
-                        RUTAS DEL MEMORAMA
-                        ========================================== */}
-
-                    <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
-
-                    <Route
-                        path="/games/memorama/crear"
-                        element={
-                            <ConfigurationGameView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Actividad creada:', activity);
-                                    window.location.href = `/games/memorama/jugar/${activity.id}`;
-                                }}
-                            />
-                        }
-                    />
-
-                    <Route
-                        path="/games/memorama/editar/:editId"
-                        element={
-                            <ConfigurationGameView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Actividad actualizada:', activity);
-                                    window.location.href = `/games/memorama`;
-                                }}
-                            />
-                        }
-                    />
-
-                    <Route
-                        path="/games/memorama/jugar/:activityId"
-                        element={
-                            <MemoramaGameView
-                                studentId={localStorage.getItem('currentStudentId') || 'student_001'}
-                            />
-                        }
-                    />
-
-                    {/* ==========================================
-                        RUTAS DEL QUIZ
-                        ========================================== */}
-
-                    <Route path="/games/quiz" element={<QuizAccessPanel />} />
-
-                    <Route
-                        path="/games/quiz/editar/:editId"
-                        element={
-                            <ConfigurationGameView
-                                onActivityCreated={(activity) => {
-                                    console.log('✅ Quiz actualizado:', activity);
-                                    window.location.href = `/games/quiz`;
-                                }}
-                            />
-                        }
-                    />
-
-                    <Route
-                        path="/games/quiz/jugar/:activityId"
-                        element={<QuizGameView />}
-                    />
-
-                    {/* ==========================================
-                        RUTAS DEL INTRUSO
-                        ========================================== */}
-
-                    <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
-                    <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
-
-                    {/* ==========================================
-                        RUTAS DEL ROMPECABEZAS
-                        ========================================== */}
-
-                    <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
-                    <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
+                            {/* Rompecabezas */}
+                            <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
+                            <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
+                        </Route>
+                    </Route>
                 </Routes>
             </div>
         </Router>

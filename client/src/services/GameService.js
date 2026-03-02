@@ -1,80 +1,40 @@
-// client/src/services/GameService.js
-// Servicio de creación de juegos
-
+// client/src/services/RompecabezasService.js
+// Servicio de API para el juego de Rompecabezas
 import apiConfig from './apiConfig';
 
-class GameService {
+const RompecabezasService = {
+
     /**
-     * Crear un nuevo juego/actividad
-     * POST /api/game
-     * @param {Object} gameData - GameDTO
-     * @returns {Promise<Object>}
+     * Obtiene la lista de actividades de tipo PUZZLE
+     * GET /api/activities/{activityType}
+     * @returns {{ success: boolean, data: Array, error?: string }}
      */
-    async createGame(gameData) {
+    async getActivities(activityType) {
         try {
-            // Validar datos requeridos
-            if (!gameData.gameType) {
-                throw new Error('El tipo de juego es requerido');
-            }
-            if (!gameData.difficult) {
-                throw new Error('La dificultad es requerida');
-            }
-
-            const response = await apiConfig.post('/api/game', {
-                gameType: gameData.gameType, // PAIRS, QUESTIONNAIRE, MEDIA_SONG, etc.
-                title: gameData.title,
-                description: gameData.description,
-                totalQuestions: gameData.totalQuestions,
-                experience: gameData.experience,
-                difficult: gameData.difficult, // EASY, MEDIUM, HARD
-                wordIds: gameData.wordIds || [],
-                questions: gameData.questions || [],
-                mediaId: gameData.mediaId,
-                gameConfigs: gameData.gameConfigs || []
-            });
-
-            return {
-                success: true,
-                data: response
-            };
+            const response = await apiConfig.get(`/api/activities/${activityType}`);
+            // La respuesta es paginada: { content: [...], totalElements, ... }
+            const content = response.content || [];
+            return { success: true, data: content };
         } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
+            return { success: false, data: [], error: error.message };
+        }
+    },
+
+    /**
+     * Inicia una partida y obtiene los datos del juego (preguntas, configs, etc.)
+     * POST /api/activities/start/game/{gameId}
+     * @param {number} gameId
+     * @returns {{ success: boolean, data: Object|null, error?: string }}
+     */
+    async startGame(gameId) {
+        try {
+            const response = await apiConfig.post(`/api/activities/start/game/${gameId}`);
+            // Respuesta: { activityId, wordIds, questions, mediaId, gameConfigs }
+            return { success: true, data: response };
+        } catch (error) {
+            return { success: false, data: null, error: error.message };
         }
     }
+};
 
-    /**
-     * Crea la configuración de un juego
-     * @param {Object} config - Configuración del juego
-     * @returns {Object} GameConfigDTO
-     */
-    createGameConfig(config = {}) {
-        return {
-            showImage: config.showImage ?? true,
-            showText: config.showText ?? true,
-            playAudio: config.playAudio ?? false,
-            isMazahua: config.isMazahua ?? false
-        };
-    }
-
-    /**
-     * Crea una pregunta para el cuestionario
-     * @param {string} question - Texto de la pregunta
-     * @param {Array} answers - Lista de respuestas
-     * @returns {Object} QuestionDTO
-     */
-    createQuestion(question, answers = []) {
-        return {
-            question: question,
-            responseList: answers.map(answer => ({
-                answerText: answer.text,
-                isCorrect: answer.isCorrect,
-                wordId: answer.wordId
-            }))
-        };
-    }
-}
-
-export default new GameService();
+export default RompecabezasService;

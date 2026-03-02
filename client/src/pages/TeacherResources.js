@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import SideBar from '../components/Dashboard/SideBar';
 import AuthService from '../services/AuthService';
 import apiConfig from '../services/apiConfig';
+import Roles from '../utils/roles';
+import { useAlert } from '../context/AlertContext';
 
 // ── Game type filter options (full list) ──
 const GAME_TYPE_FILTERS = [
@@ -32,6 +34,7 @@ const TABS = [
 const TeacherResources = () => {
     const navigate = useNavigate();
     const currentUser = AuthService.getCurrentUser();
+    const { showAlert } = useAlert();
 
     const [activeTab, setActiveTab] = useState('mine');
     const [activities, setActivities] = useState([]);
@@ -60,17 +63,32 @@ const TeacherResources = () => {
 
     // ── Delete activity ──
     const handleDelete = async (id, title) => {
-        if (!window.confirm(`¿Eliminar "${title}"? Esta acción no se puede deshacer.`)) return;
-        setDeletingId(id);
-        try {
-            await apiConfig.delete(`/api/games/${id}`);
-            setActivities(prev => prev.filter(a => a.id !== id));
-            showToast('Actividad eliminada correctamente.');
-        } catch (err) {
-            alert('Error al eliminar: ' + (err.message || 'Error desconocido'));
-        } finally {
-            setDeletingId(null);
-        }
+        showAlert({
+            mode: 'alert',
+            title: 'Confirmar Eliminación',
+            message: `¿Eliminar "${title}"? Esta acción no se puede deshacer.`,
+            buttons: [
+                { text: 'Cancelar', type: 'cancel' },
+                {
+                    text: 'Eliminar', type: 'accept', onClick: async () => {
+                        setDeletingId(id);
+                        try {
+                            await apiConfig.delete(`/api/games/${id}`);
+                            setActivities(prev => prev.filter(a => a.id !== id));
+                            showToast('Actividad eliminada correctamente.');
+                        } catch (err) {
+                            showAlert({
+                                mode: 'error',
+                                title: 'Error al eliminar',
+                                message: err.message || 'Error desconocido'
+                            });
+                        } finally {
+                            setDeletingId(null);
+                        }
+                    }
+                }
+            ]
+        });
     };
 
     // ── Assign activity to teacher's group ──
@@ -148,23 +166,9 @@ const TeacherResources = () => {
     const quizCount = activities.filter(a => a.gameType === 'QUESTIONNAIRE').length;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <SideBar
-                menuItems={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/maestro/dashboard' },
-                    { id: 'students', label: 'Estudiantes', icon: 'school', path: '/maestro/estudiantes' },
-                    { id: 'resources', label: 'Recursos', icon: 'library_books', path: '/maestro/recursos' },
-                    { id: 'content', label: 'Contenido', icon: 'article', path: '/maestro/contenido' },
-                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/maestro/diccionario' },
-                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/maestro/asignaciones' },
-                ]}
-                roleLabel="Maestro"
-                userName={currentUser?.name || 'Maestro'}
-                accentColor="green"
-                homePath="/maestro/dashboard"
-            />
-
-            <main className="pl-64 min-h-screen">
+        //min height 100% tailwind 
+        <div className="w-full bg-gray-50 flex-1 min-h-full">
+            <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
 
                     {/* Breadcrumbs */}
@@ -393,7 +397,10 @@ const TeacherResources = () => {
                                                             Editar
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(activity.id, activity.title)}
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                handleDelete(activity.id, activity.title);
+                                                            }}
                                                             disabled={deletingId === activity.id}
                                                             className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50"
                                                             title="Eliminar"
@@ -435,7 +442,7 @@ const TeacherResources = () => {
                     )}
 
                 </div>
-            </main>
+            </div>
             {
                 toast && (
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg z-50">

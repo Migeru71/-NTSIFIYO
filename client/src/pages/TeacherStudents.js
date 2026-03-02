@@ -4,6 +4,7 @@ import SideBar from '../components/Dashboard/SideBar';
 import List from '../components/common/List';
 import apiConfig from '../services/apiConfig';
 import AuthService from '../services/AuthService';
+import Roles from '../utils/roles';
 
 /**
  * Página de Estudiantes del Maestro.
@@ -88,23 +89,8 @@ const TeacherStudents = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            <SideBar
-                menuItems={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/maestro/dashboard' },
-                    { id: 'students', label: 'Estudiantes', icon: 'school', path: '/maestro/estudiantes' },
-                    { id: 'resources', label: 'Recursos', icon: 'library_books', path: '/maestro/recursos' },
-                    { id: 'content', label: 'Contenido', icon: 'article', path: '/maestro/contenido' },
-                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/maestro/diccionario' },
-                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/maestro/asignaciones' },
-                ]}
-                roleLabel="Maestro"
-                userName={currentUser?.name || 'Maestro'}
-                accentColor="green"
-                homePath="/maestro/dashboard"
-            />
-
-            <main className="flex-1 pl-64 min-h-screen">
+        <div className="w-full bg-gray-50">
+            <div className="w-full">
                 <div className="max-w-5xl mx-auto p-8">
                     {/* Breadcrumb */}
                     <nav className="text-sm text-gray-500 mb-6 flex items-center gap-2">
@@ -164,7 +150,7 @@ const TeacherStudents = () => {
                         />
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

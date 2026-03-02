@@ -38,26 +38,6 @@ class UserService {
         }
     }
 
-    /**
-     * Obtener usuarios disponibles para asignación a grupos
-     * GET /api/user/available
-     * @returns {Promise<Object>} - StudentListDTO
-     */
-    async getAvailableUsers() {
-        try {
-            const response = await apiConfig.get('/api/user/available');
-            return {
-                success: true,
-                data: response.students || []
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message,
-                data: []
-            };
-        }
-    }
 }
 
 export default new UserService();

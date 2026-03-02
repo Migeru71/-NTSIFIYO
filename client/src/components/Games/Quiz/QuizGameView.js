@@ -2,14 +2,16 @@
 // Vista de juego de Quiz para estudiantes
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import mockQuiz from '../../../data/mockQuiz';
+import { useGame } from '../../../context/GameContext';
 import './Quiz.css';
 
 function QuizGameView() {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const { currentGameData } = useGame();
 
     const [activity, setActivity] = useState(null);
+    const [gameConfigs, setGameConfigs] = useState([{}, {}]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answers, setAnswers] = useState([]);
@@ -20,19 +22,62 @@ function QuizGameView() {
 
     useEffect(() => {
         setLoading(true);
-        const id = parseInt(activityId);
-        const found = mockQuiz.getActivity(id);
 
-        if (found) {
-            setActivity(found);
-            setError(null);
-        } else {
-            setError('Quiz no encontrado');
+        if (!currentGameData) {
+            setError("No hay datos de la actividad. Regresa al panel para iniciar.");
+            setLoading(false);
+            return;
         }
+
+        // Read gameConfigs
+        if (currentGameData.gameConfigs && currentGameData.gameConfigs.length >= 2) {
+            const sorted = [...currentGameData.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setGameConfigs(sorted);
+        }
+
+        const mappedActivity = {
+            name: "Centro de Quiz",
+            recommendedXP: 100,
+            questions: (currentGameData.questions || []).map((q, i) => ({
+                id: i,
+                question: q.question,
+                word: q.word || null,
+                options: (q.responseList || []).map((r, ri) => ({
+                    id: ri,
+                    text: r.answerText,
+                    isCorrect: r.isCorrect,
+                    word: r.word || null
+                }))
+            }))
+        };
+
+        if (mappedActivity.questions.length === 0) {
+            setError("La actividad no tiene preguntas configuradas.");
+            setLoading(false);
+            return;
+        }
+
+        setActivity(mappedActivity);
+        setError(null);
         setLoading(false);
-    }, [activityId]);
+    }, [currentGameData]);
 
     const currentQuestion = activity?.questions?.[currentQuestionIndex];
+    const config1 = gameConfigs[0] || {};
+    const config2 = gameConfigs[1] || {};
+
+    // Helper: get display text
+    const getWordText = (word, config) => {
+        if (!word) return null;
+        return config.isMazahua ? word.mazahuaWord : word.spanishWord;
+    };
+
+    const playAudio = (audioUrl) => {
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(() => { });
+        }
+    };
 
     const handleAnswerSelect = (optionId) => {
         if (selectedAnswer !== null) return;
@@ -52,13 +97,6 @@ function QuizGameView() {
             setSelectedAnswer(null);
         } else {
             setShowResult(true);
-            mockQuiz.saveResult({
-                activityId: parseInt(activityId),
-                score,
-                totalQuestions: activity.questions.length,
-                answers,
-                earnedXP: Math.round((score / activity.questions.length) * activity.recommendedXP)
-            });
         }
     };
 
@@ -157,25 +195,36 @@ function QuizGameView() {
 
                 {/* Question Card */}
                 <div style={{ background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
-                    {/* Question image */}
-                    {currentQuestion.image && (
+                    {/* Question stimulus — config1 */}
+                    {config1.showImage && currentQuestion.word?.imageUrl && (
                         <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                             <img
-                                src={currentQuestion.image}
-                                alt="Question"
+                                src={currentQuestion.word.imageUrl}
+                                alt="Pregunta"
                                 style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '12px', objectFit: 'cover' }}
                             />
                         </div>
                     )}
 
-                    {/* Question text */}
-                    <h2 style={{ textAlign: 'center', color: '#1f2937', fontSize: '20px', marginBottom: '2rem' }}>
-                        {currentQuestion.question}
-                    </h2>
+                    {config1.playAudio && currentQuestion.word?.audioUrl && (
+                        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                            <button
+                                onClick={() => playAudio(currentQuestion.word.audioUrl)}
+                                style={{ fontSize: '32px', background: 'none', border: 'none', cursor: 'pointer' }}
+                                title="Escuchar"
+                            >🔊</button>
+                        </div>
+                    )}
 
-                    {/* Options */}
+                    {config1.showText && (
+                        <h2 style={{ textAlign: 'center', color: '#1f2937', fontSize: '20px', marginBottom: '2rem' }}>
+                            {currentQuestion.question || getWordText(currentQuestion.word, config1)}
+                        </h2>
+                    )}
+
+                    {/* Options — config2 */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {currentQuestion.options.filter(o => o.text).map((option, index) => {
+                        {currentQuestion.options.map((option, index) => {
                             const isSelected = selectedAnswer === option.id;
                             const showCorrect = selectedAnswer !== null && option.isCorrect;
                             const showWrong = isSelected && !option.isCorrect;
@@ -185,6 +234,14 @@ function QuizGameView() {
                             if (showCorrect) { bgColor = '#f0fdf4'; borderColor = '#22c55e'; }
                             if (showWrong) { bgColor = '#fef2f2'; borderColor = '#ef4444'; }
                             if (isSelected && !showWrong && !showCorrect) { bgColor = '#f3e8ff'; borderColor = '#7c3aed'; }
+
+                            const optionText = config2.showText
+                                ? (option.text || getWordText(option.word, config2) || '')
+                                : '';
+
+                            // Skip entirely empty options (no text, no image, no audio)
+                            const hasContent = optionText || (config2.showImage && option.word?.imageUrl) || (config2.playAudio && option.word?.audioUrl);
+                            if (!hasContent) return null;
 
                             return (
                                 <button
@@ -207,7 +264,21 @@ function QuizGameView() {
                                     }}>
                                         {showCorrect ? '✓' : showWrong ? '✗' : String.fromCharCode(65 + index)}
                                     </span>
-                                    <span style={{ fontWeight: '500', color: '#374151' }}>{option.text}</span>
+
+                                    {config2.showImage && option.word?.imageUrl && (
+                                        <img src={option.word.imageUrl} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                                    )}
+
+                                    {config2.showText && (
+                                        <span style={{ fontWeight: '500', color: '#374151', flex: 1 }}>{optionText}</span>
+                                    )}
+
+                                    {config2.playAudio && option.word?.audioUrl && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); playAudio(option.word.audioUrl); }}
+                                            style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+                                        >🔊</button>
+                                    )}
                                 </button>
                             );
                         })}

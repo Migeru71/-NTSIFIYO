@@ -1,11 +1,11 @@
 import React from 'react';
-import SideBar from '../components/Dashboard/SideBar';
 import StatsCards from '../components/Dashboard/StatsCards';
 import NextLessonCard from '../components/Dashboard/NextLessonCard';
 import CurrentProgress from '../components/Dashboard/CurrentProgress';
 import LearningActivities from '../components/Dashboard/LearningActivities';
 import DailyWisdom from '../components/Dashboard/DailyWisdom';
 import TopLearners from '../components/Dashboard/TopLearners';
+import Roles from '../utils/roles';
 
 /**
  * Dashboard principal del estudiante
@@ -25,24 +25,8 @@ const StudentDashboard = () => {
     const mazahuaGreeting = 'Jñatjo';
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">
-            {/* Sidebar */}
-            <SideBar
-                menuItems={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/estudiante/dashboard' },
-                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/estudiante/asignaciones' },
-                    { id: 'activities', label: 'Actividades', icon: 'sports_esports', path: '/estudiante/actividades' },
-                    { id: 'content', label: 'Contenido', icon: 'article', path: '/estudiante/contenido' },
-                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/estudiante/diccionario' },
-                ]}
-                roleLabel="Estudiante"
-                userName={user?.name || 'Estudiante'}
-                accentColor="amber"
-                homePath="/estudiante/dashboard"
-            />
-
-            {/* Main Content */}
-            <main className="pl-64 min-h-screen">
+        <div className="w-full flex-1 relative">
+            <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
                     {/* Welcome Header */}
                     <header className="mb-8">
@@ -84,7 +68,7 @@ const StudentDashboard = () => {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

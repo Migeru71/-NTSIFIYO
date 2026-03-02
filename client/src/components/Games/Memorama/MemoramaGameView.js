@@ -1,27 +1,33 @@
 // client/src/components/Games/Memorama/MemoramaGameView.js
 // Memoria Rápida — Juego de deslizar tarjetas (word ↔ image match)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ActivityService from '../../../services/ActivityService';
+import { useParams } from 'react-router-dom';
+import { useGame } from '../../../context/GameContext';
 import ExperienceService from '../../../services/ExperienceService';
 import GameCard from './GameCard';
 import ResultadoJuegoView from './ResultadoJuegoView';
 import './Memorama.css';
-import { useParams } from 'react-router-dom';
 
-const GAME_DURATION = 60; // segundos
-const BASE_SPEED = 3500;  // ms entre tarjetas (nivel 1)
-const MIN_SPEED = 1200;   // ms mínimo
-const SPEED_DECREASE = 150; // ms que se resta por tarjeta correcta
+// ─── CONFIGURACIÓN DEL JUEGO (modificar aquí) ──────────────────────────────
+const GAME_DURATION = 120;     // segundos de tiempo límite
+const BASE_SPEED = 9000;       // ms entre tarjetas en nivel 1
+const MIN_SPEED = 1200;        // ms mínimo (velocidad máxima)
+const SPEED_DECREASE = 150;    // ms que se resta por respuesta correcta
+const COUNTDOWN_SECONDS = 3;   // cuenta regresiva inicial
+const MATCH_PROBABILITY = 0.5; // probabilidad de mostrar un par correcto
+// ────────────────────────────────────────────────────────────────────────────
 
 const MemoramaGameView = ({ studentId = 'student_001' }) => {
     const { activityId } = useParams();
+    const { currentGameData } = useGame();
 
     const [activity, setActivity] = useState(null);
-    const [gameState, setGameState] = useState('loading'); // loading | countdown | playing | paused | completed
+    const [gameConfigs, setGameConfigs] = useState([{}, {}]);
+    const [gameState, setGameState] = useState('loading');
     const [error, setError] = useState(null);
 
     // Game state
-    const [currentCard, setCurrentCard] = useState(null); // { word, image, matches }
+    const [currentCard, setCurrentCard] = useState(null);
     const [score, setScore] = useState(0);
     const [combo, setCombo] = useState(0);
     const [maxCombo, setMaxCombo] = useState(0);
@@ -29,48 +35,66 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
     const [totalCards, setTotalCards] = useState(0);
     const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
     const [speed, setSpeed] = useState(BASE_SPEED);
-    const [feedback, setFeedback] = useState(null); // '✅' | '❌' | null
-    const [cardKey, setCardKey] = useState(0); // force re-mount
+    const [feedback, setFeedback] = useState(null);
+    const [cardKey, setCardKey] = useState(0);
     const [gameResult, setGameResult] = useState(null);
-    const [countdown, setCountdown] = useState(3);
+    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+
+    // Pair tracking: which pairs have been correctly matched
+    const [matchedPairIds, setMatchedPairIds] = useState(new Set());
+    const [totalPairs, setTotalPairs] = useState(0);
 
     const pairsRef = useRef([]);
     const autoTimerRef = useRef(null);
 
-    // Refs that mirror state — so timer closure can read current values
     const scoreRef = useRef(0);
     const correctRef = useRef(0);
     const totalRef = useRef(0);
     const maxComboRef = useRef(0);
     const gameStateRef = useRef('loading');
 
-    // Keep refs in sync with state
     useEffect(() => { scoreRef.current = score; }, [score]);
     useEffect(() => { correctRef.current = correctCount; }, [correctCount]);
     useEffect(() => { totalRef.current = totalCards; }, [totalCards]);
     useEffect(() => { maxComboRef.current = maxCombo; }, [maxCombo]);
     useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
 
-    // Load activity
+    // Load activity from GameContext
     useEffect(() => {
-        const loadActivity = async () => {
-            const idToSearch = parseInt(activityId);
-            const response = await ActivityService.getActivityForPlay(idToSearch);
+        if (!currentGameData) {
+            setError("No hay datos de la actividad. Regresa al panel para iniciar.");
+            setGameState('error');
+            return;
+        }
 
-            if (!response.success) {
-                setError(response.error);
-                setGameState('error');
-            } else {
-                setActivity(response.activity);
-                pairsRef.current = response.activity.pairs;
-                setGameState('countdown');
-            }
-        };
+        // Store gameConfigs sorted by order
+        if (currentGameData.gameConfigs && currentGameData.gameConfigs.length >= 2) {
+            const sorted = [...currentGameData.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setGameConfigs(sorted);
+        }
 
-        if (activityId) loadActivity();
-    }, [activityId]);
+        // Map words into pairs with full word data
+        const mappedPairs = (currentGameData.words || []).map((w, i) => ({
+            id: w.id || i,
+            mazahuaWord: w.mazahuaWord || '',
+            spanishWord: w.spanishWord || '',
+            imageUrl: w.imageUrl || '',
+            audioUrl: w.audioUrl || ''
+        }));
 
-    // Countdown 3..2..1
+        if (mappedPairs.length === 0) {
+            setError("La actividad no tiene palabras configuradas.");
+            setGameState('error');
+            return;
+        }
+
+        setActivity({ name: "Memoria Rápida", recommendedXP: 100 });
+        pairsRef.current = mappedPairs;
+        setTotalPairs(mappedPairs.length);
+        setGameState('countdown');
+    }, [currentGameData]);
+
+    // Countdown
     useEffect(() => {
         if (gameState !== 'countdown') return;
         if (countdown <= 0) {
@@ -88,8 +112,7 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev <= 1) {
-                    // Use setTimeout to avoid setState-inside-setState issues
-                    setTimeout(() => handleGameOverFromTimer(), 0);
+                    setTimeout(() => handleGameOver(), 0);
                     return 0;
                 }
                 return prev - 1;
@@ -98,44 +121,59 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         return () => clearInterval(timer);
     }, [gameState]);
 
-    // Auto-skip card if user doesn't respond in time
+    // Auto-skip card
     useEffect(() => {
         if (gameState !== 'playing' || !currentCard) return;
         clearTimeout(autoTimerRef.current);
         autoTimerRef.current = setTimeout(() => {
-            // Auto-skip as wrong
             processAnswer(false);
         }, speed);
         return () => clearTimeout(autoTimerRef.current);
     }, [currentCard, gameState, speed]);
 
-    // Generate a random card (50% match, 50% mismatch)
+    // Helper: get display text based on config
+    const getWordText = (word, config) => {
+        if (!config.showText) return null;
+        return config.isMazahua ? word.mazahuaWord : word.spanishWord;
+    };
+
+    // Helper: play audio
+    const playAudio = (audioUrl) => {
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(() => { });
+        }
+    };
+
+    // Generate the next card using pairs logic
     const generateNextCard = useCallback(() => {
         const pairs = pairsRef.current;
         if (!pairs || pairs.length === 0) return;
 
+        // Pick a random pair as the stimulus (top display)
         const randomPair = pairs[Math.floor(Math.random() * pairs.length)];
-        const shouldMatch = Math.random() < 0.5;
+        const shouldMatch = Math.random() < MATCH_PROBABILITY;
 
-        let displayWord, displayImage, matches;
+        let stimulusWord, responseWord, matches;
 
         if (shouldMatch) {
-            displayWord = randomPair.mazahua;
-            displayImage = randomPair.image;
+            // Show matching pair
+            stimulusWord = randomPair;
+            responseWord = randomPair;
             matches = true;
         } else {
-            // Pick a different pair's image
+            // Show mismatched pair
             let otherPair;
             do {
                 otherPair = pairs[Math.floor(Math.random() * pairs.length)];
             } while (otherPair.id === randomPair.id && pairs.length > 1);
 
-            displayWord = randomPair.mazahua;
-            displayImage = otherPair.image;
+            stimulusWord = randomPair;
+            responseWord = otherPair;
             matches = false;
         }
 
-        setCurrentCard({ word: displayWord, image: displayImage, matches });
+        setCurrentCard({ stimulusWord, responseWord, matches, pairId: randomPair.id });
         setCardKey(prev => prev + 1);
     }, []);
 
@@ -159,35 +197,45 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
             setCorrectCount(prev => prev + 1);
             setSpeed(prev => Math.max(MIN_SPEED, prev - SPEED_DECREASE));
             setFeedback('✅');
+
+            // If user correctly identified a match, mark this pair as done
+            if (currentCard.matches) {
+                setMatchedPairIds(prev => {
+                    const updated = new Set(prev);
+                    updated.add(currentCard.pairId);
+                    return updated;
+                });
+            }
         } else {
             setCombo(0);
             setFeedback('❌');
         }
 
-        // Clear feedback after flash
         setTimeout(() => setFeedback(null), 400);
-
-        // Generate next card after brief delay
         setTimeout(() => generateNextCard(), 350);
     }, [currentCard, combo, generateNextCard]);
 
-    // Handle swipe from GameCard
+    // Check if all pairs have been matched → end game
+    useEffect(() => {
+        if (gameState === 'playing' && totalPairs > 0 && matchedPairIds.size >= totalPairs) {
+            setTimeout(() => handleGameOver(), 500);
+        }
+    }, [matchedPairIds, totalPairs, gameState]);
+
     const handleSwipe = useCallback((direction) => {
         processAnswer(direction === 'right');
     }, [processAnswer]);
 
-    // Handle button clicks
     const handleCorrectBtn = () => processAnswer(true);
     const handleIncorrectBtn = () => processAnswer(false);
 
-    // Game over — called from timer, reads refs for current values
-    const handleGameOverFromTimer = async () => {
-        if (gameStateRef.current === 'completed') return; // guard against double-call
+    const handleGameOver = async () => {
+        if (gameStateRef.current === 'completed') return;
         setGameState('completed');
         clearTimeout(autoTimerRef.current);
 
         const gameStats = {
-            totalTime: GAME_DURATION,
+            totalTime: GAME_DURATION - timeLeft,
             correctCards: correctRef.current,
             totalCards: totalRef.current,
             maxCombo: maxComboRef.current,
@@ -203,11 +251,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         });
 
         if (result.success) {
-            await ActivityService.saveGameResult({
-                activityId: parseInt(activityId),
-                studentId,
-                ...result.result
-            });
             setGameResult(result.result);
         } else {
             setError(result.error);
@@ -253,7 +296,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         return <ResultadoJuegoView result={gameResult} activity={activity} />;
     }
 
-    // Countdown screen
     if (gameState === 'countdown') {
         return (
             <div className="memoria-rapida-container" style={{ justifyContent: 'center' }}>
@@ -283,7 +325,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         );
     }
 
-    // Paused overlay
     if (gameState === 'paused') {
         return (
             <div className="memoria-rapida-container" style={{ justifyContent: 'center' }}>
@@ -325,7 +366,10 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         );
     }
 
-    // PLAYING state
+    // PLAYING state — config1 = stimulus (word display top), config2 = response (card bottom)
+    const config1 = gameConfigs[0] || {};
+    const config2 = gameConfigs[1] || {};
+
     return (
         <div className="memoria-rapida-container">
             {/* Top Bar */}
@@ -344,7 +388,7 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
                 </div>
             </div>
 
-            {/* Timer */}
+            {/* Timer + Progress */}
             <div className="mr-timer-row">
                 <div className="mr-timer-dot" />
                 <span className="mr-timer-text">{formatTime(timeLeft)}</span>
@@ -354,27 +398,69 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
                         style={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
                     />
                 </div>
-            </div>
-
-            {/* Word Display */}
-            <div className="mr-word-display">
-                <button className="mr-audio-btn" title="Escuchar pronunciación">
-                    🔊
-                </button>
-                <span className="mr-word-text">
-                    {currentCard ? currentCard.word : '...'}
+                <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', whiteSpace: 'nowrap' }}>
+                    {matchedPairIds.size}/{totalPairs}
                 </span>
             </div>
 
-            {/* Swipeable Card */}
+            {/* Stimulus Display (config1) — top area showing the word/image/audio */}
+            <div className="mr-word-display">
+                {config1.playAudio && currentCard?.stimulusWord?.audioUrl && (
+                    <button className="mr-audio-btn" title="Escuchar pronunciación"
+                        onClick={() => playAudio(currentCard.stimulusWord.audioUrl)}>
+                        🔊
+                    </button>
+                )}
+                {config1.showText && currentCard && (
+                    <span className="mr-word-text">
+                        {getWordText(currentCard.stimulusWord, config1) || '...'}
+                    </span>
+                )}
+                {config1.showImage && currentCard?.stimulusWord?.imageUrl && (
+                    <img
+                        src={currentCard.stimulusWord.imageUrl}
+                        alt="Estímulo"
+                        style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', marginLeft: '12px' }}
+                    />
+                )}
+            </div>
+
+            {/* Response Card (config2) — swipeable area */}
             <div className="mr-card-area">
                 {currentCard && (
-                    <GameCard
-                        key={cardKey}
-                        image={currentCard.image}
-                        onSwipe={handleSwipe}
-                        disabled={gameState !== 'playing'}
-                    />
+                    <>
+                        {config2.showImage && currentCard.responseWord.imageUrl ? (
+                            <GameCard
+                                key={cardKey}
+                                image={currentCard.responseWord.imageUrl}
+                                onSwipe={handleSwipe}
+                                disabled={gameState !== 'playing'}
+                            />
+                        ) : (
+                            <div
+                                key={cardKey}
+                                className="mr-swipe-card mr-card-enter"
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexDirection: 'column', gap: '12px', minHeight: '200px',
+                                    background: 'white', borderRadius: '20px',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)', padding: '2rem'
+                                }}
+                            >
+                                {config2.showText && (
+                                    <span style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
+                                        {getWordText(currentCard.responseWord, config2)}
+                                    </span>
+                                )}
+                                {config2.playAudio && currentCard.responseWord.audioUrl && (
+                                    <button
+                                        onClick={() => playAudio(currentCard.responseWord.audioUrl)}
+                                        style={{ fontSize: '32px', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >🔊</button>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Speed indicator */}

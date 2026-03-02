@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAlert } from '../context/AlertContext';
 
 /**
  * Componente de Registro de Usuario.
@@ -7,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
  */
 const Register = () => {
     const navigate = useNavigate();
+    const { showAlert } = useAlert();
 
     // Estado del formulario siguiendo el esquema de la base de datos
     const [formData, setFormData] = useState({
@@ -59,15 +61,27 @@ const Register = () => {
                 const result = await response.json();
 
                 if (response.ok && result.status === "success") {
-                    alert(`¡Éxito! ${result.message}`);
+                    showAlert({
+                        mode: 'success',
+                        title: '¡Éxito!',
+                        message: result.message
+                    });
                     // Opcional: Redirigir al usuario al login tras éxito
                     // navigate('/login'); 
                 } else {
-                    alert("Error del servidor: " + result.message);
+                    showAlert({
+                        mode: 'error',
+                        title: 'Error del servidor',
+                        message: result.message
+                    });
                 }
             } catch (error) {
                 console.error("Error de conexión:", error);
-                alert("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+                showAlert({
+                    mode: 'error',
+                    title: 'Error de conexión',
+                    message: 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.'
+                });
             }
         }
     };

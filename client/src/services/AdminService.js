@@ -1,76 +1,165 @@
 // client/src/services/AdminService.js
-// Servicio de administración de usuarios
+// Servicio de administración: usuarios (maestros/estudiantes) y grupos
 
 import apiConfig from './apiConfig';
 
 class AdminService {
-    /**
-     * Registrar un nuevo usuario
-     * POST /api/admin/users
-     * @param {Object} userData - RegisterRequestDTO
-     * @returns {Promise<Object>} - RegisterResponseDTO
-     */
-    async registerUser(userData) {
-        try {
-            const response = await apiConfig.post('/api/admin/users', {
-                firstname: userData.firstname,
-                lastname: userData.lastname,
-                userType: userData.userType, // STUDENT, TEACHER, ADMIN, VISITOR
-                grade: userData.grade || null
-            });
 
-            return {
-                success: true,
-                data: {
-                    username: response.username,
-                    password: response.password
-                }
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
+    // ─────────────────────────────────────────────
+    // USUARIOS
+    // ─────────────────────────────────────────────
 
     /**
-     * Eliminar un usuario
-     * DELETE /api/admin/users/{username}
-     * @param {string} username - Username del usuario
-     * @returns {Promise<Object>}
+     * Obtener todos los maestros
+     * GET /api/admin/teacher
      */
-    async deleteUser(username) {
-        try {
-            await apiConfig.delete(`/api/admin/users/${username}`);
-            return { success: true };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+    async getTeachers() {
+        const data = await apiConfig.get('/api/admin/teacher');
+        return data; // retorna array de maestros
     }
 
     /**
      * Obtener todos los estudiantes
      * GET /api/admin/students
-     * @returns {Promise<Object>} - StudentListDTO
      */
-    async getAllStudents() {
-        try {
-            const response = await apiConfig.get('/api/admin/students');
-            return {
-                success: true,
-                data: response.students || []
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message,
-                data: []
-            };
-        }
+    async getStudents() {
+        const data = await apiConfig.get('/api/admin/students');
+        return data.students || [];
+    }
+
+    /**
+     * Obtener estudiantes disponibles (sin grupo asignado)
+     * GET /api/user/available
+     */
+    async getAvailableStudents() {
+        const data = await apiConfig.get('/api/user/available');
+        return data.students || [];
+    }
+
+    /**
+     * Crear un usuario (maestro o estudiante)
+     * POST /api/admin/users
+     * @param {{ firstname, lastname, userType, grade? }} body
+     */
+    async createUser(body) {
+        return apiConfig.post('/api/admin/users', body);
+    }
+
+    /**
+     * Eliminar un usuario por username
+     * DELETE /api/admin/users/{username}
+     * @param {string} username
+     */
+    async deleteUser(username) {
+        return apiConfig.delete(`/api/admin/users/${username}`);
+    }
+
+    /**
+     * Eliminar múltiples usuarios en paralelo
+     * @param {string[]} usernames
+     */
+    async deleteUsers(usernames) {
+        return Promise.all(usernames.map(u => this.deleteUser(u)));
+    }
+
+    // ─────────────────────────────────────────────
+    // GRUPOS
+    // ─────────────────────────────────────────────
+
+    /**
+     * Obtener todos los grupos
+     * GET /api/groups
+     */
+    async getGroups() {
+        const data = await apiConfig.get('/api/groups');
+        return data.groups || [];
+    }
+
+    /**
+     * Obtener los estudiantes de un grupo
+     * GET /api/groups/{grade}/students
+     * @param {number} grade
+     */
+    async getGroupStudents(grade) {
+        const data = await apiConfig.get(`/api/groups/${grade}/students`);
+        return data.students || [];
+    }
+
+    /**
+     * Crear un nuevo grupo
+     * POST /api/groups/{grade}
+     * @param {number} grade
+     * @param {{ studentsUsername: string[], teacherUsername: string|null }} body
+     */
+    async createGroup(grade, body) {
+        return apiConfig.post(`/api/groups/${grade}`, body);
+    }
+
+    // ─── Maestro en grupo ───
+
+    /**
+     * Asignar un maestro a un grupo
+     * POST /api/groups/{grade}/teacher/{teacherUsername}
+     */
+    async addTeacherToGroup(grade, teacherUsername) {
+        return apiConfig.post(`/api/groups/${grade}/teacher/${teacherUsername}`);
+    }
+
+    /**
+     * Mover un maestro a otro grupo
+     * PUT /api/groups/{targetGrade}/teacher/{teacherUsername}
+     */
+    async moveTeacherToGroup(targetGrade, teacherUsername) {
+        return apiConfig.put(`/api/groups/${targetGrade}/teacher/${teacherUsername}`);
+    }
+
+    /**
+     * Remover un maestro de un grupo
+     * DELETE /api/groups/{grade}/teacher/{teacherUsername}
+     */
+    async removeTeacherFromGroup(grade, teacherUsername) {
+        return apiConfig.delete(`/api/groups/${grade}/teacher/${teacherUsername}`);
+    }
+
+    // ─── Estudiantes en grupo ───
+
+    /**
+     * Agregar un estudiante a un grupo
+     * POST /api/groups/{grade}/students/{studentUsername}
+     */
+    async addStudentToGroup(grade, studentUsername) {
+        return apiConfig.post(`/api/groups/${grade}/students/${studentUsername}`);
+    }
+
+    /**
+     * Mover un estudiante a otro grupo
+     * PUT /api/groups/{targetGrade}/students/{studentUsername}
+     */
+    async moveStudentToGroup(targetGrade, studentUsername) {
+        return apiConfig.put(`/api/groups/${targetGrade}/students/${studentUsername}`);
+    }
+
+    /**
+     * Remover un estudiante de un grupo
+     * DELETE /api/groups/{grade}/students/{studentUsername}
+     */
+    async removeStudentFromGroup(grade, studentUsername) {
+        return apiConfig.delete(`/api/groups/${grade}/students/${studentUsername}`);
+    }
+
+    /**
+     * Agregar múltiples estudiantes a un grupo en paralelo
+     * @param {number} grade
+     * @param {string[]} studentUsernames
+     */
+    async addStudentsToGroup(grade, studentUsernames) {
+        const results = await Promise.all(
+            studentUsernames.map(username =>
+                this.addStudentToGroup(grade, username)
+                    .catch(err => { throw new Error(err.message || `Error al agregar estudiante ${username}`); })
+            )
+        );
+        return results;
     }
 }
 

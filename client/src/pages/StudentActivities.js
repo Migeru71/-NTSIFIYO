@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import SideBar from '../components/Dashboard/SideBar';
+import Roles from '../utils/roles';
 
 /**
  * Página de actividades de aprendizaje
@@ -10,15 +10,13 @@ const StudentActivities = () => {
     // Datos del usuario desde localStorage
     const userData = (() => {
         try {
-            return JSON.parse(localStorage.getItem('userData')) || {};
+            return JSON.parse(localStorage.getItem('appUser')) || {};
         } catch { return {}; }
     })();
 
     const user = {
-        id: userData.id || 'student_001',
-        name: userData.name || 'Estudiante',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.name || 'Student'}`,
-        level: 'A1'
+        id: userData.firstName || 'student_001',
+        name: userData.lastName || 'Estudiante',
     };
 
     // Actividades generales (una tarjeta por tipo de juego)
@@ -94,24 +92,8 @@ const StudentActivities = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">
-            {/* Sidebar */}
-            <SideBar
-                menuItems={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/estudiante/dashboard' },
-                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/estudiante/asignaciones' },
-                    { id: 'activities', label: 'Actividades', icon: 'sports_esports', path: '/estudiante/actividades' },
-                    { id: 'content', label: 'Contenido', icon: 'article', path: '/estudiante/contenido' },
-                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/estudiante/diccionario' },
-                ]}
-                roleLabel="Estudiante"
-                userName={user?.name || 'Estudiante'}
-                accentColor="amber"
-                homePath="/estudiante/dashboard"
-            />
-
-            {/* Main Content */}
-            <main className="pl-64 min-h-screen">
+        <div className="w-full flex-1 relative">
+            <div className="w-full">
                 <div className="max-w-4xl mx-auto p-8">
                     {/* Header */}
                     <header className="mb-10">
@@ -182,7 +164,7 @@ const StudentActivities = () => {
                         </Link>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

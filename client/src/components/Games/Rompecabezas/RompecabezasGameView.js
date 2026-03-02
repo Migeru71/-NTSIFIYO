@@ -2,14 +2,14 @@
 // Vista de juego de Rompecabezas — Fase 2: Juego (con API real)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import RompecabezasService from '../../../services/RompecabezasService';
-import mockRompecabezas from '../../../data/mockRompecabezas';
+import { useGame } from '../../../context/GameContext';
 import RompecabezasFinalView from './RompecabezasFinalView';
 import './Rompecabezas.css';
 
 const RompecabezasGameView = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const { currentGameData } = useGame();
 
     // ─── Estado general ────────────────────────────────────────────────────
     const [loading, setLoading] = useState(true);
@@ -39,34 +39,25 @@ const RompecabezasGameView = () => {
     const timerRef = useRef(null);
     const feedbackTimeout = useRef(null);
 
-    // ─── Cargar juego desde la API ─────────────────────────────────────────
+    // ─── Cargar juego desde el contexto ────────────────────────────────────
     useEffect(() => {
         initGame();
         return () => {
             clearInterval(timerRef.current);
             clearTimeout(feedbackTimeout.current);
         };
-    }, [activityId]);
+    }, [currentGameData]);
 
-    async function initGame() {
+    function initGame() {
         setLoading(true);
         setLoadError(null);
 
-        const gameId = parseInt(activityId);
-        const result = await RompecabezasService.startGame(gameId);
-
-        if (result.success && result.data) {
-            loadFromApiData(result.data);
+        if (currentGameData) {
+            loadFromApiData(currentGameData);
         } else {
-            // Fallback a datos mock
-            console.warn('API no disponible, usando datos de ejemplo:', result.error);
-            const fallback = mockRompecabezas.find(a => a.id === gameId) || mockRompecabezas[0];
-            if (fallback) {
-                loadFromMockData(fallback);
-            } else {
-                setLoadError('No se encontró la actividad.');
-                setGameState('error');
-            }
+            console.warn('API no disponible, faltan datos de juego en el contexto.');
+            setLoadError('No se encontró la actividad iniciada. Por favor, vuelve al panel.');
+            setGameState('error');
         }
 
         setLoading(false);
@@ -74,11 +65,10 @@ const RompecabezasGameView = () => {
 
     /** Mapea la respuesta de la API al estado del juego */
     function loadFromApiData(data) {
-        // data: { activityId, wordIds, questions, mediaId, gameConfigs }
         const questions = (data.questions || []).map(q => ({
             question: q.question,
-            wordId: q.wordId,
-            responseList: shuffleArray([...q.responseList])
+            word: q.word || null,
+            responseList: shuffleArray([...(q.responseList || [])].map(r => ({ ...r })))
         }));
 
         if (questions.length === 0) {
@@ -88,7 +78,8 @@ const RompecabezasGameView = () => {
         }
 
         if (data.gameConfigs && data.gameConfigs.length >= 2) {
-            setGameConfigs(data.gameConfigs);
+            const sorted = [...data.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setGameConfigs(sorted);
         }
 
         setQuestionQueue(questions);
@@ -97,23 +88,12 @@ const RompecabezasGameView = () => {
         setGameState('playing');
     }
 
-    /** Fallback: usa datos del mock */
-    function loadFromMockData(activity) {
-        const questions = (activity.questions || []).map(q => ({
-            question: q.question,
-            wordId: null,
-            responseList: shuffleArray([...q.responseList])
-        }));
-
-        if (activity.gameConfigs && activity.gameConfigs.length >= 2) {
-            setGameConfigs(activity.gameConfigs);
+    const playAudio = (audioUrl) => {
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(() => { });
         }
-
-        setQuestionQueue(questions);
-        setTotalOriginal(questions.length);
-        setActivityTitle(activity.title || activity.name || 'Rompecabezas');
-        setGameState('playing');
-    }
+    };
 
     // ─── Cronómetro ─────────────────────────────────────────────────────────
     useEffect(() => {
@@ -269,22 +249,42 @@ const RompecabezasGameView = () => {
 
             {/* ── Piezas superiores (pregunta + slot) ── */}
             <div className="rp-question-area" key={`q-${currentIndex}`}>
-                {/* Pieza con la pregunta */}
-                <div className="rp-piece rp-piece-question">
-                    {/* Mostrar texto si gameConfigs[0].showText */}
-                    {gameConfigs[0]?.showText && currentQuestion.question}
+                {/* Pieza con la pregunta — config1 */}
+                <div className="rp-piece rp-piece-question" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    {gameConfigs[0]?.showImage && currentQuestion.word?.imageUrl && (
+                        <img src={currentQuestion.word.imageUrl} alt=""
+                            style={{ width: '60px', height: '60px', borderRadius: '10px', objectFit: 'cover' }} />
+                    )}
+                    {gameConfigs[0]?.showText && (
+                        <span>{gameConfigs[0]?.isMazahua && currentQuestion.word
+                            ? currentQuestion.word.mazahuaWord
+                            : currentQuestion.question}</span>
+                    )}
+                    {gameConfigs[0]?.playAudio && currentQuestion.word?.audioUrl && (
+                        <button onClick={() => playAudio(currentQuestion.word.audioUrl)}
+                            style={{ fontSize: '22px', background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
+                    )}
                 </div>
 
-                {/* Slot para la respuesta */}
+                {/* Slot para la respuesta — config2 */}
                 <div className={`rp-piece-slot ${selectedOption ? 'filled' : ''}`}>
                     {selectedOption ? (
                         <span style={{
                             fontSize: '18px', fontWeight: '700',
                             color: feedback === 'correct' ? 'var(--success)'
                                 : feedback === 'incorrect' ? 'var(--error)'
-                                    : 'var(--primary-orange)'
+                                    : 'var(--primary-orange)',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
                         }}>
-                            {gameConfigs[1]?.showText && selectedOption.answerText}
+                            {gameConfigs[1]?.showImage && selectedOption.word?.imageUrl && (
+                                <img src={selectedOption.word.imageUrl} alt=""
+                                    style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                            )}
+                            {gameConfigs[1]?.showText && (
+                                gameConfigs[1]?.isMazahua && selectedOption.word
+                                    ? selectedOption.word.mazahuaWord
+                                    : selectedOption.answerText
+                            )}
                         </span>
                     ) : (
                         <span style={{ fontSize: '28px' }}>+</span>
@@ -292,7 +292,7 @@ const RompecabezasGameView = () => {
                 </div>
             </div>
 
-            {/* ── Opciones ── */}
+            {/* ── Opciones — config2 ── */}
             <div className="rp-options-section">
                 <div className="rp-options-grid">
                     {currentQuestion.responseList.map((option, idx) => {
@@ -300,7 +300,7 @@ const RompecabezasGameView = () => {
                         if (feedback && selectedOption?.answerText === option.answerText) {
                             extraClass = feedback === 'correct' ? 'correct' : 'incorrect';
                         } else if (feedback === 'incorrect' && option.isCorrect) {
-                            extraClass = 'correct'; // Revelar la correcta cuando falla
+                            extraClass = 'correct';
                         }
                         const isSelected = selectedOption?.answerText === option.answerText;
 
@@ -310,10 +310,25 @@ const RompecabezasGameView = () => {
                                 className={`rp-option-piece ${isSelected && !feedback ? 'selected' : ''} ${extraClass}`}
                                 onClick={() => handleSelectOption(option)}
                                 disabled={!!feedback}
+                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
                             >
-                                <span className="rp-option-text">
-                                    {gameConfigs[1]?.showText && option.answerText}
-                                </span>
+                                {gameConfigs[1]?.showImage && option.word?.imageUrl && (
+                                    <img src={option.word.imageUrl} alt=""
+                                        style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                                )}
+                                {gameConfigs[1]?.showText && (
+                                    <span className="rp-option-text">
+                                        {gameConfigs[1]?.isMazahua && option.word
+                                            ? option.word.mazahuaWord
+                                            : option.answerText}
+                                    </span>
+                                )}
+                                {gameConfigs[1]?.playAudio && option.word?.audioUrl && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); playAudio(option.word.audioUrl); }}
+                                        style={{ fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >🔊</button>
+                                )}
                             </button>
                         );
                     })}

@@ -6,23 +6,45 @@ import apiConfig from './apiConfig';
 
 class ActivityApiService {
     /**
-     * Obtener actividades por tipo
-     * GET /api/activity/{type}
-     * @param {string} type - Tipo de actividad
-     * @returns {Promise<Object>} - ActivityList
+     * Obtener actividades por tipo (vía /api/activities/{type})
+     * GET /api/activities/{type}?page=#
+     * @param {string} type - Tipo de actividad (FAST_MEMORY, QUIZ, INTRUDER, PUZZLE)
+     * @param {number} page - Número de página
+     * @returns {Promise<Object>} - Paginated Activity response
      */
-    async getActivityByType(type) {
+    async getActivitiesByGameType(type, page = 0) {
         try {
-            const response = await apiConfig.get(`/api/activity/${type}`);
+            const response = await apiConfig.get(`/api/games/${type}?page=${page}`);
             return {
                 success: true,
-                data: response.games || []
+                data: response
             };
         } catch (error) {
             return {
                 success: false,
                 error: error.message,
-                data: []
+                data: { content: [] }
+            };
+        }
+    }
+
+    /**
+     * Iniciar una actividad de juego
+     * POST /api/activities/start/game/{gameId}
+     * @param {number} gameId - ID del juego
+     * @returns {Promise<Object>} - StartGameResponseDTO
+     */
+    async startGame(gameId) {
+        try {
+            const response = await apiConfig.post(`/api/activities/start/game/${gameId}`);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
             };
         }
     }
@@ -72,11 +94,8 @@ class ActivityApiService {
     }
 
     /**
-     * Iniciar una actividad
+     * Iniciar una actividad (Legacy - v1)
      * POST /api/activity/start/{game}
-     * @param {number} gameId - ID del juego
-     * @param {boolean} fromAssignment - Si viene de una asignación
-     * @returns {Promise<Object>}
      */
     async startActivity(gameId, fromAssignment = false) {
         try {
@@ -93,8 +112,6 @@ class ActivityApiService {
     /**
      * Completar una actividad
      * POST /api/activity/complete
-     * @param {Object} data - ActivityCompleteRequestDTO
-     * @returns {Promise<Object>}
      */
     async completeActivity(data) {
         try {
@@ -117,8 +134,6 @@ class ActivityApiService {
     /**
      * Puntuar una actividad
      * POST /api/activity/score
-     * @param {Object} data - ExperienceRequestDTO
-     * @returns {Promise<Object>} - Score como integer
      */
     async scoreActivity(data) {
         try {
@@ -142,9 +157,6 @@ class ActivityApiService {
     /**
      * Asignar una actividad a un grupo
      * POST /api/activity/assign
-     * @param {number} gameId - ID del juego
-     * @param {number} groupId - ID del grupo
-     * @returns {Promise<Object>}
      */
     async assignActivity(gameId, groupId) {
         try {
@@ -164,9 +176,6 @@ class ActivityApiService {
     /**
      * Recompensar a un usuario por completar una actividad
      * PATCH /api/activity/reward
-     * @param {string} username - Username del usuario
-     * @param {number} activityId - ID de la actividad
-     * @returns {Promise<Object>} - RewardResponseDTO
      */
     async rewardActivity(username, activityId) {
         try {
@@ -194,8 +203,6 @@ class ActivityApiService {
     /**
      * Eliminar una actividad
      * DELETE /api/activity/{id}
-     * @param {number} id - ID de la actividad
-     * @returns {Promise<Object>}
      */
     async deleteActivity(id) {
         try {

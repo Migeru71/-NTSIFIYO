@@ -1,17 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import useNavigation from '../../hooks/useNavigation';
 
 /**
  * Sidebar de navegación reutilizable para todos los roles.
  *
  * Props:
- * - menuItems: Array<{ id, label, icon, path }>  — elementos del menú
- * - roleLabel: string  — "Estudiante" | "Maestro" | "Administrador" | "Visitante"
+ * - role: string       — El rol del usuario desde el enum Roles (ej. Roles.STUDENT)
  * - userName: string   — nombre del usuario
- * - accentColor: string — color clave de Tailwind (e.g. "primary", "green", "amber")
- * - homePath: string   — ruta base del panel (Link del logo)
  */
-const SideBar = ({ menuItems = [], roleLabel = '', userName = '', accentColor = 'primary', homePath = '/' }) => {
+const SideBar = ({ role, userName = '' }) => {
+    const { authorizedSidebarRoutes: menuItems, roleLabel, accentColor, homePath } = useNavigation(role);
     const location = useLocation();
 
     // Determinar si un item está activo
@@ -82,8 +81,8 @@ const SideBar = ({ menuItems = [], roleLabel = '', userName = '', accentColor = 
                             <Link
                                 to={item.path}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.path)
-                                        ? `${colors.activeBg} ${colors.activeText} font-semibold`
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                    ? `${colors.activeBg} ${colors.activeText} font-semibold`
+                                    : 'text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
                                 <span

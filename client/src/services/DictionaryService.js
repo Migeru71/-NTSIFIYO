@@ -89,6 +89,25 @@ class DictionaryService {
             };
         }
     }
+
+    /**
+     * Crear una nueva palabra con imagen y audio
+     * POST /api/dictionary/word/media  (multipart/form-data)
+     * @param {FormData} formData - Campos: spanishText, mazahuaText, category, image, audio
+     * @returns {Promise<Object>}
+     */
+    async createWord(formData) {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${apiConfig.baseUrl}/api/dictionary/word/media`, {
+            method: 'POST',
+            headers: {
+                ...(token && { 'Authorization': `Bearer ${token}` })
+                // No Content-Type: el navegador lo pone automáticamente con el boundary correcto
+            },
+            body: formData
+        });
+        return apiConfig.handleResponse(response);
+    }
     /**
      * Obtener todas las palabras minimamente (id y texto en español) para cache/búsqueda rápida
      * GET /api/dictionary/words/all

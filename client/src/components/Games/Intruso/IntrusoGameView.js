@@ -1,41 +1,61 @@
 // client/src/components/Games/Intruso/IntrusoGameView.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import intrusoActivities from '../../../data/mockIntruso';
+import { useGame } from '../../../context/GameContext';
 import IntrusoFinalView from './IntrusoFinalView';
 import './Intruso.css';
 
 const GAME_DURATION = 45; // 45 seconds
 
 const IntrusoGameView = () => {
-    const { activityId } = useParams();
     const navigate = useNavigate();
+    const { currentGameData } = useGame();
 
     const [activity, setActivity] = useState(null);
+    const [gameConfigs, setGameConfigs] = useState([{}, {}]);
     const [loading, setLoading] = useState(true);
-    const [gameState, setGameState] = useState('loading'); // loading, playing, finished, paused
+    const [gameState, setGameState] = useState('loading');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
-    const [feedback, setFeedback] = useState(null); // { isCorrect, message }
+    const [feedback, setFeedback] = useState(null);
 
-    // Stats for final view
     const [correctCount, setCorrectCount] = useState(0);
     const [combo, setCombo] = useState(0);
 
     const timerRef = useRef(null);
 
     useEffect(() => {
-        const id = parseInt(activityId);
-        const found = intrusoActivities.find(a => a.id === id);
-        if (found) {
-            setActivity(found);
+        setLoading(true);
+
+        if (!currentGameData) {
+            console.error("No hay datos de juego activos en el contexto.");
+            setLoading(false);
+            return;
+        }
+
+        // Read gameConfigs
+        if (currentGameData.gameConfigs && currentGameData.gameConfigs.length >= 2) {
+            const sorted = [...currentGameData.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setGameConfigs(sorted);
+        }
+
+        if (currentGameData.questions && currentGameData.questions.length > 0) {
+            // Shuffle responseList for each question so options appear in random order
+            const shuffled = {
+                ...currentGameData,
+                questions: currentGameData.questions.map(q => ({
+                    ...q,
+                    responseList: [...(q.responseList || [])].sort(() => Math.random() - 0.5)
+                }))
+            };
+            setActivity(shuffled);
             setGameState('playing');
         } else {
-            console.error("Actividad de Intruso no encontrada con ID:", id);
+            console.error("La actividad de Intruso no tiene preguntas.");
         }
         setLoading(false);
-    }, [activityId]);
+    }, [currentGameData]);
 
     // Timer Logic
     useEffect(() => {
@@ -56,42 +76,43 @@ const IntrusoGameView = () => {
         return () => clearInterval(timerRef.current);
     }, [gameState, timeLeft]);
 
-    const handleAnswer = (answer) => {
-        if (feedback) return; // Prevent double clicks during feedback
+    // Helper: get display text based on config
+    const getWordText = (word, config) => {
+        if (!word) return null;
+        return config.isMazahua ? word.mazahuaWord : word.spanishWord;
+    };
 
-        const isCorrect = answer.isCorrect; // In this game, isCorrect=true means it IS the intruder
+    const playAudio = (audioUrl) => {
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(() => { });
+        }
+    };
+
+    const handleAnswer = (answer) => {
+        if (feedback) return;
+
+        const isCorrect = answer.isCorrect;
 
         if (isCorrect) {
-            // Correct (It IS the intruder)
             const points = 100 + (combo * 10);
             setScore(prev => prev + points);
             setCorrectCount(prev => prev + 1);
             setCombo(prev => prev + 1);
             setFeedback({ type: 'correct', message: '¡Bien hecho!' });
         } else {
-            // Incorrect (It is NOT the intruder)
             setCombo(0);
             setFeedback({ type: 'incorrect', message: 'Ese si pertenece al grupo...' });
         }
-
-        // Delay for next question or repeating (if we want to allow retry? prompt implies score increases on finding intruder. Usually moves to next.)
-        // Prompt says "Al seleccionar las palabras erroneas [meaning intruder], el score... aumenta".
-        // It doesn't specify what happens on wrong choice. I'll simply move to next question or cycle.
-        // Given finite questions in mock, let's cycle or finish if all done? 
-        // "El juego acaba despues de 45 segundos" -> implies time based, so maybe loop questions or end early if all answered.
-        // Mock data has 3 questions. 45s is long for 3 qs. I will loop them if needed, or just end if options run out.
-        // Let's loop for now to fill time.
 
         setTimeout(() => {
             setFeedback(null);
             if (activity.questions && currentQuestionIndex < activity.questions.length - 1) {
                 setCurrentQuestionIndex(prev => prev + 1);
             } else {
-                // Loop back to start to keep playing until time runs out? 
-                // Or finish game. 
-                // Let's finish game if we run out of unique questions to avoid repetition boredom, or loop.
-                // Re-shuffling would be better but simple loop for valid MVP.
-                setCurrentQuestionIndex(0);
+                // All questions answered — finish the game
+                clearInterval(timerRef.current);
+                setGameState('finished');
             }
         }, 1000);
     };
@@ -110,7 +131,7 @@ const IntrusoGameView = () => {
             stats={{
                 correct: correctCount,
                 time: GAME_DURATION - timeLeft,
-                totalQuestions: correctCount + (score > 0 ? 0 : 1) // Approximation
+                totalQuestions: correctCount + (score > 0 ? 0 : 1)
             }}
             onRetry={() => window.location.reload()}
             onExit={() => navigate('/estudiante/actividades')}
@@ -120,6 +141,8 @@ const IntrusoGameView = () => {
     if (!activity || !activity.questions) return <div>Error: Actividad inválida</div>;
 
     const currentQuestion = activity.questions[currentQuestionIndex];
+    const config1 = gameConfigs[0] || {};
+    const config2 = gameConfigs[1] || {};
 
     return (
         <div className="intruso-container">
@@ -150,36 +173,68 @@ const IntrusoGameView = () => {
                 </div>
             </div>
 
-            {/* Question */}
+            {/* Question header — config1 */}
             <div className="intruso-question-header animate-pop" key={`header-${currentQuestionIndex}`}>
                 <div className="intruso-category-pill">
                     🔍 Encuentra al Intruso
                 </div>
-                <h2 className="intruso-title">
-                    {currentQuestion.question}
-                </h2>
+
+                {config1.showImage && currentQuestion.word?.imageUrl && (
+                    <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                        <img src={currentQuestion.word.imageUrl} alt="Pregunta"
+                            style={{ maxWidth: '120px', maxHeight: '90px', borderRadius: '12px', objectFit: 'cover' }} />
+                    </div>
+                )}
+
+                {config1.playAudio && currentQuestion.word?.audioUrl && (
+                    <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                        <button onClick={() => playAudio(currentQuestion.word.audioUrl)}
+                            style={{ fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer' }}>🔊</button>
+                    </div>
+                )}
+
+                {config1.showText && (
+                    <h2 className="intruso-title">
+                        {currentQuestion.question}
+                    </h2>
+                )}
             </div>
 
-            {/* Grid */}
+            {/* Grid — config2 */}
             <div className="intruso-grid">
                 {currentQuestion.responseList.map((option, idx) => (
                     <div
                         key={idx}
                         className={`intruso-option-card animate-pop 
                             ${feedback && option.isCorrect && feedback.type === 'correct' ? 'correct' : ''}
-                            ${feedback && !option.isCorrect && feedback.type === 'incorrect' && 'incorrect' /* Only highlight clicked wrong one? Hard to track clicked one without state. */} 
+                            ${feedback && !option.isCorrect && feedback.type === 'incorrect' ? 'incorrect' : ''} 
                         `}
-                        // Note: To highlight strictly the clicked one, I'd need state for 'clickedOptionIndex'. 
-                        // For MVP, valid to just disable interactions. 
                         onClick={() => handleAnswer(option)}
                         style={{ animationDelay: `${idx * 0.1}s`, pointerEvents: feedback ? 'none' : 'auto' }}
                     >
-                        <div className="intruso-option-icon">
-                            {/* Allow for image if available in wordId lookup, otherwise generic icon or text */}
-                            {/* Mock implementation: if we had images we'd show them. For now, text. */}
-                            ❔
-                        </div>
-                        <span className="intruso-option-text">{option.answerText}</span>
+                        {config2.showImage && option.word?.imageUrl ? (
+                            <div className="intruso-option-icon">
+                                <img src={option.word.imageUrl} alt=""
+                                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                            </div>
+                        ) : (
+                            <div className="intruso-option-icon">❔</div>
+                        )}
+
+                        {config2.showText && (
+                            <span className="intruso-option-text">
+                                {config2.isMazahua && option.word
+                                    ? option.word.mazahuaWord
+                                    : (option.answerText || (option.word ? option.word.spanishWord : ''))}
+                            </span>
+                        )}
+
+                        {config2.playAudio && option.word?.audioUrl && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); playAudio(option.word.audioUrl); }}
+                                style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer', marginTop: '4px' }}
+                            >🔊</button>
+                        )}
                     </div>
                 ))}
             </div>

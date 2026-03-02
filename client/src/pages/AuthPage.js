@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 import UserService from '../services/UserService';
+import Roles from '../utils/roles';
+import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 const AuthPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { login } = useAuth();
+    const { showAlert } = useAlert();
     const [authMode, setAuthMode] = useState(location.state?.mode || 'login');
     const [userType, setUserType] = useState('student');
     const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +57,19 @@ const AuthPage = () => {
         }
         return true;
     };
+
+    const onSuccess = async (response, role) => {
+        const jwtToken = response.data.jwtToken;
+        const userData = {
+            firstname: response.data?.firstname || response.data?.firstName || '',
+            lastname: response.data?.lastname || response.data?.lastName || '',
+            userType: role,
+        };
+        login(userData, jwtToken);
+        await UserService.startSession();
+        window.dispatchEvent(new Event('authChanged'));
+
+    }
 
     useEffect(() => {
         if (location.state?.mode) setAuthMode(location.state.mode);
@@ -267,13 +285,12 @@ const AuthPage = () => {
                                         const response = await AuthService.login({
                                             listNumber: parseInt(listNumber),
                                             password: studentPassword,
-                                            userType: 'STUDENT',
+                                            userType: Roles.STUDENT,
                                             grade: parseInt(grade)
                                         });
 
                                         if (response.success) {
-                                            await UserService.startSession();
-                                            window.dispatchEvent(new Event('authChanged'));
+                                            onSuccess(response, Roles.STUDENT)
                                             navigate('/estudiante/dashboard');
                                         } else {
                                             setLoginError(response.error || 'Error al iniciar sesión');
@@ -288,12 +305,11 @@ const AuthPage = () => {
                                         const response = await AuthService.login({
                                             username: teacherUsername,
                                             password: password,
-                                            userType: 'TEACHER'
+                                            userType: Roles.TEACHER
                                         });
 
                                         if (response.success) {
-                                            await UserService.startSession();
-                                            window.dispatchEvent(new Event('authChanged'));
+                                            onSuccess(response, Roles.TEACHER)
                                             navigate('/maestro/dashboard');
                                         } else {
                                             setLoginError(response.error || 'Credenciales incorrectas');
@@ -308,12 +324,11 @@ const AuthPage = () => {
                                         const response = await AuthService.login({
                                             username: guestUsername,
                                             password: password,
-                                            userType: 'VISITOR'
+                                            userType: Roles.VISITOR
                                         });
 
                                         if (response.success) {
-                                            await UserService.startSession();
-                                            window.dispatchEvent(new Event('authChanged'));
+                                            onSuccess(response, Roles.VISITOR)
                                             navigate('/estudiante/dashboard');
                                         } else {
                                             setLoginError(response.error || 'Credenciales incorrectas');
@@ -338,7 +353,11 @@ const AuthPage = () => {
                                         if (response.success) {
                                             setAuthMode('login');
                                             setLoginError('');
-                                            alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
+                                            showAlert({
+                                                mode: 'success',
+                                                title: '¡Éxito!',
+                                                message: '¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.'
+                                            });
                                         } else {
                                             setLoginError(response.error || 'Error al crear cuenta');
                                         }

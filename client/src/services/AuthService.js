@@ -2,6 +2,7 @@
 // Servicio de autenticación
 
 import apiConfig from './apiConfig';
+import Roles from '../utils/roles';
 
 class AuthService {
     /**
@@ -14,10 +15,10 @@ class AuthService {
         try {
             // Limpiar cualquier token existente antes de hacer login para evitar errores CORS/403
             localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
+            localStorage.removeItem('appUser');
 
             let payload = {};
-            if (credentials.userType === 'STUDENT') {
+            if (credentials.userType === Roles.STUDENT) {
                 payload = {
                     listNumber: credentials.listNumber,
                     password: credentials.password,
@@ -40,7 +41,7 @@ class AuthService {
 
             // Guardar información del usuario
             if (response.user) {
-                localStorage.setItem('userData', JSON.stringify(response.user));
+                localStorage.setItem('appUser', JSON.stringify(response.user));
             }
 
             return {
@@ -65,7 +66,7 @@ class AuthService {
         try {
             // Limpiar cualquier token existente antes de registrarse
             localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
+            localStorage.removeItem('appUser');
 
             const response = await apiConfig.post('/api/auth/visitor', {
                 firstname: visitorData.firstname,
@@ -93,7 +94,7 @@ class AuthService {
      */
     logout() {
         localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
+        localStorage.removeItem('appUser');
         return { success: true };
     }
 
@@ -110,7 +111,7 @@ class AuthService {
      * @returns {Object|null}
      */
     getCurrentUser() {
-        const userData = localStorage.getItem('userData');
+        const userData = localStorage.getItem('appUser');
         return userData ? JSON.parse(userData) : null;
     }
 

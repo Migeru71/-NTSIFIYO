@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Roles from '../utils/roles';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Componente de Navegación Principal.
@@ -8,44 +10,10 @@ import { Link, useNavigate } from 'react-router-dom';
  */
 const Navbar = () => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-
-    // Verificar si hay sesión activa al montar y cuando cambie el localStorage
-    useEffect(() => {
-        checkAuth();
-
-        // Escuchar cambios en localStorage (para cuando se inicie/cierre sesión en otra pestaña)
-        const handleStorageChange = () => checkAuth();
-        window.addEventListener('storage', handleStorageChange);
-
-        // Escuchar evento custom para login/logout dentro de la misma pestaña
-        window.addEventListener('authChanged', handleStorageChange);
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('authChanged', handleStorageChange);
-        };
-    }, []);
-
-    const checkAuth = () => {
-        const userData = localStorage.getItem('userData');
-        const token = localStorage.getItem('authToken');
-        if (userData && token) {
-            try {
-                setUser(JSON.parse(userData));
-            } catch {
-                setUser(null);
-            }
-        } else {
-            setUser(null);
-        }
-    };
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        setUser(null);
-        window.dispatchEvent(new Event('authChanged'));
+        logout();
         navigate('/');
     };
 
@@ -56,16 +24,27 @@ const Navbar = () => {
         return name.charAt(0).toUpperCase();
     };
 
+    const getRouteAuthenticated = () => {
+        console.log(user)
+        switch (user.userType) {
+            case "ADMIN": return "/admin/dashboard";
+            case "TEACHER": return "/maestro/dashboard";
+            case "STUDENT": return "/estudiante/dashboard";
+            case "VISITOR": return "/visitante/dashboard";
+            default: return "/";
+        }
+    }
+
     // Color del badge según el rol
     const getRoleBadge = () => {
         if (!user) return null;
         const roleMap = {
-            'TEACHER': { label: 'Maestro', color: 'bg-green-100 text-green-700' },
-            'STUDENT': { label: 'Alumno', color: 'bg-blue-100 text-blue-700' },
-            'VISITOR': { label: 'Visitante', color: 'bg-purple-100 text-purple-700' },
-            'ADMIN': { label: 'Admin', color: 'bg-red-100 text-red-700' }
+            [Roles.TEACHER]: { label: 'Maestro', color: 'bg-green-100 text-green-700' },
+            [Roles.STUDENT]: { label: 'Alumno', color: 'bg-blue-100 text-blue-700' },
+            [Roles.VISITOR]: { label: 'Visitante', color: 'bg-purple-100 text-purple-700' },
+            [Roles.ADMIN]: { label: 'Admin', color: 'bg-red-100 text-red-700' }
         };
-        return roleMap[user.role] || { label: user.role, color: 'bg-gray-100 text-gray-700' };
+        return roleMap[user.userType] || { label: user.userType, color: 'bg-gray-100 text-gray-700' };
     };
 
     return (
@@ -104,14 +83,14 @@ const Navbar = () => {
 
                             {/* Avatar + nombre */}
                             <Link
-                                to={user.role === 'TEACHER' ? '/maestro/dashboard' : user.role === 'STUDENT' ? '/estudiante/dashboard' : '/'}
+                                to={getRouteAuthenticated()}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                             >
                                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                                     {getInitial()}
                                 </div>
                                 <span className="hidden sm:block text-sm font-medium text-text-main-light dark:text-text-main-dark max-w-[120px] truncate">
-                                    {user.name || user.username || 'Usuario'}
+                                    {user.firstname}
                                 </span>
                             </Link>
 

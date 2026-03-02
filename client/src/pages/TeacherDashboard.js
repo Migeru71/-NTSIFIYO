@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SideBar from '../components/Dashboard/SideBar';
+import Roles from '../utils/roles';
 
 /**
  * Dashboard principal del maestro
@@ -202,25 +203,8 @@ const TeacherDashboard = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Sidebar */}
-            <SideBar
-                menuItems={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/maestro/dashboard' },
-                    { id: 'students', label: 'Estudiantes', icon: 'school', path: '/maestro/estudiantes' },
-                    { id: 'resources', label: 'Recursos', icon: 'library_books', path: '/maestro/recursos' },
-                    { id: 'content', label: 'Contenido', icon: 'article', path: '/maestro/contenido' },
-                    { id: 'dictionary', label: 'Diccionario', icon: 'translate', path: '/maestro/diccionario' },
-                    { id: 'assignments', label: 'Asignaciones', icon: 'assignment', path: '/maestro/asignaciones' },
-                ]}
-                roleLabel="Maestro"
-                userName={user?.name || 'Maestro'}
-                accentColor="green"
-                homePath="/maestro/dashboard"
-            />
-
-            {/* Main Content */}
-            <main className="pl-64 min-h-screen">
+        <div className="w-full bg-gray-50">
+            <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
                     {/* Breadcrumbs */}
                     <nav className="text-sm text-gray-500 mb-4">
@@ -297,7 +281,7 @@ const TeacherDashboard = () => {
                         </div>
                     )}
                 </div>
-            </main>
+            </div>
         </div>
     );
 };

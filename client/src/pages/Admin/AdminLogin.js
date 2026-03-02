@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/AuthService';
 import UserService from '../../services/UserService';
+import Roles from '../../utils/roles';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +27,18 @@ const AdminLogin = () => {
             const response = await AuthService.login({
                 username: username,
                 password: password,
-                userType: 'ADMIN' // Se enviará a /api/auth/login/admin
+                userType: Roles.ADMIN // Se enviará a /api/auth/login/admin
             });
 
             if (response.success) {
+                const jwtToken = response.data.jwtToken;
+                const userData = {
+                    firstname: response.data?.firstname || response.data?.firstName || '',
+                    lastname: response.data?.lastname || response.data?.lastName || '',
+                    userType: Roles.ADMIN,
+                };
+                login(userData, jwtToken);
+
                 await UserService.startSession();
                 window.dispatchEvent(new Event('authChanged'));
                 navigate('/admin/dashboard');
