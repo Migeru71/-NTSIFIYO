@@ -46,43 +46,50 @@ function GameAccessPanel({
         setLoading(false);
     }
 
-    // Preload images and audio from game data
-    function preloadAssets(data) {
-        const urls = new Set();
-        const audioUrls = new Set();
+    // Preload images and audio by fetching and storing as Blob URLs
+    async function preloadAssets(data) {
+        const cache = new Map();
 
-        // Collect from words array
-        (data.words || []).forEach(w => {
-            if (w.imageUrl) urls.add(w.imageUrl);
-            if (w.audioUrl) audioUrls.add(w.audioUrl);
-        });
+        const fetchAsBlobUrl = async (url) => {
+            if (!url) return null;
+            if (cache.has(url)) return cache.get(url);
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                cache.set(url, blobUrl);
+                return blobUrl;
+            } catch (err) {
+                console.error("Failed to fetch asset", url, err);
+                return url; // fallback to original
+            }
+        };
 
-        // Collect from questions and their responseList
-        (data.questions || []).forEach(q => {
-            if (q.word?.imageUrl) urls.add(q.word.imageUrl);
-            if (q.word?.audioUrl) audioUrls.add(q.word.audioUrl);
-            (q.responseList || []).forEach(r => {
-                if (r.word?.imageUrl) urls.add(r.word.imageUrl);
-                if (r.word?.audioUrl) audioUrls.add(r.word.audioUrl);
-            });
-        });
+        // Cache words
+        if (data.words) {
+            for (let w of data.words) {
+                if (w.imageUrl) w.imageUrl = await fetchAsBlobUrl(w.imageUrl);
+                if (w.audioUrl) w.audioUrl = await fetchAsBlobUrl(w.audioUrl);
+            }
+        }
 
-        const imagePromises = [...urls].map(url => new Promise((resolve) => {
-            const img = new Image();
-            img.onload = resolve;
-            img.onerror = resolve; // don't block on failed loads
-            img.src = url;
-        }));
-
-        const audioPromises = [...audioUrls].map(url => new Promise((resolve) => {
-            const audio = new Audio();
-            audio.oncanplaythrough = resolve;
-            audio.onerror = resolve;
-            audio.preload = 'auto';
-            audio.src = url;
-        }));
-
-        return Promise.all([...imagePromises, ...audioPromises]);
+        // Cache questions
+        if (data.questions) {
+            for (let q of data.questions) {
+                if (q.word) {
+                    if (q.word.imageUrl) q.word.imageUrl = await fetchAsBlobUrl(q.word.imageUrl);
+                    if (q.word.audioUrl) q.word.audioUrl = await fetchAsBlobUrl(q.word.audioUrl);
+                }
+                if (q.responseList) {
+                    for (let r of q.responseList) {
+                        if (r.word) {
+                            if (r.word.imageUrl) r.word.imageUrl = await fetchAsBlobUrl(r.word.imageUrl);
+                            if (r.word.audioUrl) r.word.audioUrl = await fetchAsBlobUrl(r.word.audioUrl);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     async function handlePlayGame(activityId) {

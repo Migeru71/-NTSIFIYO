@@ -1,9 +1,9 @@
 // client/src/components/Games/Rompecabezas/RompecabezasGameView.js
 // Vista de juego de Rompecabezas — Fase 2: Juego (con API real)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
-import RompecabezasFinalView from './RompecabezasFinalView';
+import GameSummary from '../GameSummary';
+import GameAlert from '../GameAlert';
 import './Rompecabezas.css';
 
 const RompecabezasGameView = () => {
@@ -35,6 +35,10 @@ const RompecabezasGameView = () => {
     const [gameState, setGameState] = useState('loading'); // loading | playing | finished | error
     const [elapsed, setElapsed] = useState(0);
     const [failedOnFirst, setFailedOnFirst] = useState(new Set());
+
+    // Summary data
+    const [responseLogs, setResponseLogs] = useState([]);
+    const [startDate, setStartDate] = useState(null);
 
     const timerRef = useRef(null);
     const feedbackTimeout = useRef(null);
@@ -85,6 +89,7 @@ const RompecabezasGameView = () => {
         setQuestionQueue(questions);
         setTotalOriginal(questions.length);
         setActivityTitle('Rompecabezas');
+        setStartDate(new Date().toISOString());
         setGameState('playing');
     }
 
@@ -118,12 +123,31 @@ const RompecabezasGameView = () => {
         setSelectedOption(option);
     };
 
-    // ─── Comprobar respuesta ────────────────────────────────────────────────
     const handleCheck = useCallback(() => {
         if (!selectedOption || feedback !== null) return;
 
         const isCorrect = selectedOption.isCorrect;
         const currentQ = questionQueue[currentIndex];
+
+        // Find the correct option for logging
+        const correctOption = currentQ.responseList.find(opt => opt.isCorrect);
+
+        const logEntry = {
+            questionId: currentQ.id || currentIndex, // Use ID if available, else index
+            answerId: selectedOption.id || null,     // Try to use ID if available
+            isCorrect: isCorrect,
+            questionText: gameConfigs[0]?.isMazahua && currentQ.word ? currentQ.word.mazahuaWord : currentQ.question,
+            questionImage: gameConfigs[0]?.showImage && currentQ.word ? currentQ.word.imageUrl : null,
+            questionAudio: gameConfigs[0]?.playAudio && currentQ.word ? currentQ.word.audioUrl : null,
+            selectedText: gameConfigs[1]?.isMazahua && selectedOption.word ? selectedOption.word.mazahuaWord : selectedOption.answerText,
+            selectedImage: gameConfigs[1]?.showImage && selectedOption.word ? selectedOption.word.imageUrl : null,
+            selectedAudio: gameConfigs[1]?.playAudio && selectedOption.word ? selectedOption.word.audioUrl : null,
+            correctText: correctOption ? (gameConfigs[1]?.isMazahua && correctOption.word ? correctOption.word.mazahuaWord : correctOption.answerText) : null,
+            correctImage: correctOption && gameConfigs[1]?.showImage && correctOption.word ? correctOption.word.imageUrl : null,
+            correctAudio: correctOption && gameConfigs[1]?.playAudio && correctOption.word ? correctOption.word.audioUrl : null,
+        };
+
+        setResponseLogs(prev => [...prev, logEntry]);
 
         if (isCorrect) {
             setFeedback('correct');
@@ -134,27 +158,22 @@ const RompecabezasGameView = () => {
             setFeedback('incorrect');
             if (!failedOnFirst.has(currentIndex)) {
                 setFailedOnFirst(prev => new Set([...prev, currentIndex]));
-                // Segunda oportunidad: añadir al final de la cola con respuestas mezcladas
-                setQuestionQueue(prev => [...prev, {
-                    ...currentQ,
-                    responseList: shuffleArray([...currentQ.responseList])
-                }]);
             }
         }
+    }, [selectedOption, feedback, questionQueue, currentIndex, failedOnFirst, totalOriginal, gameConfigs]);
 
-        feedbackTimeout.current = setTimeout(() => {
-            setFeedback(null);
-            setSelectedOption(null);
-            const nextIndex = currentIndex + 1;
-            setCompletedOriginal(prev => Math.min(prev + 1, totalOriginal));
+    const handleFeedbackClose = () => {
+        setFeedback(null);
+        setSelectedOption(null);
+        const nextIndex = currentIndex + 1;
+        setCompletedOriginal(prev => Math.min(prev + 1, totalOriginal));
 
-            if (nextIndex >= questionQueue.length) {
-                setGameState('finished');
-            } else {
-                setCurrentIndex(nextIndex);
-            }
-        }, 900);
-    }, [selectedOption, feedback, questionQueue, currentIndex, failedOnFirst, totalOriginal]);
+        if (nextIndex >= totalOriginal) {
+            setGameState('finished');
+        } else {
+            setCurrentIndex(nextIndex);
+        }
+    };
 
     // ─── Progreso ────────────────────────────────────────────────────────────
     const progressPercent = totalOriginal > 0
@@ -202,21 +221,25 @@ const RompecabezasGameView = () => {
 
     // ─── Render: Final ────────────────────────────────────────────────────────
     if (gameState === 'finished') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
+
         return (
-            <RompecabezasFinalView
-                score={score}
+            <GameSummary
+                activityId={activityId}
+                gameId={gameIdParam || 2}
+                startDate={startDate}
+                correctAnswers={score}
                 totalQuestions={totalOriginal}
-                elapsed={elapsed}
-                activityTitle={activityTitle}
-                onRetry={() => window.location.reload()}
+                responseLogs={responseLogs}
                 onExit={() => navigate('/games/rompecabezas')}
+                onRetry={() => window.location.reload()}
             />
         );
     }
 
     const currentQuestion = questionQueue[currentIndex];
-    // ¿Es un reintento? (está más allá del rango de preguntas originales)
-    const isRetry = currentIndex >= totalOriginal;
+
 
     return (
         <div className="rp-container">
@@ -240,11 +263,6 @@ const RompecabezasGameView = () => {
             {/* ── Instrucción ── */}
             <div className="rp-instruction">
                 Completa la frase
-                {isRetry && (
-                    <span style={{ display: 'block', fontSize: '13px', color: '#E65100', fontWeight: '600', marginTop: '4px' }}>
-                        🔄 Segunda oportunidad
-                    </span>
-                )}
             </div>
 
             {/* ── Piezas superiores (pregunta + slot) ── */}
@@ -345,11 +363,12 @@ const RompecabezasGameView = () => {
             </button>
 
             {/* ── Feedback Banner ── */}
-            {feedback && (
-                <div className={`rp-feedback-banner ${feedback}`}>
-                    {feedback === 'correct' ? '¡Correcto! 🎉' : 'Inténtalo de nuevo 😅'}
-                </div>
-            )}
+            <GameAlert
+                isOpen={!!feedback}
+                type={feedback}
+                autoCloseDuration={1200}
+                onClose={handleFeedbackClose}
+            />
 
             {/* ── Cronómetro (esquina superior derecha) ── */}
             <div style={{

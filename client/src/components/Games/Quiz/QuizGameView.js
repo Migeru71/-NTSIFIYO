@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
+import GameSummary from '../GameSummary';
+import GameAlert from '../GameAlert';
 import './Quiz.css';
 
 function QuizGameView() {
@@ -19,6 +21,11 @@ function QuizGameView() {
     const [score, setScore] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [feedback, setFeedback] = useState(null);
+
+    // Summary data
+    const [responseLogs, setResponseLogs] = useState([]);
+    const [startDate, setStartDate] = useState(null);
 
     useEffect(() => {
         setLoading(true);
@@ -58,6 +65,7 @@ function QuizGameView() {
         }
 
         setActivity(mappedActivity);
+        setStartDate(new Date().toISOString());
         setError(null);
         setLoading(false);
     }, [currentGameData]);
@@ -86,9 +94,34 @@ function QuizGameView() {
         const isCorrect = currentQuestion.options.find(o => o.id === optionId)?.isCorrect || false;
         setAnswers(prev => [...prev, { questionId: currentQuestion.id, optionId, isCorrect }]);
 
+        const selectedOptionObj = currentQuestion.options.find(o => o.id === optionId);
+        const correctOptionObj = currentQuestion.options.find(o => o.isCorrect);
+
+        const logEntry = {
+            questionId: currentQuestion.id,
+            answerId: optionId,
+            isCorrect: isCorrect,
+            questionText: currentQuestion.question || getWordText(currentQuestion.word, config1),
+            questionImage: config1.showImage && currentQuestion.word ? currentQuestion.word.imageUrl : null,
+            questionAudio: config1.playAudio && currentQuestion.word ? currentQuestion.word.audioUrl : null,
+            selectedText: selectedOptionObj ? (selectedOptionObj.text || getWordText(selectedOptionObj.word, config2)) : null,
+            selectedImage: selectedOptionObj && config2.showImage && selectedOptionObj.word ? selectedOptionObj.word.imageUrl : null,
+            selectedAudio: selectedOptionObj && config2.playAudio && selectedOptionObj.word ? selectedOptionObj.word.audioUrl : null,
+            correctText: correctOptionObj ? (correctOptionObj.text || getWordText(correctOptionObj.word, config2)) : null,
+            correctImage: correctOptionObj && config2.showImage && correctOptionObj.word ? correctOptionObj.word.imageUrl : null,
+            correctAudio: correctOptionObj && config2.playAudio && correctOptionObj.word ? correctOptionObj.word.audioUrl : null,
+        };
+
+        setResponseLogs(prev => [...prev, logEntry]);
+
         if (isCorrect) {
             setScore(prev => prev + 1);
         }
+
+        setFeedback({
+            type: isCorrect ? 'correct' : 'incorrect',
+            title: isCorrect ? '¡Correcto!' : '¡Incorrecto!'
+        });
     };
 
     const handleNextQuestion = () => {
@@ -137,38 +170,20 @@ function QuizGameView() {
     }
 
     if (showResult) {
-        const percentage = Math.round((score / activity.questions.length) * 100);
-        const earnedXP = Math.round((score / activity.questions.length) * activity.recommendedXP);
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
 
         return (
-            <div className="quiz-access-panel" style={{ textAlign: 'center', paddingTop: '3rem' }}>
-                <div style={{ maxWidth: '500px', margin: '0 auto', background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}>
-                    <span style={{ fontSize: '72px', display: 'block', marginBottom: '1rem' }}>
-                        {percentage >= 70 ? '🎉' : percentage >= 50 ? '👍' : '📚'}
-                    </span>
-                    <h1 style={{ color: '#5b21b6', marginBottom: '0.5rem' }}>
-                        {percentage >= 70 ? '¡Excelente!' : percentage >= 50 ? '¡Buen trabajo!' : '¡Sigue practicando!'}
-                    </h1>
-                    <p style={{ fontSize: '48px', fontWeight: 'bold', color: '#7c3aed', margin: '1rem 0' }}>
-                        {`${score}/${activity.questions.length}`}
-                    </p>
-                    <p style={{ color: '#6b7280' }}>{`${percentage}% de aciertos`}</p>
-                    <div style={{ background: '#f3e8ff', borderRadius: '12px', padding: '1rem', margin: '1.5rem 0' }}>
-                        <p style={{ color: '#7c3aed', fontWeight: '600' }}>{`+${earnedXP} XP ganados`}</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                        <button
-                            onClick={handleRestart}
-                            style={{ padding: '12px 24px', background: 'white', border: '2px solid #7c3aed', borderRadius: '10px', color: '#7c3aed', fontWeight: '600', cursor: 'pointer' }}
-                        >
-                            🔄 Reintentar
-                        </button>
-                        <button className="btn-play-quiz" onClick={handleExit} style={{ maxWidth: '200px' }}>
-                            ✓ Terminar
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <GameSummary
+                activityId={activityId}
+                gameId={gameIdParam || 3}
+                startDate={startDate}
+                correctAnswers={score}
+                totalQuestions={activity.questions.length}
+                responseLogs={responseLogs}
+                onExit={handleExit}
+                onRetry={() => window.location.reload()}
+            />
         );
     }
 
@@ -296,6 +311,13 @@ function QuizGameView() {
                     )}
                 </div>
             </div>
+
+            <GameAlert
+                isOpen={!!feedback}
+                type={feedback?.type}
+                autoCloseDuration={1500}
+                onClose={() => setFeedback(null)}
+            />
         </div>
     );
 }

@@ -51,13 +51,13 @@ class ActivityApiService {
 
     /**
      * Obtener detalles de una actividad
-     * GET /api/activity/{id}
+     * GET /api/activities/{id}
      * @param {number} id - ID de la actividad
      * @returns {Promise<Object>} - DetailResultListDTO
      */
     async getActivityDetails(id) {
         try {
-            const response = await apiConfig.get(`/api/activity/${id}`);
+            const response = await apiConfig.get(`/api/activities/${id}`);
             return {
                 success: true,
                 data: response.detailResults || []
@@ -73,13 +73,13 @@ class ActivityApiService {
 
     /**
      * Obtener actividades asignadas a un grupo
-     * GET /api/activity/group/{grade}
+     * GET /api/activities/group/{grade}
      * @param {number} grade - Grado escolar
      * @returns {Promise<Object>} - ActivityList
      */
     async getAssignedActivities(grade) {
         try {
-            const response = await apiConfig.get(`/api/activity/group/${grade}`);
+            const response = await apiConfig.get(`/api/activities/group/${grade}`);
             return {
                 success: true,
                 data: response.games || []
@@ -95,11 +95,11 @@ class ActivityApiService {
 
     /**
      * Iniciar una actividad (Legacy - v1)
-     * POST /api/activity/start/{game}
+     * POST /api/activities/start/{game}
      */
     async startActivity(gameId, fromAssignment = false) {
         try {
-            await apiConfig.post(`/api/activity/start/${gameId}?fromAssignment=${fromAssignment}`);
+            await apiConfig.post(`/api/activities/start/${gameId}?fromAssignment=${fromAssignment}`);
             return { success: true };
         } catch (error) {
             return {
@@ -111,11 +111,11 @@ class ActivityApiService {
 
     /**
      * Completar una actividad
-     * POST /api/activity/complete
+     * POST /api/activities/complete
      */
     async completeActivity(data) {
         try {
-            await apiConfig.post('/api/activity/complete', {
+            await apiConfig.post('/api/activities/complete', {
                 activityId: data.activityId,
                 startDate: data.startDate,
                 correctAnswers: data.correctAnswers,
@@ -133,11 +133,11 @@ class ActivityApiService {
 
     /**
      * Puntuar una actividad
-     * POST /api/activity/score
+     * POST /api/activities/score
      */
     async scoreActivity(data) {
         try {
-            const response = await apiConfig.post('/api/activity/score', {
+            const response = await apiConfig.post('/api/activities/score', {
                 difficult: data.difficult, // EASY, MEDIUM, HARD
                 totalQuestions: data.totalQuestions,
                 gameConfigDTO: data.gameConfigs || []
@@ -156,11 +156,11 @@ class ActivityApiService {
 
     /**
      * Asignar una actividad a un grupo
-     * POST /api/activity/assign
+     * POST /api/activities/assign
      */
     async assignActivity(gameId, groupId) {
         try {
-            await apiConfig.post('/api/activity/assign', {
+            await apiConfig.post('/api/activities/assign', {
                 gameId: gameId,
                 groupId: groupId
             });
@@ -175,11 +175,11 @@ class ActivityApiService {
 
     /**
      * Recompensar a un usuario por completar una actividad
-     * PATCH /api/activity/reward
+     * PATCH /api/activities/reward
      */
     async rewardActivity(username, activityId) {
         try {
-            const response = await apiConfig.patch('/api/activity/reward', {
+            const response = await apiConfig.patch('/api/activities/reward', {
                 username: username,
                 activityId: activityId
             });
@@ -202,11 +202,11 @@ class ActivityApiService {
 
     /**
      * Eliminar una actividad
-     * DELETE /api/activity/{id}
+     * DELETE /api/activities/{id}
      */
     async deleteActivity(id) {
         try {
-            await apiConfig.delete(`/api/activity/${id}`);
+            await apiConfig.delete(`/api/activities/${id}`);
             return { success: true };
         } catch (error) {
             return {

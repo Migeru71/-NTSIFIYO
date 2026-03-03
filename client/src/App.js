@@ -21,6 +21,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import StudentActivities from './pages/StudentActivities';
 import TeacherStudents from './pages/TeacherStudents';
 import TeacherResources from './pages/TeacherResources';
+import DictionaryPage from './pages/DictionaryPage';
 import apiConfig from './services/apiConfig';
 
 import { useAuth } from './context/AuthContext';
@@ -91,6 +92,7 @@ function App() {
                             <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
                             <Route path="/maestro/recursos" element={<TeacherResources />} />
+                            <Route path="/maestro/diccionario" element={<DictionaryPage />} />
 
                             <Route path="/maestro/recursos/crear" element={
                                 <ConfigurationGameView
@@ -114,7 +116,7 @@ function App() {
                             <Route path="/estudiante/actividades" element={<StudentActivities />} />
                             <Route path="/estudiante/asignaciones" element={<StudentActivities />} />
                             <Route path="/estudiante/contenido" element={<StudentActivities />} />
-                            <Route path="/estudiante/diccionario" element={<StudentActivities />} />
+                            <Route path="/estudiante/diccionario" element={<DictionaryPage />} />
                         </Route>
 
                         {/* Games/Global Authenticated Routes */}

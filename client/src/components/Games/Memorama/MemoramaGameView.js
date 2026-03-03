@@ -5,7 +5,8 @@ import { useParams } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import ExperienceService from '../../../services/ExperienceService';
 import GameCard from './GameCard';
-import ResultadoJuegoView from './ResultadoJuegoView';
+import GameSummary from '../GameSummary';
+import GameAlert from '../GameAlert';
 import './Memorama.css';
 
 // ─── CONFIGURACIÓN DEL JUEGO (modificar aquí) ──────────────────────────────
@@ -44,7 +45,15 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
     const [matchedPairIds, setMatchedPairIds] = useState(new Set());
     const [totalPairs, setTotalPairs] = useState(0);
 
+    // Summary data
+    const [responseLogs, setResponseLogs] = useState([]);
+    const [startDate, setStartDate] = useState(null);
+
+    // Round tracking: limit game to exactly N rounds (N = number of words)
+    const [roundsPlayed, setRoundsPlayed] = useState(0);
+
     const pairsRef = useRef([]);
+    const remainingPairsRef = useRef([]);
     const autoTimerRef = useRef(null);
 
     const scoreRef = useRef(0);
@@ -52,12 +61,14 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
     const totalRef = useRef(0);
     const maxComboRef = useRef(0);
     const gameStateRef = useRef('loading');
+    const roundsPlayedRef = useRef(0);
 
     useEffect(() => { scoreRef.current = score; }, [score]);
     useEffect(() => { correctRef.current = correctCount; }, [correctCount]);
     useEffect(() => { totalRef.current = totalCards; }, [totalCards]);
     useEffect(() => { maxComboRef.current = maxCombo; }, [maxCombo]);
     useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+    useEffect(() => { roundsPlayedRef.current = roundsPlayed; }, [roundsPlayed]);
 
     // Load activity from GameContext
     useEffect(() => {
@@ -88,9 +99,14 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
             return;
         }
 
+        // Shuffle mappedPairs for the remaining array to randomize the order they appear
+        const shuffled = [...mappedPairs].sort(() => Math.random() - 0.5);
+
         setActivity({ name: "Memoria Rápida", recommendedXP: 100 });
         pairsRef.current = mappedPairs;
+        remainingPairsRef.current = shuffled;
         setTotalPairs(mappedPairs.length);
+        setStartDate(new Date().toISOString());
         setGameState('countdown');
     }, [currentGameData]);
 
@@ -147,33 +163,34 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
 
     // Generate the next card using pairs logic
     const generateNextCard = useCallback(() => {
-        const pairs = pairsRef.current;
-        if (!pairs || pairs.length === 0) return;
+        const remaining = remainingPairsRef.current;
+        if (!remaining || remaining.length === 0) return;
 
-        // Pick a random pair as the stimulus (top display)
-        const randomPair = pairs[Math.floor(Math.random() * pairs.length)];
+        // Pick the next pair from remaining array as the stimulus (top display)
+        const currentStimulus = remaining.shift(); // remove from remaining
         const shouldMatch = Math.random() < MATCH_PROBABILITY;
 
         let stimulusWord, responseWord, matches;
 
         if (shouldMatch) {
             // Show matching pair
-            stimulusWord = randomPair;
-            responseWord = randomPair;
+            stimulusWord = currentStimulus;
+            responseWord = currentStimulus;
             matches = true;
         } else {
             // Show mismatched pair
             let otherPair;
+            const allPairs = pairsRef.current;
             do {
-                otherPair = pairs[Math.floor(Math.random() * pairs.length)];
-            } while (otherPair.id === randomPair.id && pairs.length > 1);
+                otherPair = allPairs[Math.floor(Math.random() * allPairs.length)];
+            } while (otherPair.id === currentStimulus.id && allPairs.length > 1);
 
-            stimulusWord = randomPair;
+            stimulusWord = currentStimulus;
             responseWord = otherPair;
             matches = false;
         }
 
-        setCurrentCard({ stimulusWord, responseWord, matches, pairId: randomPair.id });
+        setCurrentCard({ stimulusWord, responseWord, matches, pairId: currentStimulus.id });
         setCardKey(prev => prev + 1);
     }, []);
 
@@ -184,6 +201,27 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         const isCorrect = userSaysMatch === currentCard.matches;
 
         setTotalCards(prev => prev + 1);
+        setRoundsPlayed(prev => prev + 1);
+
+        const config1 = gameConfigs[0] || {};
+        const config2 = gameConfigs[1] || {};
+
+        const logEntry = {
+            questionId: currentCard.stimulusWord.id,
+            answerId: currentCard.responseWord.id,
+            isCorrect: isCorrect,
+            isMemorama: true,
+            userSaidMatch: userSaysMatch,
+            actuallyMatched: currentCard.matches,
+            questionText: getWordText(currentCard.stimulusWord, config1),
+            questionImage: config1.showImage ? currentCard.stimulusWord.imageUrl : null,
+            questionAudio: config1.playAudio ? currentCard.stimulusWord.audioUrl : null,
+            correctText: getWordText(currentCard.responseWord, config2),
+            correctImage: config2.showImage ? currentCard.responseWord.imageUrl : null,
+            correctAudio: config2.playAudio ? currentCard.responseWord.audioUrl : null,
+        };
+
+        setResponseLogs(prev => [...prev, logEntry]);
 
         if (isCorrect) {
             const comboMultiplier = Math.min(1 + combo * 0.1, 3);
@@ -196,7 +234,7 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
             });
             setCorrectCount(prev => prev + 1);
             setSpeed(prev => Math.max(MIN_SPEED, prev - SPEED_DECREASE));
-            setFeedback('✅');
+            setFeedback({ type: 'correct', title: '¡Correcto!' });
 
             // If user correctly identified a match, mark this pair as done
             if (currentCard.matches) {
@@ -208,19 +246,19 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
             }
         } else {
             setCombo(0);
-            setFeedback('❌');
+            setFeedback({ type: 'incorrect', title: '¡Fallaste!' });
         }
 
-        setTimeout(() => setFeedback(null), 400);
-        setTimeout(() => generateNextCard(), 350);
+        // Check if all rounds have been played (N rounds = N words)
+        const nextRound = roundsPlayedRef.current + 1;
+        if (nextRound >= pairsRef.current.length) {
+            setTimeout(() => handleGameOver(), 500);
+        } else {
+            setTimeout(() => generateNextCard(), 350);
+        }
     }, [currentCard, combo, generateNextCard]);
 
-    // Check if all pairs have been matched → end game
-    useEffect(() => {
-        if (gameState === 'playing' && totalPairs > 0 && matchedPairIds.size >= totalPairs) {
-            setTimeout(() => handleGameOver(), 500);
-        }
-    }, [matchedPairIds, totalPairs, gameState]);
+    // (Round-based end condition is now handled in processAnswer)
 
     const handleSwipe = useCallback((direction) => {
         processAnswer(direction === 'right');
@@ -233,28 +271,6 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         if (gameStateRef.current === 'completed') return;
         setGameState('completed');
         clearTimeout(autoTimerRef.current);
-
-        const gameStats = {
-            totalTime: GAME_DURATION - timeLeft,
-            correctCards: correctRef.current,
-            totalCards: totalRef.current,
-            maxCombo: maxComboRef.current,
-            score: scoreRef.current,
-            won: correctRef.current > totalRef.current * 0.5
-        };
-
-        const result = await ExperienceService.processGameCompletion({
-            activityId: parseInt(activityId),
-            studentId,
-            recommendedXP: activity.recommendedXP,
-            gameStats
-        });
-
-        if (result.success) {
-            setGameResult(result.result);
-        } else {
-            setError(result.error);
-        }
     };
 
     const togglePause = () => {
@@ -292,8 +308,22 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
         );
     }
 
-    if (gameState === 'completed' && gameResult) {
-        return <ResultadoJuegoView result={gameResult} activity={activity} />;
+    if (gameState === 'completed') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
+
+        return (
+            <GameSummary
+                activityId={activityId}
+                gameId={gameIdParam || 1}
+                startDate={startDate}
+                correctAnswers={correctCount}
+                totalQuestions={totalPairs}
+                responseLogs={responseLogs}
+                onExit={() => window.history.back()}
+                onRetry={() => window.location.reload()}
+            />
+        );
     }
 
     if (gameState === 'countdown') {
@@ -399,7 +429,7 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
                     />
                 </div>
                 <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', whiteSpace: 'nowrap' }}>
-                    {matchedPairIds.size}/{totalPairs}
+                    {roundsPlayed}/{totalPairs}
                 </span>
             </div>
 
@@ -489,10 +519,13 @@ const MemoramaGameView = ({ studentId = 'student_001' }) => {
             {/* Mode label */}
             <div className="mr-mode-label">Modo Ritmo Rápido</div>
 
-            {/* Feedback Flash */}
-            {feedback && (
-                <div className="mr-feedback-flash">{feedback}</div>
-            )}
+            {/* Feedback Alert */}
+            <GameAlert
+                isOpen={!!feedback}
+                type={feedback?.type}
+                autoCloseDuration={600}
+                onClose={() => setFeedback(null)}
+            />
         </div>
     );
 };

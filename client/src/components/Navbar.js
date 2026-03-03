@@ -126,7 +126,10 @@ const Navbar = () => {
                     )}
 
                     {/* Menú Móvil */}
-                    <button className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100 text-text-main-light dark:text-text-main-dark">
+                    <button
+                        onClick={() => window.dispatchEvent(new Event('toggle-sidebar'))}
+                        className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100 text-text-main-light dark:text-text-main-dark transition-colors"
+                    >
                         <span className="material-symbols-outlined">menu</span>
                     </button>
                 </div>

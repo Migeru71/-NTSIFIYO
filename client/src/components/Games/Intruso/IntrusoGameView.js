@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
-import IntrusoFinalView from './IntrusoFinalView';
+import GameSummary from '../GameSummary';
+import GameAlert from '../GameAlert';
 import './Intruso.css';
 
 const GAME_DURATION = 45; // 45 seconds
 
 const IntrusoGameView = () => {
+    const { activityId } = useParams();
     const navigate = useNavigate();
     const { currentGameData } = useGame();
 
@@ -22,6 +24,10 @@ const IntrusoGameView = () => {
 
     const [correctCount, setCorrectCount] = useState(0);
     const [combo, setCombo] = useState(0);
+
+    // Summary data
+    const [responseLogs, setResponseLogs] = useState([]);
+    const [startDate, setStartDate] = useState(null);
 
     const timerRef = useRef(null);
 
@@ -50,6 +56,7 @@ const IntrusoGameView = () => {
                 }))
             };
             setActivity(shuffled);
+            setStartDate(new Date().toISOString());
             setGameState('playing');
         } else {
             console.error("La actividad de Intruso no tiene preguntas.");
@@ -93,28 +100,50 @@ const IntrusoGameView = () => {
         if (feedback) return;
 
         const isCorrect = answer.isCorrect;
+        const currentQuestion = activity.questions[currentQuestionIndex];
+        const correctOption = currentQuestion.responseList.find(opt => opt.isCorrect);
+
+        const config1 = gameConfigs[0] || {};
+        const config2 = gameConfigs[1] || {};
+
+        const logEntry = {
+            questionId: currentQuestion.id || currentQuestionIndex,
+            answerId: answer.id || null, // use ID if available
+            isCorrect: isCorrect,
+            questionText: currentQuestion.question,
+            questionImage: config1.showImage && currentQuestion.word ? currentQuestion.word.imageUrl : null,
+            questionAudio: config1.playAudio && currentQuestion.word ? currentQuestion.word.audioUrl : null,
+            selectedText: config2.isMazahua && answer.word ? answer.word.mazahuaWord : (answer.answerText || (answer.word ? answer.word.spanishWord : null)),
+            selectedImage: config2.showImage && answer.word ? answer.word.imageUrl : null,
+            selectedAudio: config2.playAudio && answer.word ? answer.word.audioUrl : null,
+            correctText: correctOption ? (config2.isMazahua && correctOption.word ? correctOption.word.mazahuaWord : (correctOption.answerText || (correctOption.word ? correctOption.word.spanishWord : null))) : null,
+            correctImage: correctOption && config2.showImage && correctOption.word ? correctOption.word.imageUrl : null,
+            correctAudio: correctOption && config2.playAudio && correctOption.word ? correctOption.word.audioUrl : null,
+        };
+
+        setResponseLogs(prev => [...prev, logEntry]);
 
         if (isCorrect) {
             const points = 100 + (combo * 10);
             setScore(prev => prev + points);
             setCorrectCount(prev => prev + 1);
             setCombo(prev => prev + 1);
-            setFeedback({ type: 'correct', message: '¡Bien hecho!' });
+            setFeedback({ type: 'correct', title: '¡Correcto!', message: '¡Bien hecho!' });
         } else {
             setCombo(0);
-            setFeedback({ type: 'incorrect', message: 'Ese si pertenece al grupo...' });
+            setFeedback({ type: 'incorrect', title: 'Incorrecto ❌', message: 'Ese si pertenece al grupo...' });
         }
+    };
 
-        setTimeout(() => {
-            setFeedback(null);
-            if (activity.questions && currentQuestionIndex < activity.questions.length - 1) {
-                setCurrentQuestionIndex(prev => prev + 1);
-            } else {
-                // All questions answered — finish the game
-                clearInterval(timerRef.current);
-                setGameState('finished');
-            }
-        }, 1000);
+    const handleFeedbackClose = () => {
+        setFeedback(null);
+        if (activity.questions && currentQuestionIndex < activity.questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+            // All questions answered — finish the game
+            clearInterval(timerRef.current);
+            setGameState('finished');
+        }
     };
 
     const formatTime = (seconds) => {
@@ -126,16 +155,21 @@ const IntrusoGameView = () => {
     if (loading) return <div className="intruso-container"><div className="spinner"></div></div>;
 
     if (gameState === 'finished') {
-        return <IntrusoFinalView
-            score={score}
-            stats={{
-                correct: correctCount,
-                time: GAME_DURATION - timeLeft,
-                totalQuestions: correctCount + (score > 0 ? 0 : 1)
-            }}
-            onRetry={() => window.location.reload()}
-            onExit={() => navigate('/estudiante/actividades')}
-        />;
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
+
+        return (
+            <GameSummary
+                activityId={activityId}
+                gameId={gameIdParam || 4}
+                startDate={startDate}
+                correctAnswers={correctCount}
+                totalQuestions={activity?.questions?.length || 0}
+                responseLogs={responseLogs}
+                onExit={() => navigate('/estudiante/actividades')}
+                onRetry={() => window.location.reload()}
+            />
+        );
     }
 
     if (!activity || !activity.questions) return <div>Error: Actividad inválida</div>;
@@ -240,14 +274,12 @@ const IntrusoGameView = () => {
             </div>
 
             {/* Feedback Overlay */}
-            {feedback && (
-                <div className="intruso-feedback">
-                    <div className={`intruso-instruction-pill ${feedback.type === 'correct' ? 'success' : 'error'}`}
-                        style={{ color: feedback.type === 'correct' ? '#10B981' : '#EF4444', fontSize: '24px', padding: '1rem 3rem' }}>
-                        {feedback.type === 'correct' ? 'Correcto! 🎉' : 'Ops... ❌'}
-                    </div>
-                </div>
-            )}
+            <GameAlert
+                isOpen={!!feedback}
+                type={feedback?.type}
+                autoCloseDuration={1200}
+                onClose={handleFeedbackClose}
+            />
 
         </div>
     );

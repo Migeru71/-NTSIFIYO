@@ -9,7 +9,7 @@ import useNavigation from '../../hooks/useNavigation';
  * - role: string       — El rol del usuario desde el enum Roles (ej. Roles.STUDENT)
  * - userName: string   — nombre del usuario
  */
-const SideBar = ({ role, userName = '' }) => {
+const SideBar = ({ role, userName = '', isOpen, onClose }) => {
     const { authorizedSidebarRoutes: menuItems, roleLabel, accentColor, homePath } = useNavigation(role);
     const location = useLocation();
 
@@ -59,10 +59,10 @@ const SideBar = ({ role, userName = '' }) => {
     const initial = userName ? userName.charAt(0).toUpperCase() : roleLabel.charAt(0).toUpperCase();
 
     return (
-        <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-100 flex flex-col z-30">
+        <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-100 flex flex-col z-30 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
             {/* Logo / Branding */}
-            <div className="p-6 border-b border-gray-100">
-                <Link to={homePath} className="flex items-center gap-3">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <Link to={homePath} className="flex items-center gap-3" onClick={onClose}>
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors.gradient} flex items-center justify-center`}>
                         <span className="material-symbols-outlined text-white">{roleIcon}</span>
                     </div>
@@ -71,6 +71,13 @@ const SideBar = ({ role, userName = '' }) => {
                         <span className={`text-xs font-medium ${colors.roleText}`}>Panel {roleLabel}</span>
                     </div>
                 </Link>
+                {/* Botón de cerrar en móvil */}
+                <button
+                    onClick={onClose}
+                    className="lg:hidden text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg p-1.5 transition-colors flex items-center justify-center"
+                >
+                    <span className="material-symbols-outlined text-xl">close</span>
+                </button>
             </div>
 
             {/* Navigation */}
@@ -80,6 +87,7 @@ const SideBar = ({ role, userName = '' }) => {
                         <li key={item.id}>
                             <Link
                                 to={item.path}
+                                onClick={onClose}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.path)
                                     ? `${colors.activeBg} ${colors.activeText} font-semibold`
                                     : 'text-gray-600 hover:bg-gray-50'
