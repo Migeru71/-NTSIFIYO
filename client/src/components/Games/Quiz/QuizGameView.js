@@ -46,11 +46,11 @@ function QuizGameView() {
             name: "Centro de Quiz",
             recommendedXP: 100,
             questions: (currentGameData.questions || []).map((q, i) => ({
-                id: i,
+                id: q.id,
                 question: q.question,
                 word: q.word || null,
                 options: (q.responseList || []).map((r, ri) => ({
-                    id: ri,
+                    id: r.id,
                     text: r.answerText,
                     isCorrect: r.isCorrect,
                     word: r.word || null

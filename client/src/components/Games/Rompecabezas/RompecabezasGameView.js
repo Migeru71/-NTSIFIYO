@@ -1,6 +1,7 @@
 // client/src/components/Games/Rompecabezas/RompecabezasGameView.js
 // Vista de juego de Rompecabezas — Fase 2: Juego (con API real)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import GameSummary from '../GameSummary';
 import GameAlert from '../GameAlert';
@@ -70,6 +71,7 @@ const RompecabezasGameView = () => {
     /** Mapea la respuesta de la API al estado del juego */
     function loadFromApiData(data) {
         const questions = (data.questions || []).map(q => ({
+            id: q.id,
             question: q.question,
             word: q.word || null,
             responseList: shuffleArray([...(q.responseList || [])].map(r => ({ ...r })))

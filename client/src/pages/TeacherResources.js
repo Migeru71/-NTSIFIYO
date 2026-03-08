@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SideBar from '../components/Dashboard/SideBar';
 import AuthService from '../services/AuthService';
 import apiConfig from '../services/apiConfig';
+import ActivityApiService from '../services/ActivityApiService';
 import Roles from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
@@ -43,6 +44,7 @@ const TeacherResources = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('ALL');
     const [deletingId, setDeletingId] = useState(null);
+    const [instances, setInstances] = useState([]);
     const [toast, setToast] = useState('');
 
     // ── Fetch teacher's own activities ──
@@ -52,6 +54,11 @@ const TeacherResources = () => {
         try {
             const data = await apiConfig.get('/api/activities/teacher');
             setActivities(Array.isArray(data) ? data : []);
+
+            const instData = await ActivityApiService.getGroupInstances();
+            if (instData.success) {
+                setInstances(instData.data || []);
+            }
         } catch (err) {
             console.error('Error fetching teacher activities:', err);
             setError(err.message || 'Error al cargar las actividades.');
@@ -105,6 +112,37 @@ const TeacherResources = () => {
             } else {
                 showToast(`❌ Error al asignar: ${err.message || 'Error desconocido'}`);
             }
+        }
+    };
+
+    // ── Toggle activity instance (Activar/Desactivar) ──
+    const handleToggleInstance = async (activityId, state) => {
+        const instance = instances.find(inst => (inst.game?.id === activityId || inst.gameId === activityId));
+        if (!instance) return;
+
+        const groupId = instance.group?.id || instance.groupId;
+        if (!groupId) return;
+
+        try {
+            const res = await ActivityApiService.toggleInstance(groupId, activityId, state);
+            if (res.success) {
+                setInstances(prev => prev.map(inst => {
+                    if ((inst.game?.id === activityId || inst.gameId === activityId)) {
+                        return { ...inst, isActive: !inst.isActive };
+                    }
+                    return inst;
+                }));
+                showToast(`Actividad ${instance.isActive ? 'desactivada' : 'activada'} correctamente.`);
+            } else {
+                showAlert({
+                    mode: 'error',
+                    title: 'Error de actualización',
+                    message: res.error || 'No se pudo cambiar el estado de la actividad.'
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('❌ Error de conexión al cambiar estado.');
         }
     };
 
@@ -164,6 +202,143 @@ const TeacherResources = () => {
     const totalXP = activities.reduce((sum, a) => sum + (a.experience || 0), 0);
     const fastMemoryCount = activities.filter(a => a.gameType === 'FAST_MEMORY').length;
     const quizCount = activities.filter(a => a.gameType === 'QUESTIONNAIRE').length;
+
+    // ── Categorized Lists ──
+    const activeActivities = filteredActivities.filter(a => {
+        const inst = instances.find(i => i.gameId === a.id || i.game?.id === a.id);
+        return inst && inst.isActive;
+    });
+    const inactiveActivities = filteredActivities.filter(a => {
+        const inst = instances.find(i => i.gameId === a.id || i.game?.id === a.id);
+        return inst && !inst.isActive;
+    });
+
+    const renderActivityCard = (activity, extraClasses = "") => {
+        const typeInfo = getGameTypeInfo(activity.gameType);
+        const diffBadge = getDifficultyBadge(activity.difficult);
+        const configSummary = activity.assignActivityGameConfigDTO || [];
+        const inst = instances.find(i => (i.game?.id === activity.id || i.gameId === activity.id));
+
+        return (
+            <div
+                key={activity.id}
+                className={`bg-white rounded-2xl border ${inst ? (inst.isActive ? 'border-green-200 shadow-green-100' : 'border-red-100 shadow-red-50') : 'border-gray-100'} shadow-sm overflow-hidden hover:shadow-md transition-all group flex flex-col ${extraClasses}`}
+            >
+                {/* Color bar */}
+                <div className="h-2" style={{ background: typeInfo.color }} />
+
+                <div className="p-5 flex flex-col flex-1">
+                    {/* Header */}
+                    <div className="flex items-start gap-3 mb-3">
+                        <div
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                            style={{ background: typeInfo.color + '15' }}
+                        >
+                            {typeInfo.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-800 leading-tight truncate">{activity.title}</h3>
+                            <span
+                                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-1 inline-block"
+                                style={{ background: typeInfo.color + '15', color: typeInfo.color }}
+                            >
+                                {typeInfo.label}
+                            </span>
+                        </div>
+                        {/* Instance Badge */}
+                        {inst && (
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${inst.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {inst.isActive ? '✅ Activa' : '❌ Inactiva'}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">{activity.description}</p>
+
+                    {/* Teacher info */}
+                    {activity.teacher && (
+                        <p className="text-xs text-gray-400 mb-3">
+                            👤 {activity.teacher.firstName} {activity.teacher.lastName}
+                        </p>
+                    )}
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+                        <span style={{ color: diffBadge.color, fontWeight: 600 }}>{diffBadge.label}</span>
+                        <span className="w-px h-3 bg-gray-200" />
+                        <span>⭐ {activity.experience} XP</span>
+                        <span className="w-px h-3 bg-gray-200" />
+                        <span>📝 {activity.totalQuestions} {activity.gameType === 'FAST_MEMORY' ? 'pares' : 'preguntas'}</span>
+                    </div>
+
+                    {/* Game config badges */}
+                    {configSummary.length > 0 && (
+                        <div className="flex gap-2 mb-4 flex-wrap mt-auto">
+                            {configSummary.map((cfg, i) => (
+                                <div key={i} className="flex gap-1 text-[10px] bg-gray-50 rounded-lg px-2 py-1">
+                                    {cfg.showImage && <span title="Imagen">🖼️</span>}
+                                    {cfg.showText && <span title="Texto">📝</span>}
+                                    {cfg.playAudio && <span title="Audio">🔊</span>}
+                                    <span className="text-gray-400 ml-1">{cfg.isMazahua ? 'MAZ' : 'ESP'}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* 3 action buttons */}
+                    <div className="flex gap-2 pt-1 mt-auto">
+                        <button
+                            onClick={() => navigate(`/maestro/recursos/editar/${activity.id}`)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                            title="Editar"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                            Editar
+                        </button>
+                        <button
+                            onClick={e => {
+                                e.stopPropagation();
+                                handleDelete(activity.id, activity.title);
+                            }}
+                            disabled={deletingId === activity.id}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50"
+                            title="Eliminar"
+                        >
+                            {deletingId === activity.id
+                                ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                                : <span className="material-symbols-outlined text-[16px]">delete</span>
+                            }
+                            Eliminar
+                        </button>
+
+                        {/* Asignar or Toggle button */}
+                        {!inst ? (
+                            <button
+                                onClick={() => handleAssign(activity)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors"
+                                title="Asignar"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">group_add</span>
+                                Asignar
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handleToggleInstance(activity.id, !inst.isActive)}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl transition-colors ${inst.isActive ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'}`}
+                                title={inst.isActive ? 'Desactivar' : 'Activar'}
+                            >
+                                <span className="material-symbols-outlined text-[16px]">
+                                    {inst.isActive ? 'block' : 'check_circle'}
+                                </span>
+                                {inst.isActive ? 'Desactivar' : 'Activar'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         //min height 100% tailwind 
@@ -318,125 +493,46 @@ const TeacherResources = () => {
                                     )}
                                 </div>
                             ) : (
-                                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredActivities.map((activity) => {
-                                        const typeInfo = getGameTypeInfo(activity.gameType);
-                                        const diffBadge = getDifficultyBadge(activity.difficult);
-                                        // The API returns assignActivityGameConfigDTO
-                                        const configSummary = activity.assignActivityGameConfigDTO || [];
-
-                                        return (
-                                            <div
-                                                key={activity.id}
-                                                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all group"
-                                            >
-                                                {/* Color bar */}
-                                                <div className="h-2" style={{ background: typeInfo.color }} />
-
-                                                <div className="p-5">
-                                                    {/* Header */}
-                                                    <div className="flex items-start gap-3 mb-3">
-                                                        <div
-                                                            className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                                                            style={{ background: typeInfo.color + '15' }}
-                                                        >
-                                                            {typeInfo.icon}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h3 className="font-bold text-gray-800 leading-tight truncate">{activity.title}</h3>
-                                                            <span
-                                                                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-1 inline-block"
-                                                                style={{ background: typeInfo.color + '15', color: typeInfo.color }}
-                                                            >
-                                                                {typeInfo.label}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Description */}
-                                                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">{activity.description}</p>
-
-                                                    {/* Teacher info */}
-                                                    {activity.teacher && (
-                                                        <p className="text-xs text-gray-400 mb-3">
-                                                            👤 {activity.teacher.firstName} {activity.teacher.lastName}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Stats */}
-                                                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
-                                                        <span style={{ color: diffBadge.color, fontWeight: 600 }}>{diffBadge.label}</span>
-                                                        <span className="w-px h-3 bg-gray-200" />
-                                                        <span>⭐ {activity.experience} XP</span>
-                                                        <span className="w-px h-3 bg-gray-200" />
-                                                        <span>📝 {activity.totalQuestions} {activity.gameType === 'FAST_MEMORY' ? 'pares' : 'preguntas'}</span>
-                                                    </div>
-
-                                                    {/* Game config badges */}
-                                                    {configSummary.length > 0 && (
-                                                        <div className="flex gap-2 mb-4 flex-wrap">
-                                                            {configSummary.map((cfg, i) => (
-                                                                <div key={i} className="flex gap-1 text-[10px] bg-gray-50 rounded-lg px-2 py-1">
-                                                                    {cfg.showImage && <span title="Imagen">🖼️</span>}
-                                                                    {cfg.showText && <span title="Texto">📝</span>}
-                                                                    {cfg.playAudio && <span title="Audio">🔊</span>}
-                                                                    <span className="text-gray-400 ml-1">{cfg.isMazahua ? 'MAZ' : 'ESP'}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {/* 3 action buttons */}
-                                                    <div className="flex gap-2 pt-1">
-                                                        <button
-                                                            onClick={() => navigate(`/maestro/recursos/editar/${activity.id}`)}
-                                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
-                                                            title="Editar"
-                                                        >
-                                                            <span className="material-symbols-outlined text-[16px]">edit</span>
-                                                            Editar
-                                                        </button>
-                                                        <button
-                                                            onClick={e => {
-                                                                e.stopPropagation();
-                                                                handleDelete(activity.id, activity.title);
-                                                            }}
-                                                            disabled={deletingId === activity.id}
-                                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50"
-                                                            title="Eliminar"
-                                                        >
-                                                            {deletingId === activity.id
-                                                                ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                                                                : <span className="material-symbols-outlined text-[16px]">delete</span>
-                                                            }
-                                                            Eliminar
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleAssign(activity)}
-                                                            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors"
-                                                            title="Asignar"
-                                                        >
-                                                            <span className="material-symbols-outlined text-[16px]">group_add</span>
-                                                            Asignar
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                <div className="flex flex-col gap-8 w-full">
+                                    {activeActivities.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">🟢 Actividades Activas</h3>
+                                            <div className="flex gap-6 overflow-x-auto pb-6 snap-x" style={{ scrollSnapType: 'x mandatory' }}>
+                                                {activeActivities.map(activity => renderActivityCard(activity, "min-w-[320px] max-w-[360px] snap-start shrink-0"))}
                                             </div>
-                                        );
-                                    })}
-
-                                    {/* Create Card */}
-                                    <div
-                                        onClick={() => navigate('/maestro/recursos/crear')}
-                                        className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-5 flex flex-col items-center justify-center min-h-[280px] hover:border-green-400 hover:bg-green-50/30 transition-all cursor-pointer"
-                                    >
-                                        <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                            <span className="material-symbols-outlined text-gray-400 text-3xl">add</span>
                                         </div>
-                                        <h3 className="font-semibold text-green-600 text-lg mb-1">Crear Nueva Actividad</h3>
-                                        <p className="text-sm text-gray-500 text-center">Diseña juegos y cuestionarios</p>
+                                    )}
+
+                                    {inactiveActivities.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">🔴 Actividades Inactivas</h3>
+                                            <div className="flex gap-6 overflow-x-auto pb-6 snap-x" style={{ scrollSnapType: 'x mandatory' }}>
+                                                {inactiveActivities.map(activity => renderActivityCard(activity, "min-w-[320px] max-w-[360px] snap-start shrink-0"))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        {(activeActivities.length > 0 || inactiveActivities.length > 0) && (
+                                            <h3 className="text-xl font-bold text-gray-800 mb-4 mt-4">🎮 Todas las Actividades</h3>
+                                        )}
+                                        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {filteredActivities.map((activity) => renderActivityCard(activity))}
+
+                                            {/* Create Card */}
+                                            <div
+                                                onClick={() => navigate('/maestro/recursos/crear')}
+                                                className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-5 flex flex-col items-center justify-center min-h-[280px] hover:border-green-400 hover:bg-green-50/30 transition-all cursor-pointer"
+                                            >
+                                                <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                                    <span className="material-symbols-outlined text-gray-400 text-3xl">add</span>
+                                                </div>
+                                                <h3 className="font-semibold text-green-600 text-lg mb-1">Crear Nueva Actividad</h3>
+                                                <p className="text-sm text-gray-500 text-center">Diseña juegos y cuestionarios</p>
+                                            </div>
+                                        </section>
                                     </div>
-                                </section>
+                                </div>
                             )}
                         </>
                     )}

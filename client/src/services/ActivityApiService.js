@@ -97,10 +97,55 @@ class ActivityApiService {
      * Iniciar una actividad (Legacy - v1)
      * POST /api/activities/start/{game}
      */
+    /**
+     * Iniciar una actividad (Legacy - v1)
+     * POST /api/activities/start/{game}
+     */
     async startActivity(gameId, fromAssignment = false) {
         try {
             await apiConfig.post(`/api/activities/start/${gameId}?fromAssignment=${fromAssignment}`);
             return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Obtener asignaciones para un estudiante
+     * GET /api/activities/student?page=#
+     * @param {number} page - Número de página
+     */
+    async getStudentVariedActivities(page = 0) {
+        try {
+            const response = await apiConfig.get(`/api/activities/student?page=${page}`);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: { content: [] }
+            };
+        }
+    }
+
+    /**
+     * Iniciar una actividad asignada para estudiante
+     * POST /api/activities/start/{activityId}
+     * @param {number} activityId - ID de la actividad
+     */
+    async startStudentActivity(activityId) {
+        try {
+            const response = await apiConfig.post(`/api/activities/start/${activityId}`);
+            return {
+                success: true,
+                data: response
+            };
         } catch (error) {
             return {
                 success: false,
@@ -200,14 +245,50 @@ class ActivityApiService {
         }
     }
 
-    /**
-     * Eliminar una actividad
-     * DELETE /api/activities/{id}
-     */
     async deleteActivity(id) {
         try {
             await apiConfig.delete(`/api/activities/${id}`);
             return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Obtener las instancias de actividades para el grupo del maestro actual
+     * GET /api/activities/instance/group
+     */
+    async getGroupInstances() {
+        try {
+            const response = await apiConfig.get('/api/activities/instance/group');
+            return {
+                success: true,
+                data: response || []
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
+
+    /**
+     * Cambiar el estado activo/inactivo de una instancia
+     * PUT /api/activities/instance/{groupId}/{gameId}
+     */
+    async toggleInstance(groupId, gameId, state) {
+        try {
+            // Asumiendo que es PUT o POST, de acuerdo al estándar REST suele ser PUT/PATCH para toggle.
+            const response = await apiConfig.patch(`/api/activities/instance/${groupId}/${gameId}?state=${state}`);
+            return {
+                success: true,
+                data: response
+            };
         } catch (error) {
             return {
                 success: false,

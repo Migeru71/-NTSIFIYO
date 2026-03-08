@@ -1,8 +1,5 @@
 // client/src/services/ExperienceService.js
 // Servicio encargado de calcular experiencia (XP) y puntuaciones
-
-import mockGames from '../data/mockGames';
-
 class InvalidXPException extends Error {
     constructor(message) {
         super(message);

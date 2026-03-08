@@ -2,3 +2,4 @@ client/node_modules/
 CLAUDE.md
 client/.env
 server
+client/.env

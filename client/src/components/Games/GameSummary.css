@@ -4,25 +4,28 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: calc(100vh - 80px);
+    /* 80px approx navbar height */
     padding: 2rem;
     background: #f3f4f6;
     font-family: 'Poppins', sans-serif;
 }
 
 .gs-card {
-    background: white;
-    border-radius: 24px;
-    padding: 2.5rem;
     width: 100%;
     max-width: 500px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     text-align: center;
     position: relative;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.gs-content-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
 }
 
 .gs-left-panel {
@@ -105,6 +108,57 @@
     font-size: 16px;
     color: #6b7280;
     font-weight: 600;
+}
+
+/* Accuracy and Time Metrics */
+.gs-metrics-section {
+    display: flex;
+    justify-content: space-around;
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+}
+
+.gs-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.gs-metric-label {
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.gs-metric-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #374151;
+}
+
+.gs-metric-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.gs-star {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.gs-star.filled {
+    color: #fbbf24;
+    text-shadow: 0 0 4px rgba(251, 191, 36, 0.4);
+}
+
+.gs-star.empty {
+    color: #d1d5db;
 }
 
 .gs-xp-container {
@@ -321,15 +375,15 @@
 }
 
 .gs-btn {
-    flex: 1;
-    padding: 14px;
-    border-radius: 12px;
-    font-size: 16px;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     border: none;
     transition: all 0.2s;
     font-family: inherit;
+    min-width: 140px;
 }
 
 .gs-btn-retry {
@@ -429,38 +483,27 @@
     .gs-actions {
         flex-direction: column;
     }
-
-    .gs-card {
-        padding: 1.5rem;
-    }
 }
 
 /* Desktop layout */
 @media (min-width: 900px) {
     .gs-card {
-        max-width: 1000px;
+        max-width: 1200px;
+        max-height: calc(100vh - 120px);
+        gap: 2rem;
+    }
+
+    .gs-content-row {
         flex-direction: row;
         align-items: stretch;
-        padding: 3rem;
         gap: 3rem;
-        text-align: left;
+        flex: 1;
+        overflow: hidden;
     }
 
     .gs-left-panel {
         flex: 1;
         justify-content: center;
-    }
-
-    .gs-header {
-        text-align: left;
-    }
-
-    .gs-score-section {
-        justify-content: flex-start;
-    }
-
-    .gs-actions {
-        margin-top: auto;
     }
 
     .gs-right-panel {
@@ -469,13 +512,30 @@
         border-radius: 20px;
         padding: 1.5rem;
         border: 1px solid #f3f4f6;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .gs-header-centered {
+        text-align: center;
+    }
+
+    .gs-actions-centered {
+        justify-content: center;
+        margin-top: auto;
+    }
+
+    .gs-score-section {
+        justify-content: center;
     }
 
     .gs-logs-section {
         margin-bottom: 0;
-        height: 100%;
+        flex: 1;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
     .gs-logs-toggle {
@@ -486,8 +546,9 @@
     .gs-logs-list {
         display: flex !important;
         /* Always show logs on desktop */
-        max-height: 500px;
         height: 100%;
+        max-height: none;
+        overflow-y: auto;
         margin-top: 0;
     }
 }

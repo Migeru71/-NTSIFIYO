@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import './configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
+import CustomAlert from '../common/CustomAlert';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -122,6 +123,8 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
     const isEditMode = !!editId;
 
     const [loadingEdit, setLoadingEdit] = useState(isEditMode);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [alertConfig, setAlertConfig] = useState(null);
     const [interactionType, setInteractionType] = useState('QUESTIONNAIRE');
     const [gameType, setGameType] = useState('QUESTIONNAIRE');
     const [title, setTitle] = useState('');
@@ -226,7 +229,12 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
             })
             .catch(err => {
                 console.error('Error loading game for edit:', err);
-                alert('Error al cargar la actividad: ' + err.message);
+                setAlertConfig({
+                    mode: 'error',
+                    title: 'Error de carga',
+                    message: 'Error al cargar la actividad: ' + err.message,
+                    buttons: [{ text: 'Cerrar', type: 'accept' }]
+                });
             })
             .finally(() => setLoadingEdit(false));
     }, [editId]); // eslint-disable-line
@@ -275,6 +283,13 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
     ));
 
     const validateForm = () => {
+        if (!title || title.trim() === '') return "El nombre del juego (título) no puede estar vacío.";
+        if (!description || description.trim() === '') return "La descripción del juego no puede estar vacía.";
+        if (!gameType) return "El tipo de juego es obligatorio.";
+        if (!difficult) return "La dificultad del juego es obligatoria.";
+        if (!experience || experience <= 0) return "La experiencia debe ser un valor numérico positivo mayor a 0.";
+        if (totalItems <= 0) return "El juego debe tener al menos un ítem (pregunta o par).";
+
         if (interactionType === 'PAIRS') {
             for (let i = 0; i < pairs.length; i++) {
                 const pair = pairs[i];
@@ -288,14 +303,22 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
         } else {
             for (let i = 0; i < questions.length; i++) {
                 const q = questions[i];
+                if (!q.question || q.question.trim() === '') {
+                    return `El estímulo de la pregunta ${i + 1} no puede estar vacío.`;
+                }
                 if ((config1.showImage || config1.playAudio) && !q.wordId) {
                     return `El estímulo de la pregunta ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
                 }
+                let correctCount = 0;
                 for (let j = 0; j < q.answers.length; j++) {
                     const a = q.answers[j];
+                    if (a.isCorrect) correctCount++;
                     if ((config2.showImage || config2.playAudio) && !a.wordId) {
                         return `La opción ${j + 1} de la pregunta ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
                     }
+                }
+                if (correctCount !== 1) {
+                    return `La pregunta ${i + 1} debe tener exactamente una respuesta correcta.`;
                 }
             }
         }
@@ -306,10 +329,16 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
     const handleSubmit = async () => {
         const validationError = validateForm();
         if (validationError) {
-            alert(validationError);
+            setAlertConfig({
+                mode: 'alert',
+                title: 'Error de Validación',
+                message: validationError,
+                buttons: [{ text: 'Entendido', type: 'accept' }]
+            });
             return;
         }
 
+        setIsSubmitting(true);
         const dto = {
             gameType, title, description,
             experience: experience || recXP,
@@ -337,26 +366,64 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
             let result;
             if (isEditMode) {
                 result = await apiConfig.put(`/api/games/${editId}`, dto);
-                alert('Juego actualizado con exito!');
+                setAlertConfig({
+                    mode: 'success',
+                    title: '¡Éxito!',
+                    message: 'Juego actualizado con éxito.',
+                    buttons: [{ text: 'Aceptar', type: 'accept', onClick: () => { if (onActivityCreated) onActivityCreated(result || dto); } }]
+                });
             } else {
                 result = await apiConfig.post('/api/games', dto);
-                alert('Juego creado con exito!');
+                setAlertConfig({
+                    mode: 'success',
+                    title: '¡Éxito!',
+                    message: 'Juego creado con éxito.',
+                    buttons: [{ text: 'Aceptar', type: 'accept', onClick: () => { if (onActivityCreated) onActivityCreated(result || dto); } }]
+                });
             }
-            if (onActivityCreated) onActivityCreated(result || dto);
         } catch (err) {
-            alert(`Error al ${isEditMode ? 'actualizar' : 'crear'} el juego: ` + err.message);
+            let errorMessage = `Error al ${isEditMode ? 'actualizar' : 'crear'} el juego.`;
+            let dataBox = [];
+
+            if (err.response && err.response.data) {
+                const { message, validationErrors } = err.response.data;
+                if (message) errorMessage = message;
+
+                if (validationErrors) {
+                    dataBox = Object.entries(validationErrors).map(([key, val]) => ({
+                        label: key,
+                        value: val
+                    }));
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setAlertConfig({
+                mode: 'error',
+                title: 'Error de validación o servidor',
+                message: errorMessage,
+                dataBox: dataBox.length > 0 ? dataBox : undefined,
+                buttons: [{ text: 'Cerrar', type: 'accept' }]
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const hasWord = wId => wId !== null && wId !== undefined;
 
     /* ═══════════════ RENDER ═══════════════ */
-    if (loadingEdit) {
+    if (loadingEdit || isSubmitting) {
+        const loadingText = loadingEdit
+            ? 'Cargando actividad para editar...'
+            : (isEditMode ? 'Actualizando actividad...' : 'Creando actividad...');
+
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f9fafb' }}>
                 <div style={{ textAlign: 'center', padding: '4rem' }}>
                     <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#6b7280', fontFamily: 'inherit' }}>Cargando actividad para editar...</p>
+                    <p style={{ color: '#6b7280', fontFamily: 'inherit' }}>{loadingText}</p>
                 </div>
             </div>
         );
@@ -614,6 +681,13 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
                     )}
                 </div>
             </main>
+
+            {alertConfig && (
+                <CustomAlert
+                    {...alertConfig}
+                    onClose={() => setAlertConfig(null)}
+                />
+            )}
         </div>
     );
 };

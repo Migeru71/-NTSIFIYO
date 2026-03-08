@@ -19,6 +19,7 @@ import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGa
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import StudentActivities from './pages/StudentActivities';
+import StudentAssignments from './pages/StudentAssignments';
 import TeacherStudents from './pages/TeacherStudents';
 import TeacherResources from './pages/TeacherResources';
 import DictionaryPage from './pages/DictionaryPage';
@@ -114,7 +115,7 @@ function App() {
                         <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} />}>
                             <Route path="/estudiante/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/estudiante/actividades" element={<StudentActivities />} />
-                            <Route path="/estudiante/asignaciones" element={<StudentActivities />} />
+                            <Route path="/estudiante/asignaciones" element={<StudentAssignments />} />
                             <Route path="/estudiante/contenido" element={<StudentActivities />} />
                             <Route path="/estudiante/diccionario" element={<DictionaryPage />} />
                         </Route>
