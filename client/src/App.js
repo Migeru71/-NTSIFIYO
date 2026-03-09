@@ -21,6 +21,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import StudentActivities from './pages/StudentActivities';
 import StudentAssignments from './pages/StudentAssignments';
 import TeacherStudents from './pages/TeacherStudents';
+import TeacherAssignments from './pages/TeacherAssignments';
 import TeacherResources from './pages/TeacherResources';
 import DictionaryPage from './pages/DictionaryPage';
 import apiConfig from './services/apiConfig';
@@ -92,6 +93,7 @@ function App() {
                         <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} />}>
                             <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
+                            <Route path="/maestro/asignaciones" element={<TeacherAssignments />} />
                             <Route path="/maestro/recursos" element={<TeacherResources />} />
                             <Route path="/maestro/diccionario" element={<DictionaryPage />} />
 

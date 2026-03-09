@@ -89,7 +89,7 @@ const TeacherStudents = () => {
     );
 
     return (
-        <div className="w-full bg-gray-50">
+        <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-50">
             <div className="w-full">
                 <div className="max-w-5xl mx-auto p-8">
                     {/* Breadcrumb */}

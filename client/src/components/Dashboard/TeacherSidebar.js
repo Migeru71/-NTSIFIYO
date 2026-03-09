@@ -11,6 +11,7 @@ const TeacherSidebar = ({ user }) => {
     const navItems = [
         { id: 'groups', label: 'Mis Grupos', mazahua: "Nu'u jñatjo", icon: 'groups', path: '/maestro/dashboard' },
         { id: 'students', label: 'Estudiantes', mazahua: "Yomu", icon: 'school', path: '/maestro/estudiantes' },
+        { id: 'assignments', label: 'Asignaciones', mazahua: "Nts'ede", icon: 'assignment', path: '/maestro/asignaciones' },
         { id: 'resources', label: 'Recursos', mazahua: "Jña'a", icon: 'library_books', path: '/maestro/recursos' },
         { id: 'settings', label: 'Configuración', mazahua: "Ts'ike", icon: 'settings', path: '/maestro/configuracion' },
     ];

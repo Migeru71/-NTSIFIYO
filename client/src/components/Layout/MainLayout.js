@@ -12,7 +12,9 @@ const MainLayout = ({ user }) => {
     const location = useLocation();
 
     // Check if the current route is a game route where we want a full-screen experience
-    const isGameRoute = location.pathname.includes('/games/');
+    const isGameRoute = location.pathname.includes('/games/') ||
+        location.pathname.includes('/recursos/crear') ||
+        location.pathname.includes('/recursos/editar');
 
     useEffect(() => {
         const handleToggle = () => setIsSidebarOpen(prev => !prev);

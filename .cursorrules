@@ -1,0 +1,12 @@
+# Alerts
+for alerts always use client/src/components/common/CustomAlert.js
+# Data
+for data have to call backend, if needed, create the service for abstracting the api logic from the view
+# Styles
+always create custom stylesheets, dont use tailwind
+# Games
+use GameAccessPanel for showing the available games, use GameAlert for notifying correct or incorrect answers, use GameSummary for the final view after the gameview.
+# ListView
+for creating lists or tables, use the component client/src/components/common/List.js
+# Navigation
+add the route on App.js and config/navigation.js and use the hook useNavigation for getting the authorized routes

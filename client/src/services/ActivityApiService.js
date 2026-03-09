@@ -296,6 +296,54 @@ class ActivityApiService {
             };
         }
     }
+
+    /**
+     * Obtener actividades activas asignadas a un grupo (para vista del maestro)
+     * GET /api/activities/group/{groupId}?active=true
+     * @param {number} groupId - ID del grupo (grade)
+     * @param {boolean} active - Filtrar por activas/inactivas
+     * @returns {Promise<Object>} - { activities: [...] }
+     */
+    async getActiveAssignments(groupId, active = true) {
+        try {
+            const response = await apiConfig.get(`/api/activities/group/${groupId}?active=${active}`);
+            return {
+                success: true,
+                data: response.activities || []
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
+
+    /**
+     * Obtener las respuestas de un estudiante para una actividad específica
+     * GET /api/games/activities/{activityId}/students/{studentUsername}/responses
+     * @param {number} activityId - ID de la actividad (gameId)
+     * @param {string} studentUsername - Username del estudiante
+     * @returns {Promise<Object>} - Array de { questionId, responseWordId, isCorrect }
+     */
+    async getStudentResponses(activityId, studentUsername) {
+        try {
+            const response = await apiConfig.get(
+                `/api/games/activities/${activityId}/students/${studentUsername}/responses`
+            );
+            return {
+                success: true,
+                data: Array.isArray(response) ? response : []
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
 }
 
 export default new ActivityApiService();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import './configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
@@ -8,7 +8,7 @@ import CustomAlert from '../common/CustomAlert';
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 /* ─────────────── Word Search Input ─────────────── */
-const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words }) => {
+const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words, wordId }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
@@ -17,6 +17,16 @@ const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
+
+    // Auto-select exact match if typed
+    useEffect(() => {
+        if (value && !wordId && words.length > 0) {
+            const exactMatch = words.find(w => w.text?.toLowerCase() === value.trim().toLowerCase());
+            if (exactMatch) {
+                onSelectWord(exactMatch);
+            }
+        }
+    }, [value, wordId, words, onSelectWord]);
 
     const filtered = useMemo(() => {
         if (!value || value.length < 1) return [];
@@ -41,6 +51,54 @@ const WordSearchInput = ({ value, onSelectWord, onChangeText, placeholder, words
                         </div>
                     ))}
                 </div>
+            )}
+        </div>
+    );
+};
+
+/* ─────────────── Word Preview Cache ─────────────── */
+const previewCache = new Map();
+
+/* ─────────────── Word Preview (image + audio) ─────────────── */
+const WordPreview = ({ wordId }) => {
+    const [preview, setPreview] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!wordId) { setPreview(null); return; }
+        // Check cache first
+        if (previewCache.has(wordId)) {
+            setPreview(previewCache.get(wordId));
+            return;
+        }
+        setLoading(true);
+        apiConfig.get(`/api/dictionary/words/details/${wordId}`)
+            .then(data => {
+                // apiConfig.get returns parsed JSON directly (no .data wrapper)
+                let result = null;
+                if (Array.isArray(data) && data.length > 0) result = data[0];
+                else if (data && !Array.isArray(data)) result = data;
+                if (result) previewCache.set(wordId, result);
+                setPreview(result);
+            })
+            .catch(() => setPreview(null))
+            .finally(() => setLoading(false));
+    }, [wordId]);
+
+    if (!wordId) return <div className="cfg-preview-empty">🖼️ Selecciona una palabra</div>;
+    if (loading) return <div className="cfg-preview-loading">Cargando…</div>;
+    if (!preview) return <div className="cfg-preview-empty">Sin vista previa</div>;
+
+    return (
+        <div className="cfg-preview-box">
+            {preview.urlImage && (
+                <img src={preview.urlImage} alt="preview" className="cfg-preview-img" />
+            )}
+            {preview.urlAudio && (
+                <audio src={preview.urlAudio} controls className="cfg-preview-audio" />
+            )}
+            {!preview.urlImage && !preview.urlAudio && (
+                <div className="cfg-preview-empty">Sin recursos multimedia</div>
             )}
         </div>
     );
@@ -190,29 +248,24 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
                 if (cfgs[0]) setConfig1({ showImage: cfgs[0].showImage, showText: cfgs[0].showText, playAudio: cfgs[0].playAudio, isMazahua: cfgs[0].isMazahua, order: 1 });
                 if (cfgs[1]) setConfig2({ showImage: cfgs[1].showImage, showText: cfgs[1].showText, playAudio: cfgs[1].playAudio, isMazahua: cfgs[1].isMazahua, order: 2 });
 
-                // Pairs mode: rebuild pairs from wordIds and resolve word text
+                // Pairs mode: rebuild pairs from wordIds
                 if (isPairs && Array.isArray(game.wordIds) && game.wordIds.length > 0) {
-                    const builtPairs = [];
-                    for (let i = 0; i < game.wordIds.length; i += 2) {
-                        const wId1 = game.wordIds[i] ?? null;
-                        const wId2 = game.wordIds[i + 1] ?? null;
-                        builtPairs.push({
-                            id: generateId(),
-                            elem1: { text: wordMap[wId1] || String(wId1 ?? ''), wordId: wId1, sw: wordMap[wId1] || '' },
-                            elem2: { text: wordMap[wId2] || String(wId2 ?? ''), wordId: wId2, sw: wordMap[wId2] || '' }
-                        });
-                    }
+                    const builtPairs = game.wordIds.map(wId => ({
+                        id: generateId(),
+                        text: wordMap[wId] || String(wId ?? ''),
+                        wordId: wId
+                    }));
                     setPairs(builtPairs.length > 0 ? builtPairs : [makePair()]);
                     setQuestions([makeQuestion()]);
 
-                    // Quiz mode: rebuild questions from game.questions (API returns `answers` not `answers`)
+                    // Quiz mode: rebuild questions
                 } else if (!isPairs && Array.isArray(game.questions) && game.questions.length > 0) {
                     const builtQuestions = game.questions.map(q => ({
                         id: generateId(),
                         question: q.question || '',
                         wordId: q.wordId ?? null,
                         sw: q.wordId ? (wordMap[q.wordId] || '') : '',
-                        answers: (q.answers || q.answers || []).map(a => ({
+                        answers: (q.answers || []).map(a => ({
                             id: generateId(),
                             answerText: a.answerText || '',
                             wordId: a.wordId ?? null,
@@ -239,7 +292,7 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
             .finally(() => setLoadingEdit(false));
     }, [editId]); // eslint-disable-line
 
-    const makePair = () => ({ id: generateId(), elem1: { text: '', wordId: null, sw: '' }, elem2: { text: '', wordId: null, sw: '' } });
+    const makePair = () => ({ id: generateId(), text: '', wordId: null });
     const makeQuestion = () => ({
         id: generateId(), question: '', wordId: null, sw: '',
         answers: [
@@ -254,7 +307,7 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
     const recXP = totalItems * (difficult === 'EASY' ? 10 : difficult === 'MEDIUM' ? 15 : 20);
 
     /* ── Pair helpers ── */
-    const updatePairElem = (id, elem, data) => setPairs(ps => ps.map(p => p.id === id ? { ...p, [elem]: { ...p[elem], ...data } } : p));
+    const updatePair = (id, data) => setPairs(ps => ps.map(p => p.id === id ? { ...p, ...data } : p));
     const removePair = id => { if (pairs.length > 1) setPairs(ps => ps.filter(p => p.id !== id)); };
 
     /* ── Question helpers ── */
@@ -293,11 +346,8 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
         if (interactionType === 'PAIRS') {
             for (let i = 0; i < pairs.length; i++) {
                 const pair = pairs[i];
-                if ((config1.showImage || config1.playAudio) && !pair.elem1.wordId) {
-                    return `El Elemento 1 del par ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
-                }
-                if ((config2.showImage || config2.playAudio) && !pair.elem2.wordId) {
-                    return `El Elemento 2 del par ${i + 1} requiere seleccionar una palabra base porque tiene habilitado Imagen o Audio.`;
+                if (!pair.wordId) {
+                    return `El par ${i + 1} requiere seleccionar una palabra.`;
                 }
             }
         } else {
@@ -351,9 +401,7 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
         };
 
         if (interactionType === 'PAIRS') {
-            const ids = new Set();
-            pairs.forEach(p => { if (p.elem1.wordId) ids.add(p.elem1.wordId); if (p.elem2.wordId) ids.add(p.elem2.wordId); });
-            dto.wordIds = Array.from(ids);
+            dto.wordIds = pairs.filter(p => p.wordId).map(p => p.wordId);
         } else {
             dto.questions = questions.map(q => ({
                 question: q.question,
@@ -430,180 +478,138 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
     }
 
     return (
-        <div className="cfg-game-root">
-            {/* ─── SIDEBAR ─── */}
-            <aside className="cfg-sidebar">
-                <p className="cfg-sidebar-title">General</p>
-                <div className="cfg-sidebar-section">
-                    <label>Nombre</label>
-                    <input className="cfg-input" placeholder="Nombre del juego" value={title} onChange={e => setTitle(e.target.value)} />
-                </div>
-
-                <div className="cfg-sidebar-section">
-                    <label>Descripción</label>
-                    <textarea className="cfg-input" placeholder="Describe la actividad..." value={description} onChange={e => setDescription(e.target.value)} />
-                </div>
-
-                <div className="cfg-sidebar-section">
-                    <label>Dificultad</label>
-                    <div className="cfg-diff-group">
-                        {['EASY', 'MEDIUM', 'HARD'].map(d => (
-                            <button
-                                key={d}
-                                className={`cfg-diff-btn ${difficult === d ? `active-${d.toLowerCase()}` : ''}`}
-                                onClick={() => setDifficult(d)}
+        <div className="cfg-game-root no-sidebar">
+            {/* ─── TWO-COLUMN LAYOUT ─── */}
+            <div className="cfg-layout-body">
+                {/* ─── LEFT SIDEBAR (fixed general config) ─── */}
+                <aside className="cfg-left-sidebar">
+                    <button className="cfg-btn-back" onClick={() => window.history.back()}>
+                        ⬅ Regresar
+                    </button>
+                    <div className="cfg-sidebar-card">
+                        <h3 className="cfg-sidebar-card-title">⚙️ General</h3>
+                        <div className="cfg-sidebar-section">
+                            <label>Nombre</label>
+                            <input className="cfg-input" placeholder="Nombre del juego" value={title} onChange={e => setTitle(e.target.value)} />
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>Descripción</label>
+                            <textarea className="cfg-input" placeholder="Describe la actividad..." value={description} onChange={e => setDescription(e.target.value)} />
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>Dificultad</label>
+                            <div className="cfg-diff-group">
+                                {['EASY', 'MEDIUM', 'HARD'].map(d => (
+                                    <button
+                                        key={d}
+                                        className={`cfg-diff-btn ${difficult === d ? `active-${d.toLowerCase()}` : ''}`}
+                                        onClick={() => setDifficult(d)}
+                                    >
+                                        {d === 'EASY' ? '😊' : d === 'MEDIUM' ? '🤔' : '🔥'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>XP</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input className="cfg-input" type="number" value={experience} onChange={e => setExperience(parseInt(e.target.value) || 0)} style={{ width: '80px' }} />
+                                <span className="cfg-xp-hint">⭐ {recXP}</span>
+                            </div>
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>Interacción</label>
+                            <div className="cfg-toggle-group">
+                                <button className={`cfg-toggle-btn ${interactionType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => handleInteractionChange('QUESTIONNAIRE')}>❓ Quiz</button>
+                                <button className={`cfg-toggle-btn ${interactionType === 'PAIRS' ? 'active' : ''}`} onClick={() => handleInteractionChange('PAIRS')}>🃏 Pares</button>
+                            </div>
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>Tipo de Juego</label>
+                            <select
+                                className="cfg-input cfg-select"
+                                value={gameType}
+                                onChange={e => setGameType(e.target.value)}
                             >
-                                {d === 'EASY' ? '😊 Fácil' : d === 'MEDIUM' ? '🤔 Medio' : '🔥 Difícil'}
+                                {(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).map(gt => (
+                                    <option key={gt.value} value={gt.value}>{gt.label} — {gt.desc}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </aside>
+
+                {/* ─── RIGHT CONTENT ─── */}
+                <main className="cfg-main-content">
+                    <div className="cfg-section-heading">
+                        <div className="cfg-heading-row">
+                            <div>
+                                <h2>{interactionType === 'PAIRS' ? 'Pares de Palabras' : 'Preguntas del Quiz'}</h2>
+                                <p>{interactionType === 'PAIRS' ? 'Cada palabra forma un par consigo misma.' : 'Diseña tus preguntas y define las opciones de respuesta.'}</p>
+                            </div>
+                            <button className="cfg-btn-publish" onClick={handleSubmit}>
+                                {isEditMode ? '💾 Actualizar' : '🚀 Publicar'}
                             </button>
-                        ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="cfg-sidebar-section">
-                    <label>Experiencia (XP)</label>
-                    <input className="cfg-input" type="number" value={experience} onChange={e => setExperience(parseInt(e.target.value) || 0)} />
-                    <span className="cfg-xp-hint">⭐ Recomendado: {recXP} XP</span>
-                </div>
-
-                <div className="cfg-sidebar-section">
-                    <label>Tipo de Interacción</label>
-                    <div className="cfg-toggle-group">
-                        <button className={`cfg-toggle-btn ${interactionType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => handleInteractionChange('QUESTIONNAIRE')}>❓ Quiz</button>
-                        <button className={`cfg-toggle-btn ${interactionType === 'PAIRS' ? 'active' : ''}`} onClick={() => handleInteractionChange('PAIRS')}>🃏 Pares</button>
+                    {/* Config Cards in main content */}
+                    <div className="cfg-configs-row">
+                        <ConfigCard
+                            title={interactionType === 'PAIRS' ? 'Config. Elemento 1' : 'Config. Pregunta'}
+                            dotClass="dot-1"
+                            config={config1}
+                            setConfig={setConfig1}
+                        />
+                        <ConfigCard
+                            title={interactionType === 'PAIRS' ? 'Config. Elemento 2' : 'Config. Respuestas'}
+                            dotClass="dot-2"
+                            config={config2}
+                            setConfig={setConfig2}
+                        />
                     </div>
-                </div>
 
-                <div className="cfg-sidebar-section">
-                    <label>Tipo de Juego</label>
-                    <div className="cfg-game-type-list">
-                        {(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).map(gt => (
-                            <button
-                                key={gt.value}
-                                className={`cfg-game-type-btn ${gameType === gt.value ? 'active' : ''}`}
-                                onClick={() => setGameType(gt.value)}
-                                title={gt.desc}
-                            >
-                                {gt.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <button className="cfg-btn-publish" onClick={handleSubmit}>
-                    {isEditMode ? '💾 Actualizar' : '🚀 Publicar'}
-                </button>
-            </aside>
-
-            {/* ─── MAIN CONTENT ─── */}
-            <main className="cfg-main">
-                <div className="cfg-section-heading">
-                    <h2>{interactionType === 'PAIRS' ? 'Configuración de Contenido' : 'Configuración de Quiz'}</h2>
-                    <p>{interactionType === 'PAIRS' ? 'Configura tus pares de palabras y recursos multimedia.' : 'Diseña tus preguntas y define las opciones de respuesta.'}</p>
-                    <span className="cfg-game-type-badge">{(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).find(g => g.value === gameType)?.label}</span>
-                </div>
-
-                {/* Mode pill */}
-                <div className={`cfg-mode-pill ${interactionType === 'PAIRS' ? 'pairs' : 'quiz'}`}>
-                    <span className="pill-icon">{interactionType === 'PAIRS' ? '🃏' : '⚠️'}</span>
-                    {interactionType === 'PAIRS'
-                        ? 'Modo Pares — Cada item consiste en dos elementos que se emparejan.'
-                        : 'Modo Quiz — Cada item consiste en una pregunta y múltiples opciones de respuesta.'}
-                </div>
-
-                {/* Configs row */}
-                <div className="cfg-configs-row">
-                    <ConfigCard
-                        title={interactionType === 'PAIRS' ? 'Configuración Elemento 1' : 'Configuración Pregunta'}
-                        dotClass="dot-1"
-                        config={config1}
-                        setConfig={setConfig1}
-                    />
-                    <ConfigCard
-                        title={interactionType === 'PAIRS' ? 'Configuración Elemento 2' : 'Configuración Respuestas'}
-                        dotClass="dot-2"
-                        config={config2}
-                        setConfig={setConfig2}
-                    />
-                </div>
-
-                {/* ─── ITEMS LIST ─── */}
-                <div className="cfg-items-list">
+                    {/* ─── ITEMS ─── */}
                     {interactionType === 'PAIRS' ? (
                         <>
-                            {pairs.map((pair, idx) => (
-                                <div key={pair.id} className="cfg-item-card">
-                                    <div className="cfg-item-header">
-                                        <div className="cfg-item-number">
-                                            <span className="num-badge">{idx + 1}</span>
-                                            Nuevo Elemento
-                                        </div>
-                                        <div className="cfg-item-status">
-                                            <span className={`cfg-status-tag ${pair.elem1.text && pair.elem2.text ? 'complete' : 'incomplete'}`}>
-                                                {pair.elem1.text && pair.elem2.text ? 'Completo' : 'Incompleto'}
-                                            </span>
-                                            {pairs.length > 1 && <button className="cfg-btn-delete" onClick={() => removePair(pair.id)}>🗑️</button>}
-                                        </div>
+                            <div className="cfg-pairs-grid">
+                                {pairs.map((pair, idx) => (
+                                    <div key={pair.id} className="cfg-pair-card">
+                                        {pairs.length > 1 && (
+                                            <button className="cfg-pair-delete" onClick={() => removePair(pair.id)}>✕</button>
+                                        )}
+                                        <span className="cfg-pair-number">{idx + 1}</span>
+                                        <WordPreview wordId={pair.wordId} />
+                                        <WordSearchInput
+                                            words={words}
+                                            value={pair.text}
+                                            wordId={pair.wordId}
+                                            placeholder="Buscar palabra..."
+                                            onChangeText={t => updatePair(pair.id, { text: t, wordId: null })}
+                                            onSelectWord={w => updatePair(pair.id, { text: w.text, wordId: w.id })}
+                                        />
                                     </div>
-                                    <div className="cfg-row">
-                                        <div className="cfg-field">
-                                            <span className="cfg-field-label">
-                                                Estímulo <ConfigBadges config={config1} hasWord={hasWord(pair.elem1.wordId)} />
-                                            </span>
-                                            <input
-                                                className="cfg-input"
-                                                placeholder="Escribe la palabra..."
-                                                value={pair.elem1.text}
-                                                onChange={e => updatePairElem(pair.id, 'elem1', { text: e.target.value })}
-                                            />
-                                            <WordSearchInput
-                                                words={words}
-                                                value={pair.elem1.sw}
-                                                placeholder="Buscar palabra conocida..."
-                                                onChangeText={t => updatePairElem(pair.id, 'elem1', { sw: t, wordId: null })}
-                                                onSelectWord={w => updatePairElem(pair.id, 'elem1', { sw: w.text, wordId: w.id })}
-                                            />
-                                        </div>
-                                        <div className="cfg-field">
-                                            <span className="cfg-field-label">
-                                                Respuesta <ConfigBadges config={config2} hasWord={hasWord(pair.elem2.wordId)} />
-                                            </span>
-                                            <input
-                                                className="cfg-input"
-                                                placeholder="Respuesta correcta..."
-                                                value={pair.elem2.text}
-                                                onChange={e => updatePairElem(pair.id, 'elem2', { text: e.target.value })}
-                                            />
-                                            <WordSearchInput
-                                                words={words}
-                                                value={pair.elem2.sw}
-                                                placeholder="Buscar palabra conocida..."
-                                                onChangeText={t => updatePairElem(pair.id, 'elem2', { sw: t, wordId: null })}
-                                                onSelectWord={w => updatePairElem(pair.id, 'elem2', { sw: w.text, wordId: w.id })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            <button className="cfg-add-card" onClick={() => setPairs([...pairs, makePair()])}>
-                                <span className="add-icon">+</span>
-                                <span>Agregar Nuevo Par</span>
-                            </button>
+                                ))}
+                                <button className="cfg-pair-card cfg-pair-add" onClick={() => setPairs([...pairs, makePair()])}>
+                                    <span className="add-icon">+</span>
+                                    <span>Nuevo Par</span>
+                                </button>
+                            </div>
                         </>
                     ) : (
-                        <>
+                        <div className="cfg-items-list">
                             {questions.map((q, idx) => (
                                 <div key={q.id} className="cfg-item-card">
                                     <div className="cfg-item-header">
                                         <div className="cfg-item-number">
                                             <span className="num-badge">{idx + 1}</span>
-                                            Configuración de Pregunta
+                                            Pregunta {idx + 1}
                                         </div>
                                         <div className="cfg-item-status">
                                             {questions.length > 1 && <button className="cfg-btn-delete" onClick={() => removeQ(q.id)}>🗑️</button>}
                                         </div>
                                     </div>
 
-                                    {/* Question row */}
                                     <div className="cfg-row">
                                         <div className="cfg-field">
                                             <span className="cfg-field-label">
@@ -618,17 +624,17 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
                                             <WordSearchInput
                                                 words={words}
                                                 value={q.sw}
+                                                wordId={q.wordId}
                                                 placeholder="Buscar palabra base..."
                                                 onChangeText={t => updateQ(q.id, { sw: t, wordId: null })}
                                                 onSelectWord={w => updateQ(q.id, { sw: w.text, wordId: w.id })}
                                             />
                                         </div>
-                                        <div className="cfg-field" style={{ alignSelf: 'flex-start' }}>
-                                            {/* Empty right column for spacing */}
+                                        <div className="cfg-field">
+                                            <WordPreview wordId={q.wordId} />
                                         </div>
                                     </div>
 
-                                    {/* Answers */}
                                     <p className="cfg-answers-label">Configuración de Respuestas</p>
                                     <div className="cfg-answers-grid">
                                         {q.answers.map((ans, aIdx) => (
@@ -659,6 +665,7 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
                                                 <WordSearchInput
                                                     words={words}
                                                     value={ans.sw}
+                                                    wordId={ans.wordId}
                                                     placeholder="Palabra (opcional)..."
                                                     onChangeText={t => updateAnswer(q.id, ans.id, { sw: t, wordId: null })}
                                                     onSelectWord={w => updateAnswer(q.id, ans.id, { sw: w.text, wordId: w.id })}
@@ -677,10 +684,10 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
                                 <span className="add-icon">+</span>
                                 <span>Agregar Nueva Pregunta</span>
                             </button>
-                        </>
+                        </div>
                     )}
-                </div>
-            </main>
+                </main>
+            </div>
 
             {alertConfig && (
                 <CustomAlert
