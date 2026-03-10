@@ -89,6 +89,23 @@ const StudentActivities = () => {
                 { icon: 'lightbulb', label: 'Contexto' },
                 { icon: 'emoji_events', label: 'XP' }
             ]
+        },
+        {
+            id: 'memorama',
+            title: 'Memorama',
+            subtitle: 'Emparejar Pares',
+            description: 'Voltea las cartas y encuentra todas las parejas. Aprende vocabulario mazahua emparejando palabras con su significado en español o imágenes.',
+            icon: '🃏',
+            iconBg: 'bg-gradient-to-br from-rose-100 to-pink-100',
+            borderColor: 'border-rose-200',
+            accentColor: 'text-rose-600',
+            btnColor: 'bg-rose-500 hover:bg-rose-600',
+            path: '/games/memorama',
+            stats: [
+                { icon: 'style', label: 'Pares' },
+                { icon: 'psychology', label: 'Memoria' },
+                { icon: 'emoji_events', label: 'XP' }
+            ]
         }
     ];
 

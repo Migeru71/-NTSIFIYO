@@ -1,10 +1,10 @@
-// client/src/components/Games/Memorama/GameCard.js
+// client/src/components/Games/MemoriaRapida/MemoriaRapidaCard.js
 // Tarjeta deslizable para Memoria Rápida
 import React, { useRef, useState } from 'react';
 
 const SWIPE_THRESHOLD = 80; // px para aceptar como swipe
 
-function GameCard({ image, onSwipe, disabled }) {
+function MemoriaRapidaCard({ image, onSwipe, disabled }) {
     const cardRef = useRef(null);
     const [dragState, setDragState] = useState({ dragging: false, startX: 0, currentX: 0 });
 
@@ -73,7 +73,7 @@ function GameCard({ image, onSwipe, disabled }) {
         <div
             ref={cardRef}
             className={`mr-swipe-card mr-card-enter ${direction === 'right' ? 'swiping-right' :
-                    direction === 'left' ? 'swiping-left' : ''
+                direction === 'left' ? 'swiping-left' : ''
                 }`}
             style={cardStyle}
             onMouseDown={onMouseDown}
@@ -104,4 +104,4 @@ function GameCard({ image, onSwipe, disabled }) {
     );
 }
 
-export default GameCard;
+export default MemoriaRapidaCard;
