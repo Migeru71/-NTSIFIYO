@@ -4,8 +4,8 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
 import ConfigurationGameView from './components/Teacher/ConfigurationGameView';
-import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
-import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
+import MemoriaRapidaGameView from './components/Games/MemoriaRapida/MemoriaRapidaGameView';
+import MemoriaRapidaAccessPanel from './components/Games/MemoriaRapida/MemoriaRapidaAccessPanel';
 // Quiz imports
 import QuizAccessPanel from './components/Games/Quiz/QuizAccessPanel';
 import QuizGameView from './components/Games/Quiz/QuizGameView';
@@ -15,6 +15,18 @@ import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
 // Rompecabezas imports
 import RompecabezasAccessPanel from './components/Games/Rompecabezas/RompecabezasAccessPanel';
 import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGameView';
+
+// Memorama imports
+import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
+import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
+// Student Dashboard
+import StudentDashboard from './pages/StudentDashboard';
+import StudentActivities from './pages/StudentActivities';
+// Teacher Dashboard
+import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherResources from './pages/TeacherResources';
+import TeacherStudents from './pages/TeacherStudents';
+// Admin
 
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -144,11 +156,97 @@ function App() {
                             <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
                             <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
 
+
                             {/* Rompecabezas */}
                             <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
                             <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
                         </Route>
                     </Route>
+
+                    <Route
+                        path="/maestro/recursos/editar/:editId"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad actualizada:', activity);
+                                    window.location.href = '/maestro/recursos';
+                                }}
+                            />
+                        }
+                    />
+
+                    {/* ==========================================
+                        RUTAS DEL MEMORAMA
+                        ========================================== */}
+
+                    <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
+
+                    <Route
+                        path="/games/memorama/crear"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad creada:', activity);
+                                    window.location.href = `/games/memorama/jugar/${activity.id}`;
+                                }}
+                            />
+                        }
+                    />
+
+                    <Route
+                        path="/games/memorama/editar/:editId"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Actividad actualizada:', activity);
+                                    window.location.href = `/games/memorama`;
+                                }}
+                            />
+                        }
+                    />
+
+                    <Route
+                        path="/games/memorama/jugar/:activityId"
+                        element={<MemoramaGameView />}
+                    />
+
+                    {/* ==========================================
+                        RUTAS DEL QUIZ
+                        ========================================== */}
+
+                    <Route path="/games/quiz" element={<QuizAccessPanel />} />
+
+                    <Route
+                        path="/games/quiz/editar/:editId"
+                        element={
+                            <ConfigurationGameView
+                                onActivityCreated={(activity) => {
+                                    console.log('✅ Quiz actualizado:', activity);
+                                    window.location.href = `/games/quiz`;
+                                }}
+                            />
+                        }
+                    />
+
+                    <Route
+                        path="/games/quiz/jugar/:activityId"
+                        element={<QuizGameView />}
+                    />
+
+                    {/* ==========================================
+                        RUTAS DEL INTRUSO
+                        ========================================== */}
+
+                    <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
+                    <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
+
+                    {/* ==========================================
+                        RUTAS DEL ROMPECABEZAS
+                        ========================================== */}
+
+                    <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
+                    <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
+
                 </Routes>
             </div>
         </Router>

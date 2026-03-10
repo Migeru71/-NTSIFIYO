@@ -1,531 +1,323 @@
 // client/src/components/Games/Memorama/MemoramaGameView.js
-// Memoria Rápida — Juego de deslizar tarjetas (word ↔ image match)
+// Fase 2 — Juego: Tablero de cartas para emparejar (Memorama clásico)
+// POST /api/activities/start/game/{gameId} → wordIds + gameConfigs → construir pares de cartas
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { useGame } from '../../../context/GameContext';
-import ExperienceService from '../../../services/ExperienceService';
-import GameCard from './GameCard';
-import GameSummary from '../GameSummary';
-import GameAlert from '../GameAlert';
+import { useParams, useNavigate } from 'react-router-dom';
+import MemoramaService from '../../../services/MemoramaService';
+import mockMemorama, { mockWordDictionary } from '../../../data/mockMemorama';
+import MemoramaFinalView from './MemoramaFinalView';
 import './Memorama.css';
 
-// ─── CONFIGURACIÓN DEL JUEGO (modificar aquí) ──────────────────────────────
-const GAME_DURATION = 120;     // segundos de tiempo límite
-const BASE_SPEED = 9000;       // ms entre tarjetas en nivel 1
-const MIN_SPEED = 1200;        // ms mínimo (velocidad máxima)
-const SPEED_DECREASE = 150;    // ms que se resta por respuesta correcta
-const COUNTDOWN_SECONDS = 3;   // cuenta regresiva inicial
-const MATCH_PROBABILITY = 0.5; // probabilidad de mostrar un par correcto
-// ────────────────────────────────────────────────────────────────────────────
+// Construir cartas a partir de wordIds y gameConfigs
+function buildCards(wordIds, gameConfigs, wordDict) {
+    const cfg0 = gameConfigs[0] || { showText: true, showImage: false, isMazahua: true };
+    const cfg1 = gameConfigs[1] || { showText: true, showImage: false, isMazahua: false };
 
-const MemoramaGameView = ({ studentId = 'student_001' }) => {
-    const { activityId } = useParams();
-    const { currentGameData } = useGame();
-
-    const [activity, setActivity] = useState(null);
-    const [gameConfigs, setGameConfigs] = useState([{}, {}]);
-    const [gameState, setGameState] = useState('loading');
-    const [error, setError] = useState(null);
-
-    // Game state
-    const [currentCard, setCurrentCard] = useState(null);
-    const [score, setScore] = useState(0);
-    const [combo, setCombo] = useState(0);
-    const [maxCombo, setMaxCombo] = useState(0);
-    const [correctCount, setCorrectCount] = useState(0);
-    const [totalCards, setTotalCards] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
-    const [speed, setSpeed] = useState(BASE_SPEED);
-    const [feedback, setFeedback] = useState(null);
-    const [cardKey, setCardKey] = useState(0);
-    const [gameResult, setGameResult] = useState(null);
-    const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
-
-    // Pair tracking: which pairs have been correctly matched
-    const [matchedPairIds, setMatchedPairIds] = useState(new Set());
-    const [totalPairs, setTotalPairs] = useState(0);
-
-    // Summary data
-    const [responseLogs, setResponseLogs] = useState([]);
-    const [startDate, setStartDate] = useState(null);
-
-    // Round tracking: limit game to exactly N rounds (N = number of words)
-    const [roundsPlayed, setRoundsPlayed] = useState(0);
-
-    const pairsRef = useRef([]);
-    const remainingPairsRef = useRef([]);
-    const autoTimerRef = useRef(null);
-
-    const scoreRef = useRef(0);
-    const correctRef = useRef(0);
-    const totalRef = useRef(0);
-    const maxComboRef = useRef(0);
-    const gameStateRef = useRef('loading');
-    const roundsPlayedRef = useRef(0);
-
-    useEffect(() => { scoreRef.current = score; }, [score]);
-    useEffect(() => { correctRef.current = correctCount; }, [correctCount]);
-    useEffect(() => { totalRef.current = totalCards; }, [totalCards]);
-    useEffect(() => { maxComboRef.current = maxCombo; }, [maxCombo]);
-    useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
-    useEffect(() => { roundsPlayedRef.current = roundsPlayed; }, [roundsPlayed]);
-
-    // Load activity from GameContext
-    useEffect(() => {
-        if (!currentGameData) {
-            setError("No hay datos de la actividad. Regresa al panel para iniciar.");
-            setGameState('error');
-            return;
-        }
-
-        // Store gameConfigs sorted by order
-        if (currentGameData.gameConfigs && currentGameData.gameConfigs.length >= 2) {
-            const sorted = [...currentGameData.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-            setGameConfigs(sorted);
-        }
-
-        // Map words into pairs with full word data
-        const mappedPairs = (currentGameData.words || []).map((w, i) => ({
-            id: w.id || i,
-            mazahuaWord: w.mazahuaWord || '',
-            spanishWord: w.spanishWord || '',
-            imageUrl: w.imageUrl || '',
-            audioUrl: w.audioUrl || ''
-        }));
-
-        if (mappedPairs.length === 0) {
-            setError("La actividad no tiene palabras configuradas.");
-            setGameState('error');
-            return;
-        }
-
-        // Shuffle mappedPairs for the remaining array to randomize the order they appear
-        const shuffled = [...mappedPairs].sort(() => Math.random() - 0.5);
-
-        setActivity({ name: "Memoria Rápida", recommendedXP: 100 });
-        pairsRef.current = mappedPairs;
-        remainingPairsRef.current = shuffled;
-        setTotalPairs(mappedPairs.length);
-        setStartDate(new Date().toISOString());
-        setGameState('countdown');
-    }, [currentGameData]);
-
-    // Countdown
-    useEffect(() => {
-        if (gameState !== 'countdown') return;
-        if (countdown <= 0) {
-            setGameState('playing');
-            generateNextCard();
-            return;
-        }
-        const t = setTimeout(() => setCountdown(prev => prev - 1), 1000);
-        return () => clearTimeout(t);
-    }, [gameState, countdown]);
-
-    // Main timer
-    useEffect(() => {
-        if (gameState !== 'playing') return;
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    setTimeout(() => handleGameOver(), 0);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [gameState]);
-
-    // Auto-skip card
-    useEffect(() => {
-        if (gameState !== 'playing' || !currentCard) return;
-        clearTimeout(autoTimerRef.current);
-        autoTimerRef.current = setTimeout(() => {
-            processAnswer(false);
-        }, speed);
-        return () => clearTimeout(autoTimerRef.current);
-    }, [currentCard, gameState, speed]);
-
-    // Helper: get display text based on config
-    const getWordText = (word, config) => {
-        if (!config.showText) return null;
-        return config.isMazahua ? word.mazahuaWord : word.spanishWord;
-    };
-
-    // Helper: play audio
-    const playAudio = (audioUrl) => {
-        if (audioUrl) {
-            const audio = new Audio(audioUrl);
-            audio.play().catch(() => { });
-        }
-    };
-
-    // Generate the next card using pairs logic
-    const generateNextCard = useCallback(() => {
-        const remaining = remainingPairsRef.current;
-        if (!remaining || remaining.length === 0) return;
-
-        // Pick the next pair from remaining array as the stimulus (top display)
-        const currentStimulus = remaining.shift(); // remove from remaining
-        const shouldMatch = Math.random() < MATCH_PROBABILITY;
-
-        let stimulusWord, responseWord, matches;
-
-        if (shouldMatch) {
-            // Show matching pair
-            stimulusWord = currentStimulus;
-            responseWord = currentStimulus;
-            matches = true;
-        } else {
-            // Show mismatched pair
-            let otherPair;
-            const allPairs = pairsRef.current;
-            do {
-                otherPair = allPairs[Math.floor(Math.random() * allPairs.length)];
-            } while (otherPair.id === currentStimulus.id && allPairs.length > 1);
-
-            stimulusWord = currentStimulus;
-            responseWord = otherPair;
-            matches = false;
-        }
-
-        setCurrentCard({ stimulusWord, responseWord, matches, pairId: currentStimulus.id });
-        setCardKey(prev => prev + 1);
-    }, []);
-
-    const processAnswer = useCallback((userSaysMatch) => {
-        if (!currentCard || gameStateRef.current !== 'playing') return;
-
-        clearTimeout(autoTimerRef.current);
-        const isCorrect = userSaysMatch === currentCard.matches;
-
-        setTotalCards(prev => prev + 1);
-        setRoundsPlayed(prev => prev + 1);
-
-        const config1 = gameConfigs[0] || {};
-        const config2 = gameConfigs[1] || {};
-
-        const logEntry = {
-            questionId: currentCard.stimulusWord.id,
-            answerId: currentCard.responseWord.id,
-            isCorrect: isCorrect,
-            isMemorama: true,
-            userSaidMatch: userSaysMatch,
-            actuallyMatched: currentCard.matches,
-            questionText: getWordText(currentCard.stimulusWord, config1),
-            questionImage: config1.showImage ? currentCard.stimulusWord.imageUrl : null,
-            questionAudio: config1.playAudio ? currentCard.stimulusWord.audioUrl : null,
-            correctText: getWordText(currentCard.responseWord, config2),
-            correctImage: config2.showImage ? currentCard.responseWord.imageUrl : null,
-            correctAudio: config2.playAudio ? currentCard.responseWord.audioUrl : null,
+    const cards = [];
+    wordIds.forEach((wordId) => {
+        const word = wordDict[wordId] || {
+            id: wordId, mazahua: `Palabra ${wordId}`, spanish: `Word ${wordId}`, emoji: '❓'
         };
 
-        setResponseLogs(prev => [...prev, logEntry]);
+        // Carta A — lado Mazahua / texto principal (cfg0)
+        cards.push({
+            uid: `${wordId}-A`,
+            wordId,
+            type: 'A',
+            showText: cfg0.showText,
+            showImage: cfg0.showImage,
+            isMazahua: cfg0.isMazahua,
+            text: cfg0.isMazahua ? word.mazahua : word.spanish,
+            emoji: cfg0.showImage ? word.emoji : null,
+        });
 
-        if (isCorrect) {
-            const comboMultiplier = Math.min(1 + combo * 0.1, 3);
-            const pointsEarned = Math.round(100 * comboMultiplier);
-            setScore(prev => prev + pointsEarned);
-            setCombo(prev => {
-                const newCombo = prev + 1;
-                setMaxCombo(mc => Math.max(mc, newCombo));
-                return newCombo;
-            });
-            setCorrectCount(prev => prev + 1);
-            setSpeed(prev => Math.max(MIN_SPEED, prev - SPEED_DECREASE));
-            setFeedback({ type: 'correct', title: '¡Correcto!' });
+        // Carta B — lado Español / imagen (cfg1)
+        cards.push({
+            uid: `${wordId}-B`,
+            wordId,
+            type: 'B',
+            showText: cfg1.showText,
+            showImage: cfg1.showImage,
+            isMazahua: cfg1.isMazahua,
+            text: cfg1.isMazahua ? word.mazahua : word.spanish,
+            emoji: cfg1.showImage ? word.emoji : null,
+        });
+    });
 
-            // If user correctly identified a match, mark this pair as done
-            if (currentCard.matches) {
-                setMatchedPairIds(prev => {
-                    const updated = new Set(prev);
-                    updated.add(currentCard.pairId);
-                    return updated;
-                });
+    // Barajar
+    return cards.sort(() => Math.random() - 0.5);
+}
+
+const MemoramaGameView = () => {
+    const { activityId } = useParams();
+    const navigate = useNavigate();
+
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
+    const [activityTitle, setActivityTitle] = useState('Memorama');
+    const [activityXP, setActivityXP] = useState(100);
+
+    // Estado del tablero
+    const [cards, setCards] = useState([]);
+    const [flippedUids, setFlippedUids] = useState([]); // máx 2 uids seleccionados
+    const [matchedWordIds, setMatchedWordIds] = useState(new Set());
+    const [wrongUids, setWrongUids] = useState([]);     // animación de error
+    const [lockBoard, setLockBoard] = useState(false);  // bloquear clics durante verificación
+    const [attempts, setAttempts] = useState(0);        // cuántos pares se intentaron
+    const [feedback, setFeedback] = useState(null);     // 'correct' | 'incorrect' | null
+
+    const [gameState, setGameState] = useState('loading'); // loading | playing | finished | error
+    const [elapsed, setElapsed] = useState(0);
+    const timerRef = useRef(null);
+    const feedbackTimeout = useRef(null);
+
+    const totalPairs = cards.length / 2;
+
+    // ─── Cargar juego ────────────────────────────────────────────────────────
+    useEffect(() => {
+        initGame();
+        return () => {
+            clearInterval(timerRef.current);
+            clearTimeout(feedbackTimeout.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activityId]);
+
+    async function initGame() {
+        setLoading(true);
+        setLoadError(null);
+
+        const gameId = parseInt(activityId);
+        const result = await MemoramaService.startGame(gameId);
+
+        if (result.success && result.data?.wordIds?.length) {
+            loadFromApiData(result.data);
+        } else {
+            const fallback = mockMemorama.find(a => a.id === gameId) || mockMemorama[0];
+            if (fallback) {
+                loadFromMockData(fallback);
+            } else {
+                setLoadError('No se encontró la actividad.');
+                setGameState('error');
             }
-        } else {
-            setCombo(0);
-            setFeedback({ type: 'incorrect', title: '¡Fallaste!' });
         }
+        setLoading(false);
+    }
 
-        // Check if all rounds have been played (N rounds = N words)
-        const nextRound = roundsPlayedRef.current + 1;
-        if (nextRound >= pairsRef.current.length) {
-            setTimeout(() => handleGameOver(), 500);
+    function loadFromApiData(data) {
+        const built = buildCards(data.wordIds, data.gameConfigs || [], mockWordDictionary);
+        setCards(built);
+        setActivityXP(data.experience || 100);
+        setGameState('playing');
+    }
+
+    function loadFromMockData(activity) {
+        const built = buildCards(activity.wordIds, activity.gameConfigs || [], mockWordDictionary);
+        setCards(built);
+        setActivityTitle(activity.title || activity.name || 'Memorama');
+        setActivityXP(activity.experience || activity.recommendedXP || 100);
+        setGameState('playing');
+    }
+
+    // ─── Cronómetro ─────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (gameState === 'playing') {
+            timerRef.current = setInterval(() => setElapsed(p => p + 1), 1000);
         } else {
-            setTimeout(() => generateNextCard(), 350);
+            clearInterval(timerRef.current);
         }
-    }, [currentCard, combo, generateNextCard]);
+        return () => clearInterval(timerRef.current);
+    }, [gameState]);
 
-    // (Round-based end condition is now handled in processAnswer)
+    const formatTime = (s) =>
+        `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-    const handleSwipe = useCallback((direction) => {
-        processAnswer(direction === 'right');
-    }, [processAnswer]);
+    // ─── Seleccionar carta ───────────────────────────────────────────────────
+    const handleCardClick = useCallback((uid, wordId) => {
+        if (lockBoard) return;
+        if (matchedWordIds.has(wordId)) return;          // ya emparejada
+        if (flippedUids.includes(uid)) return;           // ya seleccionada
+        if (flippedUids.length === 2) return;            // ya hay 2 seleccionadas
 
-    const handleCorrectBtn = () => processAnswer(true);
-    const handleIncorrectBtn = () => processAnswer(false);
+        const newFlipped = [...flippedUids, uid];
+        setFlippedUids(newFlipped);
 
-    const handleGameOver = async () => {
-        if (gameStateRef.current === 'completed') return;
-        setGameState('completed');
-        clearTimeout(autoTimerRef.current);
+        if (newFlipped.length === 2) {
+            // Buscar wordIds de las dos cartas
+            const [uid1, uid2] = newFlipped;
+            const wid1 = uid1.split('-')[0];
+            const wid2 = uid2.split('-')[0];
+
+            setAttempts(p => p + 1);
+            setLockBoard(true);
+
+            if (wid1 === wid2) {
+                // ¡Par! Marcar como emparejadas
+                setTimeout(() => {
+                    setMatchedWordIds(prev => {
+                        const next = new Set(prev);
+                        next.add(parseInt(wid1));
+                        return next;
+                    });
+                    setFlippedUids([]);
+                    setFeedback('correct');
+                    feedbackTimeout.current = setTimeout(() => setFeedback(null), 800);
+                    setLockBoard(false);
+                }, 300);
+            } else {
+                // No coincide — voltear de vuelta
+                setWrongUids(newFlipped);
+                setFeedback('incorrect');
+                setTimeout(() => {
+                    setFlippedUids([]);
+                    setWrongUids([]);
+                    setFeedback(null);
+                    setLockBoard(false);
+                }, 900);
+            }
+        }
+    }, [lockBoard, matchedWordIds, flippedUids]);
+
+    // ─── Fin del juego ───────────────────────────────────────────────────────
+    useEffect(() => {
+        if (gameState === 'playing' && totalPairs > 0 && matchedWordIds.size === totalPairs) {
+            clearInterval(timerRef.current);
+            // Pequeño delay para ver la última carta
+            setTimeout(() => setGameState('finished'), 700);
+        }
+    }, [matchedWordIds, totalPairs, gameState]);
+
+    // ─── Determinar columnas del grid ────────────────────────────────────────
+    const boardCols = () => {
+        if (cards.length <= 8) return 'cols-4';
+        return 'cols-8';
+
     };
 
-    const togglePause = () => {
-        setGameState(prev => prev === 'paused' ? 'playing' : 'paused');
-    };
+    // ─── Render: Loading ──────────────────────────────────────────────────────
+    if (loading) return (
+        <div className="game-loading-container">
+            <div className="spinner" />
+            <p style={{ color: '#1E3A8A', fontFamily: 'Poppins, sans-serif', marginTop: '1rem' }}>
+                Preparando el memorama...
+            </p>
+        </div>
+    );
 
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // --- RENDERIZADO ---
-
-    if (gameState === 'error') {
-        return (
-            <div className="game-error-container">
-                <div className="error-box">
-                    <h2>❌ Error</h2>
-                    <p>{error}</p>
-                    <button className="btn btn-secondary" onClick={() => window.history.back()}>
-                        Volver Atrás
-                    </button>
-                </div>
+    if (gameState === 'error') return (
+        <div className="game-error-container">
+            <div style={{
+                background: 'white', padding: '2rem', borderRadius: '16px', textAlign: 'center',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)', maxWidth: '380px'
+            }}>
+                <p style={{ fontSize: '48px', marginBottom: '1rem' }}>😕</p>
+                <h2 style={{ color: '#E65100', fontFamily: 'Poppins, sans-serif' }}>Actividad no encontrada</h2>
+                <p style={{ color: '#374151', margin: '0.5rem 0 1.5rem' }}>{loadError}</p>
+                <button onClick={() => navigate('/games/memorama')} style={{
+                    background: '#1E3A8A', color: 'white', padding: '0.75rem 1.5rem',
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    fontFamily: 'Poppins, sans-serif', fontWeight: '600'
+                }}>Volver</button>
             </div>
-        );
-    }
+        </div>
+    );
 
-    if (gameState === 'loading' || !activity) {
-        return (
-            <div className="game-loading-container">
-                <div className="spinner" />
-                <p>Cargando actividad...</p>
-            </div>
-        );
-    }
+    if (gameState === 'finished') return (
+        <MemoramaFinalView
+            totalPairs={totalPairs}
+            matchedPairs={matchedWordIds.size}
+            attempts={attempts}
+            elapsed={elapsed}
+            experience={activityXP}
+            onRetry={() => window.location.reload()}
+            onExit={() => navigate('/games/memorama')}
+        />
+    );
 
-    if (gameState === 'completed') {
-        const urlParams = new URLSearchParams(window.location.search);
-        const gameIdParam = urlParams.get('gameId');
 
-        return (
-            <GameSummary
-                activityId={activityId}
-                gameId={gameIdParam || 1}
-                startDate={startDate}
-                correctAnswers={correctCount}
-                totalQuestions={totalPairs}
-                responseLogs={responseLogs}
-                onExit={() => window.history.back()}
-                onRetry={() => window.location.reload()}
-            />
-        );
-    }
-
-    if (gameState === 'countdown') {
-        return (
-            <div className="memoria-rapida-container" style={{ justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '1rem' }}>
-                        {activity.name}
-                    </p>
-                    <div style={{
-                        width: '120px', height: '120px', borderRadius: '50%',
-                        background: 'white', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', margin: '0 auto 1.5rem',
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
-                        animation: 'comboPop 0.5s ease'
-                    }}>
-                        <span style={{ fontSize: '56px', fontWeight: '800', color: '#1e293b' }}>
-                            {countdown || '🚀'}
-                        </span>
-                    </div>
-                    <p style={{ fontSize: '18px', fontWeight: '700', color: '#374151' }}>
-                        ¡Prepárate!
-                    </p>
-                    <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '0.5rem' }}>
-                        Desliza ➡️ si coincide, ⬅️ si no
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (gameState === 'paused') {
-        return (
-            <div className="memoria-rapida-container" style={{ justifyContent: 'center' }}>
-                <div style={{
-                    background: 'white', borderRadius: '24px', padding: '2.5rem',
-                    textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                    maxWidth: '360px', width: '100%'
-                }}>
-                    <span style={{ fontSize: '48px', display: 'block', marginBottom: '1rem' }}>⏸️</span>
-                    <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b', marginBottom: '0.5rem' }}>
-                        Juego Pausado
-                    </h2>
-                    <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
-                        Puntaje actual: <strong>{score.toLocaleString()}</strong>
-                    </p>
-                    <button
-                        onClick={togglePause}
-                        style={{
-                            background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                            color: 'white', border: 'none', borderRadius: '14px',
-                            padding: '14px 2rem', fontSize: '16px', fontWeight: '700',
-                            cursor: 'pointer', width: '100%', marginBottom: '0.75rem'
-                        }}
-                    >
-                        ▶️ Continuar
-                    </button>
-                    <button
-                        onClick={() => window.history.back()}
-                        style={{
-                            background: 'transparent', color: '#ef4444', border: '2px solid #ef4444',
-                            borderRadius: '14px', padding: '12px 2rem', fontSize: '14px',
-                            fontWeight: '700', cursor: 'pointer', width: '100%'
-                        }}
-                    >
-                        Salir del Juego
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // PLAYING state — config1 = stimulus (word display top), config2 = response (card bottom)
-    const config1 = gameConfigs[0] || {};
-    const config2 = gameConfigs[1] || {};
+    const progressPercent = totalPairs > 0
+        ? (matchedWordIds.size / totalPairs) * 100 : 0;
 
     return (
-        <div className="memoria-rapida-container">
-            {/* Top Bar */}
-            <div className="mr-top-bar">
-                <button className="mr-pause-btn" onClick={togglePause}>⏸</button>
-
-                {combo >= 2 && (
-                    <div className="mr-combo-badge">
-                        {combo}x COMBO
-                    </div>
-                )}
-
-                <div className="mr-score-area">
-                    <div className="mr-score-label">Puntaje</div>
-                    <div className="mr-score-value">{score.toLocaleString()}</div>
-                </div>
+        <div className="mem-container">
+            {/* Barra superior */}
+            <div className="mem-top-bar">
+                <button className="mem-back-btn" onClick={() => navigate('/games/memorama')} title="Salir">‹</button>
+                <span className="mem-title">{activityTitle}</span>
+                <div className="mem-timer-badge">⏱ {formatTime(elapsed)}</div>
             </div>
 
-            {/* Timer + Progress */}
-            <div className="mr-timer-row">
-                <div className="mr-timer-dot" />
-                <span className="mr-timer-text">{formatTime(timeLeft)}</span>
-                <div className="mr-timer-bar">
-                    <div
-                        className="mr-timer-fill"
-                        style={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
-                    />
+
+            {/* Barra de progreso */}
+            <div className="mem-progress-row">
+                <div className="mem-progress-bar-bg">
+                    <div className="mem-progress-fill" style={{ width: `${progressPercent}%` }} />
                 </div>
-                <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px', whiteSpace: 'nowrap' }}>
-                    {roundsPlayed}/{totalPairs}
+                <span className="mem-progress-label">
+                    {matchedWordIds.size}/{totalPairs} pares
                 </span>
             </div>
 
-            {/* Stimulus Display (config1) — top area showing the word/image/audio */}
-            <div className="mr-word-display">
-                {config1.playAudio && currentCard?.stimulusWord?.audioUrl && (
-                    <button className="mr-audio-btn" title="Escuchar pronunciación"
-                        onClick={() => playAudio(currentCard.stimulusWord.audioUrl)}>
-                        🔊
-                    </button>
-                )}
-                {config1.showText && currentCard && (
-                    <span className="mr-word-text">
-                        {getWordText(currentCard.stimulusWord, config1) || '...'}
-                    </span>
-                )}
-                {config1.showImage && currentCard?.stimulusWord?.imageUrl && (
-                    <img
-                        src={currentCard.stimulusWord.imageUrl}
-                        alt="Estímulo"
-                        style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', marginLeft: '12px' }}
-                    />
-                )}
-            </div>
+            {/* Tablero */}
+            <div className={`mem-board ${boardCols()}`}>
+                {cards.map(card => {
+                    const isFlipped = flippedUids.includes(card.uid);
+                    const isMatched = matchedWordIds.has(card.wordId);
+                    const isWrong = wrongUids.includes(card.uid);
+                    const isSelected = isFlipped && !isMatched && !isWrong;
 
-            {/* Response Card (config2) — swipeable area */}
-            <div className="mr-card-area">
-                {currentCard && (
-                    <>
-                        {config2.showImage && currentCard.responseWord.imageUrl ? (
-                            <GameCard
-                                key={cardKey}
-                                image={currentCard.responseWord.imageUrl}
-                                onSwipe={handleSwipe}
-                                disabled={gameState !== 'playing'}
-                            />
-                        ) : (
-                            <div
-                                key={cardKey}
-                                className="mr-swipe-card mr-card-enter"
-                                style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    flexDirection: 'column', gap: '12px', minHeight: '200px',
-                                    background: 'white', borderRadius: '20px',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)', padding: '2rem'
-                                }}
-                            >
-                                {config2.showText && (
-                                    <span style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
-                                        {getWordText(currentCard.responseWord, config2)}
-                                    </span>
-                                )}
-                                {config2.playAudio && currentCard.responseWord.audioUrl && (
-                                    <button
-                                        onClick={() => playAudio(currentCard.responseWord.audioUrl)}
-                                        style={{ fontSize: '32px', background: 'none', border: 'none', cursor: 'pointer' }}
-                                    >🔊</button>
-                                )}
+
+                    return (
+                        <div
+                            key={card.uid}
+                            className={[
+                                'mem-card',
+                                isFlipped || isMatched ? 'flipped' : '',
+                                isMatched ? 'matched' : '',
+                                isSelected ? 'selected' : '',
+                                isWrong ? 'wrong' : '',
+                            ].join(' ')}
+                            onClick={() => handleCardClick(card.uid, card.wordId)}
+                        >
+                            <div className="mem-card-inner">
+                                {/* Dorso */}
+                                <div className="mem-card-front">
+                                    <span className="mem-card-front-icon">?</span>
+                                </div>
+                                {/* Frente */}
+                                <div className="mem-card-back">
+                                    {card.emoji && (
+                                        <span className="mem-card-emoji">{card.emoji}</span>
+                                    )}
+                                    {card.showText && card.text && (
+                                        <span className={`mem-card-text ${card.isMazahua ? 'mazahua' : ''}`}>
+                                            {card.text}
+                                        </span>
+                                    )}
+                                    {/* Si showImage pero no hay emoji (en producción habría URL) */}
+                                    {card.showImage && !card.emoji && (
+                                        <span style={{ fontSize: '28px' }}>🖼️</span>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </>
-                )}
-
-                {/* Speed indicator */}
-                <div className="mr-speed-indicator">
-                    ⚡ {Math.round((1 - (speed - MIN_SPEED) / (BASE_SPEED - MIN_SPEED)) * 100)}%
-                </div>
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* Action Buttons */}
-            <div className="mr-action-buttons">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <button className="mr-btn-incorrect" onClick={handleIncorrectBtn}>
-                        ✕
-                    </button>
-                    <span className="mr-btn-label incorrect">Incorrecto</span>
+            {/* Instrucción */}
+            <p className="mem-instruction">
+                ¡Encuentra las parejas de cartas! — Intentos: {attempts}
+            </p>
+
+
+            {/* Feedback flash */}
+            {feedback && (
+                <div className={`mem-feedback-banner ${feedback}`}>
+                    {feedback === 'correct' ? '¡Par encontrado! 🎉' : 'Inténtalo de nuevo 😅'}
                 </div>
+            )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <button className="mr-btn-correct" onClick={handleCorrectBtn}>
-                        ✓
-                    </button>
-                    <span className="mr-btn-label correct">Correcto</span>
-                </div>
-            </div>
-
-            {/* Mode label */}
-            <div className="mr-mode-label">Modo Ritmo Rápido</div>
-
-            {/* Feedback Alert */}
-            <GameAlert
-                isOpen={!!feedback}
-                type={feedback?.type}
-                autoCloseDuration={600}
-                onClose={() => setFeedback(null)}
-            />
         </div>
     );
 };

@@ -1,4 +1,5 @@
 // client/src/components/Games/Memorama/MemoramaAccessPanel.js
+
 import React from 'react';
 import GameAccessPanel from '../GameAccessPanel';
 import ActivityTypes from '../../../utils/activityTypes'
@@ -14,6 +15,7 @@ function MemoramaAccessPanel() {
             cardIcon="🎴"
             tipStudent="Desliza rápido y acumula combos para ganar más XP"
         />
+
     );
 }
 
