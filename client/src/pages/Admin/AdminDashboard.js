@@ -7,6 +7,7 @@ import StudentsSection from './sections/StudentsSection';
 import GroupsSection from './sections/GroupsSection';
 import WordsSection from './sections/WordsSection';
 import { useAuth } from '../../context/AuthContext';
+import Breadcrumb from '../../components/common/Breadcrumb';
 
 const AdminDashboard = () => {
     const location = useLocation();
@@ -43,17 +44,15 @@ const AdminDashboard = () => {
         <div className="min-h-screen bg-gray-50 flex">
             <SideBar role={Roles.ADMIN} userName={user.firstname} />
             <main className="flex-1 ml-4 p-8 min-h-screen">
-                <nav className="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                    <Link to="/admin/dashboard" className="hover:text-primary transition-colors font-medium">Admin Panel</Link>
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                    <span className="text-gray-800 font-bold capitalize">{sectionName}</span>
+                <div className="flex items-center justify-between mb-6">
+                    <Breadcrumb />
                     <div className="ml-auto">
                         <Link to="/" className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-1">
                             <span className="material-symbols-outlined text-[18px]">logout</span>
                             Cerrar Sesión / Salir
                         </Link>
                     </div>
-                </nav>
+                </div>
 
                 {renderSection()}
             </main>

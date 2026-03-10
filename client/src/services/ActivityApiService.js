@@ -344,6 +344,28 @@ class ActivityApiService {
             };
         }
     }
+
+    /**
+     * Obtener los datos del panel principal del maestro
+     * GET /api/dashboard/teacher/{groupId}
+     * @param {number} groupId - ID del grupo (grade)
+     * @returns {Promise<Object>} - Dashboard general data
+     */
+    async getTeacherDashboard(groupId) {
+        try {
+            const response = await apiConfig.get(`/api/dashboard/teacher/${groupId}`);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: null
+            };
+        }
+    }
 }
 
 export default new ActivityApiService();
