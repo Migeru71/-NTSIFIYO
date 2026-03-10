@@ -6,7 +6,7 @@ import ActivityTypes from '../../../utils/activityTypes'
 function IntrusoAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.intruder}
+            gameType={ActivityTypes.intruder.value}
             icon="🕵️"
             title="Encuentra al Intruso"
             subtitle="Selecciona la palabra que no pertenece al grupo"

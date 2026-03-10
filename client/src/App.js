@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
@@ -23,10 +23,12 @@ import StudentAssignments from './pages/StudentAssignments';
 import TeacherStudents from './pages/TeacherStudents';
 import TeacherAssignments from './pages/TeacherAssignments';
 import TeacherResources from './pages/TeacherResources';
+import TeacherContent from './pages/TeacherContent';
 import DictionaryPage from './pages/DictionaryPage';
 import apiConfig from './services/apiConfig';
 
 import { useAuth } from './context/AuthContext';
+import { StudentsProvider } from './context/StudentsContext';
 import MainLayout from './components/Layout/MainLayout';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
@@ -91,26 +93,21 @@ function App() {
 
                         {/* Teacher Routes */}
                         <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} />}>
-                            <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
-                            <Route path="/maestro/asignaciones" element={<TeacherAssignments />} />
-                            <Route path="/maestro/recursos" element={<TeacherResources />} />
-                            <Route path="/maestro/diccionario" element={<DictionaryPage />} />
+                            <Route element={<StudentsProvider><Outlet /></StudentsProvider>}>
+                                <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
+                                <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
+                                <Route path="/maestro/asignaciones" element={<TeacherAssignments />} />
+                                <Route path="/maestro/recursos" element={<TeacherResources />} />
+                                <Route path="/maestro/contenido" element={<TeacherContent />} />
+                                <Route path="/maestro/diccionario" element={<DictionaryPage />} />
 
-                            <Route path="/maestro/recursos/crear" element={
-                                <ConfigurationGameView
-                                    onActivityCreated={(activity) => {
-                                        window.location.href = '/maestro/recursos';
-                                    }}
-                                />
-                            } />
-                            <Route path="/maestro/recursos/editar/:editId" element={
-                                <ConfigurationGameView
-                                    onActivityCreated={(activity) => {
-                                        window.location.href = '/maestro/recursos';
-                                    }}
-                                />
-                            } />
+                                <Route path="/maestro/recursos/crear" element={
+                                    <ConfigurationGameView redirectPath="/maestro/recursos" />
+                                } />
+                                <Route path="/maestro/recursos/editar/:editId" element={
+                                    <ConfigurationGameView redirectPath="/maestro/recursos" />
+                                } />
+                            </Route>
                         </Route>
 
                         {/* Student Routes */}
@@ -127,10 +124,10 @@ function App() {
                             {/* Memorama */}
                             <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
                             <Route path="/games/memorama/crear" element={
-                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/memorama/jugar/${activity.id}`} />
+                                <ConfigurationGameView redirectPath="/games/memorama/jugar/{id}" />
                             } />
                             <Route path="/games/memorama/editar/:editId" element={
-                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/memorama`} />
+                                <ConfigurationGameView redirectPath="/games/memorama" />
                             } />
                             <Route path="/games/memorama/jugar/:activityId" element={
                                 <MemoramaGameView studentId={localStorage.getItem('app_user') ? JSON.parse(localStorage.getItem('app_user')).id : 'student_001'} />
@@ -139,7 +136,7 @@ function App() {
                             {/* Quiz */}
                             <Route path="/games/quiz" element={<QuizAccessPanel />} />
                             <Route path="/games/quiz/editar/:editId" element={
-                                <ConfigurationGameView onActivityCreated={(activity) => window.location.href = `/games/quiz`} />
+                                <ConfigurationGameView redirectPath="/games/quiz" />
                             } />
                             <Route path="/games/quiz/jugar/:activityId" element={<QuizGameView />} />
 

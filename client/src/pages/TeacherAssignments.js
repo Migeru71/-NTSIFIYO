@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 import ActivityApiService from '../services/ActivityApiService';
 import apiConfig from '../services/apiConfig';
+import { useStudents } from '../context/StudentsContext';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 // ── Helpers ──
 
@@ -154,9 +156,8 @@ const TeacherAssignments = () => {
     const [expandedId, setExpandedId] = useState(null);
     const [groupId, setGroupId] = useState(null);
 
-    // Student list (fetched once, shared across all expanded activities)
-    const [students, setStudents] = useState([]);
-    const [studentsLoaded, setStudentsLoaded] = useState(false);
+    // Student list from shared context (cached across teacher views)
+    const { students, fetchStudents: loadStudents } = useStudents();
 
     // Step 1: Discover the teacher's groupId from their instances
     const resolveGroupId = useCallback(async () => {
@@ -207,22 +208,8 @@ const TeacherAssignments = () => {
         }
     }, [groupId, resolveGroupId]);
 
-    const loadStudents = useCallback(async () => {
-        if (studentsLoaded) return;
-        try {
-            const response = await fetch(`${apiConfig.baseUrl}/api/groups/students`, {
-                headers: apiConfig.getHeaders()
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setStudents(data.students || []);
-            }
-        } catch (err) {
-            console.error('Error fetching students:', err);
-        } finally {
-            setStudentsLoaded(true);
-        }
-    }, [studentsLoaded]);
+    // loadStudents is now provided by useStudents() (aliased from fetchStudents)
+    // It will only fetch from the backend if students haven't been loaded yet
 
     useEffect(() => {
         loadAssignments();
@@ -242,13 +229,7 @@ const TeacherAssignments = () => {
                 <div className="max-w-5xl mx-auto p-8">
 
                     {/* Breadcrumb */}
-                    <nav className="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                        <Link to="/maestro/dashboard" className="hover:text-primary transition-colors font-medium">
-                            Panel del Maestro
-                        </Link>
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                        <span className="text-gray-800 font-bold">Asignaciones</span>
-                    </nav>
+                    <Breadcrumb />
 
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

@@ -4,9 +4,11 @@ import WordsGrid from './WordsGrid';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
 import { useAlert } from '../../context/AlertContext';
+import { useBreadcrumb } from '../../context/BreadcrumbContext';
 
 const DictionaryBrowser = ({ isAdmin = false }) => {
     const { showAlert } = useAlert();
+    const { updateBreadcrumbs } = useBreadcrumb();
 
     // Categories state
     const [dictionaryCategories, setDictionaryCategories] = useState([]);
@@ -31,6 +33,20 @@ const DictionaryBrowser = ({ isAdmin = false }) => {
     useEffect(() => {
         fetchDictionaryCategories();
     }, []);
+
+    useEffect(() => {
+        if (selectedCategory) {
+            updateBreadcrumbs([
+                {
+                    label: isAdmin ? 'Palabras' : 'Diccionario',
+                    onClick: () => setSelectedCategory(null)
+                },
+                { label: selectedCategory }
+            ]);
+        } else {
+            updateBreadcrumbs([]);
+        }
+    }, [selectedCategory, updateBreadcrumbs, isAdmin]);
 
     const fetchDictionaryCategories = async () => {
         setIsLoadingCategories(true);

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SideBar from '../components/Dashboard/SideBar';
 import Roles from '../utils/roles';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 /**
  * Dashboard principal del maestro
@@ -207,11 +208,7 @@ const TeacherDashboard = () => {
             <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
                     {/* Breadcrumbs */}
-                    <nav className="text-sm text-gray-500 mb-4">
-                        <Link to="/" className="hover:text-gray-700">Inicio</Link>
-                        <span className="mx-2">›</span>
-                        <span className="text-gray-700">Panel de Control</span>
-                    </nav>
+                    <Breadcrumb />
 
                     {/* Header */}
                     <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

@@ -6,6 +6,7 @@ import LearningActivities from '../components/Dashboard/LearningActivities';
 import DailyWisdom from '../components/Dashboard/DailyWisdom';
 import TopLearners from '../components/Dashboard/TopLearners';
 import Roles from '../utils/roles';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 /**
  * Dashboard principal del estudiante
@@ -28,6 +29,7 @@ const StudentDashboard = () => {
         <div className="w-full flex-1 relative">
             <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
+                    <Breadcrumb />
                     {/* Welcome Header */}
                     <header className="mb-8">
                         <h1 className="text-4xl font-bold text-gray-800">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Roles from '../utils/roles';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 /**
  * Página de actividades de aprendizaje
@@ -92,9 +93,10 @@ const StudentActivities = () => {
     ];
 
     return (
-        <div className="w-full flex-1 relative">
+        <div className="w-full flex-1 relative min-h-screen">
             <div className="w-full">
-                <div className="max-w-4xl mx-auto p-8">
+                <div className="max-w-6xl mx-auto p-8">
+                    <Breadcrumb />
                     {/* Header */}
                     <header className="mb-10">
                         <h1 className="text-3xl font-bold text-gray-800">Actividades de Aprendizaje</h1>
@@ -102,15 +104,15 @@ const StudentActivities = () => {
                     </header>
 
                     {/* Game Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {games.map((game) => (
                             <Link
                                 key={game.id}
                                 to={game.path}
-                                className={`group block bg-white rounded-2xl border ${game.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden`}
+                                className={`group bg-white rounded-2xl border ${game.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full`}
                             >
                                 {/* Icon Header */}
-                                <div className={`${game.iconBg} p-8 flex flex-col items-center justify-center`}>
+                                <div className={`${game.iconBg} p-8 flex flex-col items-center justify-center shrink-0`}>
                                     <span className="text-7xl mb-3 group-hover:scale-110 transition-transform duration-300">
                                         {game.icon}
                                     </span>
@@ -119,13 +121,13 @@ const StudentActivities = () => {
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-6">
-                                    <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <p className="text-sm text-gray-600 mb-5 leading-relaxed grow">
                                         {game.description}
                                     </p>
 
                                     {/* Stats */}
-                                    <div className="flex items-center justify-around mb-5 py-3 bg-gray-50 rounded-xl">
+                                    <div className="flex items-center justify-around mb-5 py-3 bg-gray-50 rounded-xl shrink-0">
                                         {game.stats.map((stat, idx) => (
                                             <div key={idx} className="flex flex-col items-center gap-1">
                                                 <span className={`material-symbols-outlined text-lg ${game.accentColor}`}>
@@ -137,7 +139,7 @@ const StudentActivities = () => {
                                     </div>
 
                                     {/* CTA */}
-                                    <div className={`w-full py-3 text-center text-white font-semibold rounded-xl ${game.btnColor} transition-colors`}>
+                                    <div className={`w-full py-3 text-center text-white font-semibold rounded-xl ${game.btnColor} transition-colors shrink-0`}>
                                         ▶️ Entrar
                                     </div>
                                 </div>

@@ -8,18 +8,15 @@ import apiConfig from '../services/apiConfig';
 import ActivityApiService from '../services/ActivityApiService';
 import Roles from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES } from '../utils/activityTypes';
+import { ReactComponent as QuestionMarkIcon } from '../assets/svgs/QuestionMark.svg';
+import Breadcrumb from '../components/common/Breadcrumb';
 
-// ── Game type filter options (full list) ──
+// ── Game type filter options (built from activityTypes) ──
+const ALL_ACTIVITY_TYPES = [...QUESTIONNAIRE_TYPES, ...PAIR_TYPES];
 const GAME_TYPE_FILTERS = [
     { value: 'ALL', label: 'Todos' },
-    { value: 'QUESTIONNAIRE', label: '❓ Quiz' },
-    { value: 'FAST_MEMORY', label: '⚡ Memoria Rápida' },
-    { value: 'INTRUDER', label: '🕵️ Intruso' },
-    { value: 'FIND_THE_WORD', label: '🔍 Encuentra Palabra' },
-    { value: 'MEDIA_SONG', label: '🎵 Canción' },
-    { value: 'MEDIA_ANECDOTE', label: '📖 Anécdota' },
-    { value: 'MEDIA_LEGEND', label: '🗺️ Leyenda' },
-    { value: 'PUZZLE', label: '🧩 Rompecabezas' },
+    ...ALL_ACTIVITY_TYPES.map(t => ({ value: t.value, label: t.label })),
 ];
 
 const TABS = [
@@ -41,7 +38,7 @@ const TeacherResources = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+
     const [filterType, setFilterType] = useState('ALL');
     const [deletingId, setDeletingId] = useState(null);
     const [instances, setInstances] = useState([]);
@@ -190,18 +187,17 @@ const TeacherResources = () => {
 
     // ── Filtered list ──
     const filteredActivities = activities.filter(a => {
-        const title = (a.title || '').toLowerCase();
-        const desc = (a.description || '').toLowerCase();
-        const matchesSearch = title.includes(searchQuery.toLowerCase()) ||
-            desc.includes(searchQuery.toLowerCase());
         const matchesType = filterType === 'ALL' || a.gameType === filterType;
-        return matchesSearch && matchesType;
+        return matchesType;
     });
 
     // ── Stats ──
-    const totalXP = activities.reduce((sum, a) => sum + (a.experience || 0), 0);
-    const fastMemoryCount = activities.filter(a => a.gameType === 'FAST_MEMORY').length;
-    const quizCount = activities.filter(a => a.gameType === 'QUESTIONNAIRE').length;
+    const quizValues = new Set(QUESTIONNAIRE_TYPES.map(t => t.value));
+    const pairValues = new Set(PAIR_TYPES.map(t => t.value));
+    const quizCount = activities.filter(a => quizValues.has(a.gameType)).length;
+    const pairsCount = activities.filter(a => pairValues.has(a.gameType)).length;
+    const assignedCount = instances.filter(i => i.isActive).length;
+    const pausedCount = instances.filter(i => !i.isActive).length;
 
     // ── Categorized Lists ──
     const activeActivities = filteredActivities.filter(a => {
@@ -294,7 +290,7 @@ const TeacherResources = () => {
                             title="Editar"
                         >
                             <span className="material-symbols-outlined text-[16px]">edit</span>
-                            Editar
+                            <span className="hidden sm:inline lg:hidden xl:inline">Editar</span>
                         </button>
                         <button
                             onClick={e => {
@@ -309,7 +305,7 @@ const TeacherResources = () => {
                                 ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
                                 : <span className="material-symbols-outlined text-[16px]">delete</span>
                             }
-                            Eliminar
+                            <span className="hidden sm:inline lg:hidden xl:inline">Eliminar</span>
                         </button>
 
                         {/* Asignar or Toggle button */}
@@ -320,7 +316,7 @@ const TeacherResources = () => {
                                 title="Asignar"
                             >
                                 <span className="material-symbols-outlined text-[16px]">group_add</span>
-                                Asignar
+                                <span className="hidden sm:inline lg:hidden xl:inline">Asignar</span>
                             </button>
                         ) : (
                             <button
@@ -331,7 +327,7 @@ const TeacherResources = () => {
                                 <span className="material-symbols-outlined text-[16px]">
                                     {inst.isActive ? 'block' : 'check_circle'}
                                 </span>
-                                {inst.isActive ? 'Desactivar' : 'Activar'}
+                                <span className="hidden sm:inline lg:hidden xl:inline">{inst.isActive ? 'Desactivar' : 'Activar'}</span>
                             </button>
                         )}
                     </div>
@@ -347,13 +343,7 @@ const TeacherResources = () => {
                 <div className="max-w-6xl mx-auto p-8">
 
                     {/* Breadcrumbs */}
-                    <nav className="text-sm text-gray-500 mb-4">
-                        <Link to="/" className="hover:text-gray-700">Inicio</Link>
-                        <span className="mx-2">›</span>
-                        <Link to="/maestro/dashboard" className="hover:text-gray-700">Panel de Control</Link>
-                        <span className="mx-2">›</span>
-                        <span className="text-gray-700">Recursos</span>
-                    </nav>
+                    <Breadcrumb />
 
                     {/* Header */}
                     <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -397,61 +387,53 @@ const TeacherResources = () => {
                     ) : (
                         <>
                             {/* Stats Summary */}
-                            <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                 <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">⚡</div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Memoria Rápida</p>
-                                        <span className="text-2xl font-bold text-gray-800">{fastMemoryCount}</span>
+                                    <div className="w-12 h-12 rounded-xl flex items-center justify-center">
+                                        <QuestionMarkIcon className="w-10 h-10" />
                                     </div>
-                                </div>
-                                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl">❓</div>
                                     <div>
-                                        <p className="text-sm text-gray-500">Cuestionarios</p>
+                                        <p className="text-sm text-gray-500">Quiz</p>
                                         <span className="text-2xl font-bold text-gray-800">{quizCount}</span>
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">⭐</div>
+                                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">🃏</div>
                                     <div>
-                                        <p className="text-sm text-gray-500">XP Total Disponible</p>
-                                        <span className="text-2xl font-bold text-gray-800">{totalXP}</span>
+                                        <p className="text-sm text-gray-500">Pares</p>
+                                        <span className="text-2xl font-bold text-gray-800">{pairsCount}</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">✅</div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Asignadas</p>
+                                        <span className="text-2xl font-bold text-gray-800">{assignedCount}</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl">⏸️</div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Pausadas</p>
+                                        <span className="text-2xl font-bold text-gray-800">{pausedCount}</span>
                                     </div>
                                 </div>
                             </section>
 
-                            {/* Search & Filters */}
-                            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                                {/* Search */}
-                                <div className="relative flex-1 max-w-md">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">
-                                        search
-                                    </span>
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar actividades..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
-                                    />
-                                </div>
-
-                                {/* Filter chips — scrollable row */}
-                                <div className="flex gap-2 flex-wrap">
-                                    {GAME_TYPE_FILTERS.map(f => (
-                                        <button
-                                            key={f.value}
-                                            onClick={() => setFilterType(f.value)}
-                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filterType === f.value
-                                                ? 'bg-green-500 text-white shadow-sm'
-                                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            {f.label}
-                                        </button>
-                                    ))}
-                                </div>
+                            {/* Filter chips */}
+                            <div className="flex gap-2 flex-wrap mb-6">
+                                {GAME_TYPE_FILTERS.map(f => (
+                                    <button
+                                        key={f.value}
+                                        onClick={() => setFilterType(f.value)}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filterType === f.value
+                                            ? 'bg-green-500 text-white shadow-sm'
+                                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
                             </div>
 
                             {/* ── Content ── */}
@@ -476,14 +458,14 @@ const TeacherResources = () => {
                                 <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
                                     <span className="text-6xl block mb-4">📭</span>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                        {searchQuery || filterType !== 'ALL' ? 'Sin resultados' : 'Aún no has creado actividades'}
+                                        {filterType !== 'ALL' ? 'Sin resultados' : 'Aún no has creado actividades'}
                                     </h3>
                                     <p className="text-gray-500 mb-6">
-                                        {searchQuery || filterType !== 'ALL'
-                                            ? 'Intenta con otra búsqueda o filtro.'
+                                        {filterType !== 'ALL'
+                                            ? 'Intenta con otro filtro.'
                                             : 'Crea tu primera actividad para que tus alumnos puedan practicar.'}
                                     </p>
-                                    {!searchQuery && filterType === 'ALL' && (
+                                    {filterType === 'ALL' && (
                                         <button
                                             onClick={() => navigate('/maestro/recursos/crear')}
                                             className="px-6 py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"

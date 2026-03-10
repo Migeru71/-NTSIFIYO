@@ -5,7 +5,6 @@ function ActivityCard({
     activity,
     userRole,
     cardIcon,
-    startingGame,
     onEdit,
     onPlay
 }) {
@@ -56,9 +55,8 @@ function ActivityCard({
             <button
                 className="activity-card-btn-play"
                 onClick={() => onPlay(activity.id)}
-                disabled={startingGame}
             >
-                {startingGame ? 'Cargando...' : '▶️ ¡Jugar Ahora!'}
+                ▶️ ¡Jugar Ahora!
             </button>
         </div>
     );

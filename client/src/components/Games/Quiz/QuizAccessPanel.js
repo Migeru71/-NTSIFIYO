@@ -6,7 +6,7 @@ import ActivityTypes from '../../../utils/activityTypes'
 function QuizAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.questionnaire}
+            gameType={ActivityTypes.questionnaire.value}
             icon="❓"
             title="Centro de Quiz"
             subtitle="Pon a prueba tus conocimientos de Mazahua"

@@ -4,15 +4,17 @@ import ActivityApiService from '../services/ActivityApiService';
 import ActivityCard from '../components/Games/ActivityCard';
 import { useAuth } from '../context/AuthContext';
 import { useGame } from '../context/GameContext';
+import { useAlert } from '../context/AlertContext';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { saveGameData } = useGame();
+    const { showAlert, hideAlert } = useAlert();
     const [activities, setActivities] = useState([]);
     const [pageData, setPageData] = useState({ totalPages: 0, number: 0, first: true, last: true });
     const [loading, setLoading] = useState(true);
-    const [startingGame, setStartingGame] = useState(false);
 
     useEffect(() => {
         loadActivities(0);
@@ -104,28 +106,50 @@ const StudentAssignments = () => {
     };
 
     async function handlePlayGame(activityId, gameType) {
-        setStartingGame(true);
+        const selectedActivity = activities.find(a => a.id === activityId);
+
+        showAlert({
+            mode: 'loading',
+            title: 'Preparando Actividad',
+            message: `Estamos cargando "${selectedActivity?.title || 'la actividad'}" y descargando el contenido multimedia necesario para que juegues sin interrupciones. Por favor espera un momento...`,
+            icon: 'hourglass_empty',
+            isClosable: false
+        });
+
         try {
             const result = await ActivityApiService.startStudentActivity(activityId);
             if (result.success) {
                 await preloadAssets(result.data);
                 saveGameData(result.data);
                 const basePath = getGameBasePath(gameType);
+                hideAlert();
                 navigate(`${basePath}/jugar/${activityId}`);
             } else {
-                alert(`Error al iniciar el juego: ${result.error}`);
+                hideAlert();
+                showAlert({
+                    mode: 'error',
+                    title: 'Error de Carga',
+                    message: `Ocurrió un error al preparar la actividad: ${result.error}`,
+                    isClosable: true
+                });
             }
         } catch (err) {
             console.error(err);
-        } finally {
-            setStartingGame(false);
+            hideAlert();
+            showAlert({
+                mode: 'error',
+                title: 'Error Inesperado',
+                message: 'No pudimos conectarnos con el servidor. Verifica tu conexión e inténtalo nuevamente.',
+                isClosable: true
+            });
         }
     }
 
     return (
-        <div className="w-full flex-1 relative bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+        <div className="w-full flex-1 relative min-h-screen">
             <div className="w-full">
                 <div className="max-w-6xl mx-auto p-8">
+                    <Breadcrumb />
                     {/* Header */}
                     <header className="mb-10 text-center">
                         <h1 className="text-4xl font-bold text-indigo-900 mb-2 font-poppins">Tus Asignaciones</h1>
@@ -155,7 +179,6 @@ const StudentAssignments = () => {
                                             activity={activity}
                                             userRole="student"
                                             cardIcon={getGameIcon(activity.gameType)}
-                                            startingGame={startingGame}
                                             onPlay={(id) => handlePlayGame(id, activity.gameType)}
                                         />
                                     ))}

@@ -6,7 +6,7 @@ import ActivityTypes from '../../../utils/activityTypes'
 function RompecabezasAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.puzzle}
+            gameType={ActivityTypes.puzzle.value}
             icon="🧩"
             title="Rompecabezas"
             subtitle="Completa la frase eligiendo la pieza correcta"

@@ -6,7 +6,7 @@ import ActivityTypes from '../../../utils/activityTypes'
 function MemoramaAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.fastMemory}
+            gameType={ActivityTypes.fastMemory.value}
             icon="⚡"
             title="Memoria Rápida"
             subtitle="Desliza a la derecha si coincide, a la izquierda si no"

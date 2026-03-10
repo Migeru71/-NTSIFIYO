@@ -10,3 +10,5 @@ use GameAccessPanel for showing the available games, use GameAlert for notifying
 for creating lists or tables, use the component client/src/components/common/List.js
 # Navigation
 add the route on App.js and config/navigation.js and use the hook useNavigation for getting the authorized routes
+# Responsive
+if needed, remove the text on buttons only mantaining the icon. Reduce the colums amount in case of lists. Hide menus if the view is small 

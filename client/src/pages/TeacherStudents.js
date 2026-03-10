@@ -1,52 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import SideBar from '../components/Dashboard/SideBar';
 import List from '../components/common/List';
-import apiConfig from '../services/apiConfig';
-import AuthService from '../services/AuthService';
-import Roles from '../utils/roles';
+import { useStudents } from '../context/StudentsContext';
+import Breadcrumb from '../components/common/Breadcrumb';
 
 /**
  * Página de Estudiantes del Maestro.
  * Obtiene el listado de estudiantes del grupo asignado al maestro autenticado
- * usando el endpoint GET /api/groups/{grade}/students.
+ * usando el caché compartido de StudentsContext.
  */
 const TeacherStudents = () => {
-    const currentUser = AuthService.getCurrentUser();
-    // const grade = currentUser?.grade;
-
-    const [students, setStudents] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const fetchStudents = async () => {
-        // if (!grade) {
-        //     setError('No tienes un grado asignado. Contacta al administrador.');
-        //     return;
-        // }
-        setIsLoading(true);
-        setError('');
-        try {
-            const response = await fetch(`${apiConfig.baseUrl}/api/groups/students`, {
-                headers: apiConfig.getHeaders()
-            });
-            if (!response.ok) {
-                throw new Error('Error al obtener los estudiantes del grupo.');
-            }
-            const data = await response.json();
-            setStudents(data.students || []);
-        } catch (err) {
-            console.error('Error fetching students:', err);
-            setError(err.message || 'Error de conexión al cargar los estudiantes.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const { students, isLoading, error, fetchStudents, refreshStudents } = useStudents();
 
     useEffect(() => {
         fetchStudents();
-        // grade is the only value that should trigger a re-fetch
-    }, []); // eslint-disable-line
+    }, [fetchStudents]);
 
     const tableHeaders = [
         { label: 'Nº Lista', align: 'center' },
@@ -93,26 +61,15 @@ const TeacherStudents = () => {
             <div className="w-full">
                 <div className="max-w-5xl mx-auto p-8">
                     {/* Breadcrumb */}
-                    <nav className="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                        <Link to="/maestro/dashboard" className="hover:text-primary transition-colors font-medium">
-                            Panel del Maestro
-                        </Link>
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                        <span className="text-gray-800 font-bold">Estudiantes</span>
-                    </nav>
+                    <Breadcrumb />
 
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-800">Mis Estudiantes</h1>
-                            {/* <p className="text-gray-500 mt-1">
-                                {grade
-                                    ? `Listado de alumnos del ${grade}º Grado`
-                                    : 'No tienes un grado asignado'}
-                            </p> */}
                         </div>
                         <button
-                            onClick={fetchStudents}
+                            onClick={refreshStudents}
                             disabled={isLoading}
                             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 hover:text-primary hover:border-primary/30 transition-all shadow-sm disabled:opacity-50"
                             title="Recargar lista"

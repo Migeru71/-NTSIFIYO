@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import SideBar from '../Dashboard/SideBar';
+import { BreadcrumbProvider } from '../../context/BreadcrumbContext';
 
 /**
  * Layout principal de la aplicación autenticada.
@@ -25,30 +26,32 @@ const MainLayout = ({ user }) => {
     if (!user) return <Outlet />; // Fallback si no hay usuario
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background-start to-background-end flex relative w-full overflow-x-hidden">
-            {/* Sidebar global de la aplicación, hidden on game routes */}
-            {!isGameRoute && (
-                <SideBar
-                    role={user.userType}
-                    userName={user.firstname || 'Usuario'}
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                />
-            )}
+        <BreadcrumbProvider>
+            <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background-start to-background-end flex relative w-full overflow-x-hidden">
+                {/* Sidebar global de la aplicación, hidden on game routes */}
+                {!isGameRoute && (
+                    <SideBar
+                        role={user.userType}
+                        userName={user.firstname || 'Usuario'}
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                    />
+                )}
 
-            {/* Overlay para móviles */}
-            {!isGameRoute && isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-                    onClick={() => setIsSidebarOpen(false)}
-                />
-            )}
+                {/* Overlay para móviles */}
+                {!isGameRoute && isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
 
-            {/* Contenedor principal de vistas (Outlet) */}
-            <main className={`flex-1 min-w-0 ${!isGameRoute ? 'lg:pl-64' : ''}`}>
-                <Outlet />
-            </main>
-        </div>
+                {/* Contenedor principal de vistas (Outlet) */}
+                <main className={`flex-1 min-w-0 ${!isGameRoute ? 'lg:pl-64' : ''}`}>
+                    <Outlet />
+                </main>
+            </div>
+        </BreadcrumbProvider>
     );
 };
 

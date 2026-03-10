@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import './configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
 import CustomAlert from '../common/CustomAlert';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES } from '../../utils/activityTypes';
+import { useAlert } from '../../context/AlertContext';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -159,25 +161,12 @@ const ConfigBadges = ({ config, hasWord }) => (
     </span>
 );
 
-/* ─────────────── Game type constants ─────────────── */
-const QUESTIONNAIRE_TYPES = [
-    { value: 'QUESTIONNAIRE', label: '❓ Quiz', desc: 'Preguntas de opción múltiple' },
-    { value: 'FAST_MEMORY', label: '⚡ Memoria Rápida', desc: 'Recuerda con rapidez' },
-    { value: 'INTRUDER', label: '🕵️ Intruso', desc: 'Encuentra el que no pertenece' },
-    { value: 'FIND_THE_WORD', label: '🔍 Encuentra Palabra', desc: 'Localiza la palabra correcta' },
-    { value: 'MEDIA_SONG', label: '🎵 Canción', desc: 'Actividad con canción' },
-    { value: 'MEDIA_ANECDOTE', label: '📖 Anécdota', desc: 'Actividad con anécdota' },
-    { value: 'MEDIA_LEGEND', label: '🗺️ Leyenda', desc: 'Actividad con leyenda' },
-    { value: 'PUZZLE', label: '🧩 Rompecabezas', desc: 'Arma la imagen o palabra' },
-];
-
-const PAIR_TYPES = [
-    { value: 'MEMORY_GAME', label: '🎴 Memory Game', desc: 'Voltea y empareja pares' },
-];
+/* Game type constants imported from activityTypes.js */
 
 /* ═══════════════ MAIN COMPONENT ═══════════════ */
-const ConfigurationGameView = ({ onActivityCreated }) => {
+const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
     const { editId } = useParams();
+    const { showAlert } = useAlert();
     const isEditMode = !!editId;
 
     const [loadingEdit, setLoadingEdit] = useState(isEditMode);
@@ -375,6 +364,8 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
         return null;
     };
 
+    const navigate = useNavigate();
+
     /* ── Submit ── */
     const handleSubmit = async () => {
         const validationError = validateForm();
@@ -414,20 +405,28 @@ const ConfigurationGameView = ({ onActivityCreated }) => {
             let result;
             if (isEditMode) {
                 result = await apiConfig.put(`/api/games/${editId}`, dto);
-                setAlertConfig({
-                    mode: 'success',
-                    title: '¡Éxito!',
-                    message: 'Juego actualizado con éxito.',
-                    buttons: [{ text: 'Aceptar', type: 'accept', onClick: () => { if (onActivityCreated) onActivityCreated(result || dto); } }]
-                });
             } else {
                 result = await apiConfig.post('/api/games', dto);
-                setAlertConfig({
-                    mode: 'success',
-                    title: '¡Éxito!',
-                    message: 'Juego creado con éxito.',
-                    buttons: [{ text: 'Aceptar', type: 'accept', onClick: () => { if (onActivityCreated) onActivityCreated(result || dto); } }]
-                });
+            }
+
+            // Show global success alert (persists across navigation)
+            showAlert({
+                mode: 'success',
+                title: '¡Éxito!',
+                message: isEditMode
+                    ? 'Juego actualizado con éxito.'
+                    : 'Juego creado con éxito.',
+                buttons: [{ text: 'Aceptar', type: 'accept' }]
+            });
+
+            // Navigate back immediately or call the callback
+            if (redirectPath) {
+                const finalPath = redirectPath.replace('{id}', result?.id || dto.id);
+                navigate(finalPath);
+            } else if (onActivityCreated) {
+                onActivityCreated(result || dto);
+            } else {
+                navigate('/maestro/recursos');
             }
         } catch (err) {
             let errorMessage = `Error al ${isEditMode ? 'actualizar' : 'crear'} el juego.`;
