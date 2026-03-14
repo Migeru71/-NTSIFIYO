@@ -4,43 +4,44 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MemoramaService from '../../../services/MemoramaService';
-import mockMemorama, { mockWordDictionary } from '../../../data/mockMemorama';
 import MemoramaFinalView from './MemoramaFinalView';
 import './Memorama.css';
 
-// Construir cartas a partir de wordIds y gameConfigs
-function buildCards(wordIds, gameConfigs, wordDict) {
-    const cfg0 = gameConfigs[0] || { showText: true, showImage: false, isMazahua: true };
-    const cfg1 = gameConfigs[1] || { showText: true, showImage: false, isMazahua: false };
+// Construir cartas a partir de words y gameConfigs
+function buildCards(words, gameConfigs) {
+    const cfg0 = gameConfigs[0] || { showText: true, showImage: false, playAudio: false, isMazahua: true };
+    const cfg1 = gameConfigs[1] || { showText: true, showImage: false, playAudio: false, isMazahua: false };
 
     const cards = [];
-    wordIds.forEach((wordId) => {
-        const word = wordDict[wordId] || {
-            id: wordId, mazahua: `Palabra ${wordId}`, spanish: `Word ${wordId}`, emoji: '❓'
-        };
+    words.forEach((word) => {
+        const wordId = word.id;
 
-        // Carta A — lado Mazahua / texto principal (cfg0)
+        // Carta A (cfg0)
         cards.push({
             uid: `${wordId}-A`,
             wordId,
             type: 'A',
             showText: cfg0.showText,
             showImage: cfg0.showImage,
+            playAudio: cfg0.playAudio,
             isMazahua: cfg0.isMazahua,
-            text: cfg0.isMazahua ? word.mazahua : word.spanish,
-            emoji: cfg0.showImage ? word.emoji : null,
+            text: cfg0.isMazahua ? word.mazahuaWord : word.spanishWord,
+            imageUrl: cfg0.showImage ? word.imageUrl : null,
+            audioUrl: cfg0.playAudio ? word.audioUrl : null,
         });
 
-        // Carta B — lado Español / imagen (cfg1)
+        // Carta B (cfg1)
         cards.push({
             uid: `${wordId}-B`,
             wordId,
             type: 'B',
             showText: cfg1.showText,
             showImage: cfg1.showImage,
+            playAudio: cfg1.playAudio,
             isMazahua: cfg1.isMazahua,
-            text: cfg1.isMazahua ? word.mazahua : word.spanish,
-            emoji: cfg1.showImage ? word.emoji : null,
+            text: cfg1.isMazahua ? word.mazahuaWord : word.spanishWord,
+            imageUrl: cfg1.showImage ? word.imageUrl : null,
+            audioUrl: cfg1.playAudio ? word.audioUrl : null,
         });
     });
 
@@ -80,7 +81,6 @@ const MemoramaGameView = () => {
             clearInterval(timerRef.current);
             clearTimeout(feedbackTimeout.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activityId]);
 
     async function initGame() {
@@ -90,34 +90,23 @@ const MemoramaGameView = () => {
         const gameId = parseInt(activityId);
         const result = await MemoramaService.startGame(gameId);
 
-        if (result.success && result.data?.wordIds?.length) {
+        if (result.success && result.data?.words?.length) {
             loadFromApiData(result.data);
         } else {
-            const fallback = mockMemorama.find(a => a.id === gameId) || mockMemorama[0];
-            if (fallback) {
-                loadFromMockData(fallback);
-            } else {
-                setLoadError('No se encontró la actividad.');
-                setGameState('error');
-            }
+            setLoadError('No se encontró la actividad o no tiene palabras.');
+            setGameState('error');
         }
         setLoading(false);
     }
 
     function loadFromApiData(data) {
-        const built = buildCards(data.wordIds, data.gameConfigs || [], mockWordDictionary);
+        const built = buildCards(data.words, data.gameConfigs);
         setCards(built);
         setActivityXP(data.experience || 100);
         setGameState('playing');
     }
 
-    function loadFromMockData(activity) {
-        const built = buildCards(activity.wordIds, activity.gameConfigs || [], mockWordDictionary);
-        setCards(built);
-        setActivityTitle(activity.title || activity.name || 'Memorama');
-        setActivityXP(activity.experience || activity.recommendedXP || 100);
-        setGameState('playing');
-    }
+
 
     // ─── Cronómetro ─────────────────────────────────────────────────────────
     useEffect(() => {
@@ -138,6 +127,12 @@ const MemoramaGameView = () => {
         if (matchedWordIds.has(wordId)) return;          // ya emparejada
         if (flippedUids.includes(uid)) return;           // ya seleccionada
         if (flippedUids.length === 2) return;            // ya hay 2 seleccionadas
+
+        // Reproducir audio si existe
+        const card = cards.find(c => c.uid === uid);
+        if (card && card.playAudio && card.audioUrl) {
+            new Audio(card.audioUrl).play().catch(e => console.error("Error reproduciendo audio:", e));
+        }
 
         const newFlipped = [...flippedUids, uid];
         setFlippedUids(newFlipped);
@@ -176,7 +171,7 @@ const MemoramaGameView = () => {
                 }, 900);
             }
         }
-    }, [lockBoard, matchedWordIds, flippedUids]);
+    }, [lockBoard, matchedWordIds, flippedUids, cards]);
 
     // ─── Fin del juego ───────────────────────────────────────────────────────
     useEffect(() => {
@@ -286,16 +281,19 @@ const MemoramaGameView = () => {
                                 </div>
                                 {/* Frente */}
                                 <div className="mem-card-back">
-                                    {card.emoji && (
-                                        <span className="mem-card-emoji">{card.emoji}</span>
+                                    {card.playAudio && (
+                                        <span className="mem-card-emoji">🔊</span>
+                                    )}
+                                    {card.imageUrl && (
+                                        <img src={card.imageUrl} alt="pair" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
                                     )}
                                     {card.showText && card.text && (
-                                        <span className={`mem-card-text ${card.isMazahua ? 'mazahua' : ''}`}>
+                                        <span className={`mem-card-text ${card.isMazahua ? 'mazahua' : ''}`} style={{ position: card.imageUrl ? 'absolute' : 'relative', bottom: card.imageUrl ? '8px' : 'auto', background: card.imageUrl ? 'rgba(255,255,255,0.8)' : 'transparent', padding: card.imageUrl ? '2px 8px' : '0', borderRadius: '8px' }}>
                                             {card.text}
                                         </span>
                                     )}
-                                    {/* Si showImage pero no hay emoji (en producción habría URL) */}
-                                    {card.showImage && !card.emoji && (
+                                    {/* Si playAudio o imageUrl fallan como fallback visual */}
+                                    {card.showImage && !card.imageUrl && !card.playAudio && (
                                         <span style={{ fontSize: '28px' }}>🖼️</span>
                                     )}
                                 </div>

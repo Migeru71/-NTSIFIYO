@@ -1,21 +1,19 @@
-// client/src/components/Games/Memorama/MemoramaAccessPanel.js
-
 import React from 'react';
 import GameAccessPanel from '../GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes'
+import ActivityTypes from '../../../utils/activityTypes';
 
 function MemoramaAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.fastMemory.value}
-            icon="⚡"
-            title="Memoria Rápida"
-            subtitle="Desliza a la derecha si coincide, a la izquierda si no"
+            gameType={ActivityTypes.memoryGame.value}
+            icon="🃏"
+            title="Memorama"
+            subtitle="Emparejar Pares"
             gameBasePath="/games/memorama"
             cardIcon="🎴"
-            tipStudent="Desliza rápido y acumula combos para ganar más XP"
+            tipStudent="Encuentra los pares para completar el memorama"
+            tipTeacher="Crea pares de palabras e imágenes para el memorama"
         />
-
     );
 }
 

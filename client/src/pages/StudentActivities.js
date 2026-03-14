@@ -15,16 +15,11 @@ const StudentActivities = () => {
         } catch { return {}; }
     })();
 
-    const user = {
-        id: userData.firstName || 'student_001',
-        name: userData.lastName || 'Estudiante',
-    };
-
     // Actividades generales (una tarjeta por tipo de juego)
     const games = [
         {
-            id: 'memorama',
-            title: 'Memorama',
+            id: 'memoria_rapida',
+            title: 'Memoria Rapida',
             subtitle: 'Tarjetas de Memoria',
             description: 'Aprende vocabulario y pronunciación mazahua emparejando tarjetas interactivas. Ejercita tu memoria mientras descubres nuevas palabras.',
             icon: '🎴',
@@ -32,7 +27,7 @@ const StudentActivities = () => {
             borderColor: 'border-orange-200',
             accentColor: 'text-orange-600',
             btnColor: 'bg-orange-500 hover:bg-orange-600',
-            path: '/games/memorama',
+            path: '/games/memoria_rapida',
             stats: [
                 { icon: 'style', label: 'Tarjetas' },
                 { icon: 'timer', label: 'Memoria' },
