@@ -63,6 +63,19 @@ class AdminService {
     }
 
     // ─────────────────────────────────────────────
+    // DASHBOARD ADMINISTRADOR
+    // ─────────────────────────────────────────────
+
+    /**
+     * Obtener estadísticas globales de la plataforma
+     * GET /api/dashboard/admin
+     */
+    async getAdminDashboard() {
+        const data = await apiConfig.get('/api/dashboard/admin');
+        return data;
+    }
+
+    // ─────────────────────────────────────────────
     // GRUPOS
     // ─────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ import TeachersSection from './sections/TeachersSection';
 import StudentsSection from './sections/StudentsSection';
 import GroupsSection from './sections/GroupsSection';
 import WordsSection from './sections/WordsSection';
+import AdminOverviewSection from './sections/AdminOverviewSection';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
@@ -25,16 +26,7 @@ const AdminDashboard = () => {
             case '/admin/palabras':
                 return <WordsSection />;
             default:
-                return (
-                    <div className="text-center py-20">
-                        <span className="material-symbols-outlined text-7xl text-gray-300 mb-4 block">construction</span>
-                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Sección en Construcción</h2>
-                        <p className="text-gray-500 max-w-md mx-auto">
-                            Actualmente este panel se encuentra en construcción.
-                            Pronto se añadirán herramientas para gestionar {currentPath.split('/').pop()}.
-                        </p>
-                    </div>
-                );
+                return <AdminOverviewSection />;
         }
     };
 

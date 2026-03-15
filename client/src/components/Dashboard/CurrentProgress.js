@@ -4,20 +4,20 @@ import { Link } from 'react-router-dom';
 /**
  * Componente de progreso actual con anillo circular
  */
-const CurrentProgress = ({ progress }) => {
-    const defaultProgress = {
-        percentage: 75,
-        levelName: 'Nivel A1: Introducción',
-        message: '¡Estás progresando muy bien! Completa 2 lecciones más para subir de nivel.',
-        lessonsRemaining: 2
-    };
+const CurrentProgress = ({ experience = 0, level = 1 }) => {
+    
+    // Una lógica rápida para calcular progreso: suponiendo que cada nivel requiere ~1000 XP
+    // Idealmente el backend nos daría % o nextLevelExp
+    const percentage = Math.round((experience % 1000) / 10) || 0;
+    const lessonsRemaining = Math.max(1, Math.round((100 - percentage) / 10));
 
-    const data = progress || defaultProgress;
+    const levelName = `Nivel ${level}`;
+    const message = `¡Estás progresando muy bien! Obtén más XP o completa ~${lessonsRemaining} lecciones para superar el nivel actual.`;
 
     // Calculate circle progress
     const radius = 60;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (data.percentage / 100) * circumference;
+    const strokeDashoffset = Math.max(0, circumference - (percentage / 100) * circumference);
 
     return (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -52,7 +52,7 @@ const CurrentProgress = ({ progress }) => {
                     </svg>
                     {/* Center text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-bold text-gray-800">{data.percentage}%</span>
+                        <span className="text-3xl font-bold text-gray-800">{percentage}%</span>
                         <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">
                             Completado
                         </span>
@@ -62,8 +62,8 @@ const CurrentProgress = ({ progress }) => {
 
             {/* Level Info */}
             <div className="text-center">
-                <h4 className="font-semibold text-gray-800 mb-2">{data.levelName}</h4>
-                <p className="text-sm text-gray-500 mb-4">{data.message}</p>
+                <h4 className="font-semibold text-gray-800 mb-2">{levelName}</h4>
+                <p className="text-sm text-gray-500 mb-4">{message}</p>
 
                 <Link
                     to="/estudiante/progreso"

@@ -366,6 +366,27 @@ class ActivityApiService {
             };
         }
     }
+
+    /**
+     * Obtener los datos del panel principal del estudiante
+     * GET /api/dashboard/student
+     * @returns {Promise<Object>} - Dashboard student data { level, experience, inrow, pending, finished, classmates }
+     */
+    async getStudentDashboard() {
+        try {
+            const response = await apiConfig.get(`/api/dashboard/student`);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: null
+            };
+        }
+    }
 }
 
 export default new ActivityApiService();

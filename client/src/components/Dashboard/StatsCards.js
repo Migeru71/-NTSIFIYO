@@ -3,23 +3,14 @@ import React from 'react';
 /**
  * Tarjetas de estadísticas del estudiante
  */
-const StatsCards = ({ stats }) => {
-    const defaultStats = {
-        level: { value: 'A1 Intro', change: '+5%', changeLabel: 'desde la semana pasada' },
-        streak: { value: '12 Días', status: 'On fire!', statusLabel: 'Keep it up' },
-        xp: { value: '1,450', change: '+150 XP', changeLabel: 'hoy' },
-        time: { value: '4h 20m', change: '+25m', changeLabel: 'hoy' }
-    };
-
-    const data = stats || defaultStats;
-
+const StatsCards = ({ level, experience, inrow, finished }) => {
     const cards = [
         {
             id: 'level',
             label: 'Nivel Actual',
-            value: data.level.value,
-            subText: data.level.change,
-            subLabel: data.level.changeLabel,
+            value: level || 1,
+            subText: 'Rango actual',
+            subLabel: '',
             icon: 'verified',
             iconBg: 'bg-green-100',
             iconColor: 'text-green-500',
@@ -28,9 +19,9 @@ const StatsCards = ({ stats }) => {
         {
             id: 'streak',
             label: 'Racha de Días',
-            value: data.streak.value,
-            subText: data.streak.status,
-            subLabel: data.streak.statusLabel,
+            value: `${inrow || 0} Días`,
+            subText: inrow > 0 ? '¡En racha!' : 'Vuelve mañana',
+            subLabel: '',
             icon: 'local_fire_department',
             iconBg: 'bg-orange-100',
             iconColor: 'text-orange-500',
@@ -39,24 +30,24 @@ const StatsCards = ({ stats }) => {
         {
             id: 'xp',
             label: 'Total XP',
-            value: data.xp.value,
-            subText: data.xp.change,
-            subLabel: data.xp.changeLabel,
+            value: (experience || 0).toLocaleString(),
+            subText: 'Puntos globales',
+            subLabel: '',
             icon: 'emoji_events',
             iconBg: 'bg-amber-100',
             iconColor: 'text-amber-500',
-            accentColor: 'text-green-500'
+            accentColor: 'text-amber-500'
         },
         {
-            id: 'time',
-            label: 'Tiempo Aprendido',
-            value: data.time.value,
-            subText: data.time.change,
-            subLabel: data.time.changeLabel,
-            icon: 'schedule',
+            id: 'finished',
+            label: 'Actividades Completadas',
+            value: finished || 0,
+            subText: 'Lecciones domindas',
+            subLabel: '',
+            icon: 'fact_check',
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-500',
-            accentColor: 'text-green-500'
+            accentColor: 'text-purple-500'
         }
     ];
 
