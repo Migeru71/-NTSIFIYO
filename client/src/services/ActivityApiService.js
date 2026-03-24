@@ -29,6 +29,28 @@ class ActivityApiService {
     }
 
     /**
+     * Obtener juegos por tópico para el mapa
+     * GET /api/games/topic/{topic}?page=#&size=#
+     */
+    async getGamesByTopic(topic, page = 0, size = 0) {
+        try {
+            const response = await apiConfig.get(`/api/games/topic/${topic}?page=${page}&size=${size}`);
+            return {
+                success: true,
+                // Spring pagination format has { content: [...] }
+                // So return the full response or a fallback
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: { content: [] }
+            };
+        }
+    }
+
+    /**
      * Iniciar una actividad de juego
      * POST /api/activities/start/game/{gameId}
      * @param {number} gameId - ID del juego

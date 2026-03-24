@@ -1,15 +1,15 @@
 
 const ActivityTypes = Object.freeze({
-    questionnaire: { value: "QUESTIONNAIRE", label: "❓ Quiz", desc: "Preguntas de opción múltiple" },
-    fastMemory: { value: "FAST_MEMORY", label: "⚡ Memoria Rápida", desc: "Recuerda con rapidez" },
-    intruder: { value: "INTRUDER", label: "🕵️ Intruso", desc: "Encuentra el que no pertenece" },
-    findTheWord: { value: "FIND_THE_WORD", label: "🔍 Encuentra Palabra", desc: "Localiza la palabra correcta" },
-    mediaSong: { value: "MEDIA_SONG", label: "🎵 Canción", desc: "Actividad con canción" },
-    mediaAnecdote: { value: "MEDIA_ANECDOTE", label: "📖 Anécdota", desc: "Actividad con anécdota" },
-    mediaLegend: { value: "MEDIA_LEGEND", label: "🗺️ Leyenda", desc: "Actividad con leyenda" },
-    puzzle: { value: "PUZZLE", label: "🧩 Rompecabezas", desc: "Arma la imagen o palabra" },
-    memoryGame: { value: "MEMORY_GAME", label: "🎴 Memory Game", desc: "Voltea y empareja pares" },
-    lottery: { value: "LOTTERY", label: "🎰 Lotería", desc: "Juego de lotería" },
+    questionnaire: { value: "QUESTIONNAIRE", label: "❓ Quiz",             desc: "Preguntas de opción múltiple",      color: '#7c3aed' },
+    fastMemory:    { value: "FAST_MEMORY",    label: "⚡ Memoria Rápida",  desc: "Recuerda con rapidez",             color: '#E65100' },
+    intruder:      { value: "INTRUDER",       label: "🕵️ Intruso",         desc: "Encuentra el que no pertenece",   color: '#d97706' },
+    findTheWord:   { value: "FIND_THE_WORD",  label: "🔍 Encuentra Palabra",desc: "Localiza la palabra correcta",    color: '#0284c7' },
+    mediaSong:     { value: "MEDIA_SONG",     label: "🎵 Canción",          desc: "Actividad con canción",           color: '#db2777' },
+    mediaAnecdote: { value: "MEDIA_ANECDOTE", label: "📖 Anécdota",         desc: "Actividad con anécdota",          color: '#059669' },
+    mediaLegend:   { value: "MEDIA_LEGEND",   label: "🗺️ Leyenda",          desc: "Actividad con leyenda",           color: '#7c3aed' },
+    puzzle:        { value: "PUZZLE",         label: "🧩 Rompecabezas",     desc: "Arma la imagen o palabra",        color: '#2563eb' },
+    memoryGame:    { value: "MEMORY_GAME",    label: "🎴 Memory Game",      desc: "Voltea y empareja pares",         color: '#E65100' },
+    lottery:       { value: "LOTTERY",        label: "🎰 Lotería",          desc: "Juego de lotería",                color: '#b45309' },
 });
 
 /** Quiz / single-element game types */

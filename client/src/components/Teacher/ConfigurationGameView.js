@@ -5,6 +5,7 @@ import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
 import CustomAlert from '../common/CustomAlert';
 import { QUESTIONNAIRE_TYPES, PAIR_TYPES } from '../../utils/activityTypes';
+import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import { useAlert } from '../../context/AlertContext';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -178,6 +179,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
     const [description, setDescription] = useState('');
     const [experience, setExperience] = useState(0);
     const [difficult, setDifficult] = useState('EASY');
+    const [selectedTopic, setSelectedTopic] = useState(GAME_TOPICS[0].id);
 
     const [words, setWords] = useState([]);
 
@@ -231,6 +233,15 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                 setDescription(game.description || '');
                 setExperience(game.experience || 0);
                 setDifficult(game.difficult || 'EASY');
+
+                if (game.gameCategory) {
+                    const topic = GAME_TOPICS.find(t => t.id === game.gameCategory);
+                    if (topic) {
+                        setSelectedTopic(topic.id);
+                    } else {
+                        setSelectedTopic(game.gameCategory);
+                    }
+                }
 
                 // Config cards — sorted by order
                 const cfgs = Array.isArray(game.gameConfigs) ? [...game.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) : [];
@@ -329,6 +340,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
         if (!description || description.trim() === '') return "La descripción del juego no puede estar vacía.";
         if (!gameType) return "El tipo de juego es obligatorio.";
         if (!difficult) return "La dificultad del juego es obligatoria.";
+        if (!selectedTopic) return "El tema/categoría específica del juego es obligatorio.";
         if (!experience || experience <= 0) return "La experiencia debe ser un valor numérico positivo mayor a 0.";
         if (totalItems <= 0) return "El juego debe tener al menos un ítem (pregunta o par).";
 
@@ -384,6 +396,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
             gameType, title, description,
             experience: experience || recXP,
             difficult,
+            gameTopic: selectedTopic,
             totalQuestions: totalItems,
             wordIds: [],
             questions: [],
@@ -532,6 +545,22 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                             >
                                 {(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).map(gt => (
                                     <option key={gt.value} value={gt.value}>{gt.label} — {gt.desc}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="cfg-sidebar-section">
+                            <label>Tema Específico</label>
+                            <select
+                                className="cfg-input cfg-select"
+                                value={selectedTopic}
+                                onChange={e => setSelectedTopic(e.target.value)}
+                            >
+                                {GAME_CATEGORIES.map(cat => (
+                                    <optgroup key={cat.id} label={cat.label}>
+                                        {GAME_TOPICS.filter(t => t.categoryId === cat.id).map(topic => (
+                                            <option key={topic.id} value={topic.id}>{topic.label}</option>
+                                        ))}
+                                    </optgroup>
                                 ))}
                             </select>
                         </div>

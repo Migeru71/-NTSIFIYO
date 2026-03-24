@@ -1,8 +1,8 @@
 import React from 'react';
 import Roles from '../../utils/roles';
-import AdminDashboard from '../../pages/Admin/AdminDashboard';
-import TeacherDashboard from '../../pages/TeacherDashboard';
-import StudentDashboard from '../../pages/StudentDashboard';
+import AdminDashboard from '../../pages/admin/AdminDashboard';
+import TeacherDashboard from '../../pages/teacher/TeacherDashboard';
+import StudentDashboard from '../../pages/student/StudentDashboard';
 
 /**
  * Componente que renderiza dinámicamente el dashboard correspondiente según el rol.

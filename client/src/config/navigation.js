@@ -17,6 +17,7 @@ import Roles from '../utils/roles';
 // ─── Navegación del panel Estudiante ──────────────────────────
 export const studentNavigation = [
     { id: 'dashboard', label: 'Dashboard', path: '/estudiante/dashboard', icon: 'dashboard', roles: [Roles.STUDENT] },
+    { id: 'map', label: 'Mapa', path: '/estudiante/mapa', icon: 'map', roles: [Roles.STUDENT] },
     { id: 'assignments', label: 'Asignaciones', path: '/estudiante/asignaciones', icon: 'assignment', roles: [Roles.STUDENT] },
     { id: 'activities', label: 'Actividades', path: '/estudiante/actividades', icon: 'sports_esports', roles: [Roles.STUDENT] },
     { id: 'content', label: 'Contenido', path: '/estudiante/contenido', icon: 'article', roles: [Roles.STUDENT] },
@@ -26,6 +27,7 @@ export const studentNavigation = [
 // ─── Navegación del panel Visitante ───────────────────────────
 export const visitorNavigation = [
     { id: 'dashboard', label: 'Dashboard', path: '/visitante/dashboard', icon: 'dashboard', roles: [Roles.VISITOR] },
+    { id: 'map', label: 'Mapa', path: '/visitante/mapa', icon: 'map', roles: [Roles.VISITOR] },
     { id: 'activities', label: 'Actividades', path: '/visitante/actividades', icon: 'sports_esports', roles: [Roles.VISITOR] },
     { id: 'content', label: 'Contenido', path: '/visitante/contenido', icon: 'article', roles: [Roles.VISITOR] },
     { id: 'dictionary', label: 'Diccionario', path: '/visitante/diccionario', icon: 'translate', roles: [Roles.VISITOR] },

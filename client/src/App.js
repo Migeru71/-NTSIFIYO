@@ -20,24 +20,28 @@ import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGa
 import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
 import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
 // Student Dashboard
-import StudentDashboard from './pages/StudentDashboard';
-import StudentActivities from './pages/StudentActivities';
-import StudentAssignments from './pages/StudentAssignments';
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentActivities from './pages/student/StudentActivities';
+import StudentAssignments from './pages/student/StudentAssignments';
+import GameMap from './components/Map/GameMap';
 // Teacher Dashboard
-import TeacherDashboard from './pages/TeacherDashboard';
-import TeacherResources from './pages/TeacherResources';
-import TeacherStudents from './pages/TeacherStudents';
-import TeacherAssignments from './pages/TeacherAssignments';
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
+import TeacherResources from './pages/teacher/TeacherResources';
+import TeacherStudents from './pages/teacher/TeacherStudents';
+import TeacherAssignments from './pages/teacher/TeacherAssignments';
 // Admin
 
-import AdminLogin from './pages/Admin/AdminLogin';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import TeacherContent from './pages/TeacherContent';
-import DictionaryPage from './pages/DictionaryPage';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import TeacherContent from './pages/teacher/TeacherContent';
+import DictionaryPage from './pages/common/DictionaryPage';
 import apiConfig from './services/apiConfig';
 
 import { useAuth } from './context/AuthContext';
 import { StudentsProvider } from './context/StudentsContext';
+import { StudentDataProvider } from './context/StudentDataContext';
+import { TeacherDataProvider } from './context/TeacherDataContext';
+import { AdminDataProvider } from './context/AdminDataContext';
 import MainLayout from './components/Layout/MainLayout';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
@@ -84,13 +88,19 @@ function App() {
                             path="/dashboard"
                             element={
                                 <ProtectedRoute isAllowed={isAuthenticated}>
-                                    <DashboardSwitcher role={user?.userType} />
+                                    <StudentDataProvider>
+                                        <TeacherDataProvider>
+                                            <AdminDataProvider>
+                                                <DashboardSwitcher role={user?.userType} />
+                                            </AdminDataProvider>
+                                        </TeacherDataProvider>
+                                    </StudentDataProvider>
                                 </ProtectedRoute>
                             }
                         />
 
                         {/* Admin Routes */}
-                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.ADMIN} />}>
+                        <Route element={<AdminDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.ADMIN} /></AdminDataProvider>}>
                             <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/admin/grupos" element={<AdminDashboard />} />
                             <Route path="/admin/estudiantes" element={<AdminDashboard />} />
@@ -101,7 +111,7 @@ function App() {
                         </Route>
 
                         {/* Teacher Routes */}
-                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} />}>
+                        <Route element={<TeacherDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} /></TeacherDataProvider>}>
                             <Route element={<StudentsProvider><Outlet /></StudentsProvider>}>
                                 <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
                                 <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
@@ -120,12 +130,22 @@ function App() {
                         </Route>
 
                         {/* Student Routes */}
-                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} />}>
+                        <Route element={<StudentDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} /></StudentDataProvider>}>
                             <Route path="/estudiante/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/estudiante/actividades" element={<StudentActivities />} />
+                            <Route path="/estudiante/mapa" element={<GameMap />} />
                             <Route path="/estudiante/asignaciones" element={<StudentAssignments />} />
                             <Route path="/estudiante/contenido" element={<StudentActivities />} />
                             <Route path="/estudiante/diccionario" element={<DictionaryPage />} />
+                        </Route>
+
+                        {/* Visitor Routes */}
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.VISITOR} />}>
+                            <Route path="/visitante/dashboard" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="/visitante/mapa" element={<GameMap />} />
+                            <Route path="/visitante/actividades" element={<StudentActivities />} />
+                            <Route path="/visitante/contenido" element={<StudentActivities />} />
+                            <Route path="/visitante/diccionario" element={<DictionaryPage />} />
                         </Route>
 
                         {/* Games/Global Authenticated Routes */}
