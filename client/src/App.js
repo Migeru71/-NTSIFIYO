@@ -107,6 +107,12 @@ function App() {
                             <Route path="/admin/maestros" element={<AdminDashboard />} />
                             <Route path="/admin/palabras" element={<AdminDashboard />} />
                             <Route path="/admin/actividades" element={<AdminDashboard />} />
+                            <Route path="/admin/actividades/crear" element={
+                                <ConfigurationGameView redirectPath="/admin/actividades" />
+                            } />
+                            <Route path="/admin/actividades/editar/:editId" element={
+                                <ConfigurationGameView redirectPath="/admin/actividades" />
+                            } />
                             <Route path="/admin/contenido" element={<AdminDashboard />} />
                         </Route>
 

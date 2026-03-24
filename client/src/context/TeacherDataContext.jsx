@@ -60,7 +60,10 @@ async function resolveGroupId() {
 
 const fetchDashboard = async () => {
     const gId = await resolveGroupId();
-    if (!gId) throw new Error('No se pudo determinar tu grupo. Contacta al administrador.');
+    if (!gId) {
+        // No group assigned yet — return empty state so the panel still renders
+        return { totalStudents: 0, activeAssignments: [], alertStudents: [], completeStudents: [], groupId: null, noGroup: true };
+    }
     const result = await ActivityApiService.getTeacherDashboard(gId);
     if (!result.success) throw new Error(result.error || 'Error al cargar el dashboard.');
     return { ...result.data, groupId: gId };
@@ -77,7 +80,10 @@ const fetchResources = async () => {
 
 const fetchAssignments = async () => {
     const gId = await resolveGroupId();
-    if (!gId) throw new Error('No se pudo determinar tu grupo. Contacta al administrador.');
+    if (!gId) {
+        // No group assigned yet — return empty state so the panel still renders
+        return { activities: [], groupId: null, noGroup: true };
+    }
     const result = await ActivityApiService.getActiveAssignments(gId, true);
     if (!result.success) throw new Error(result.error || 'Error al cargar las asignaciones.');
     return { activities: result.data, groupId: gId };

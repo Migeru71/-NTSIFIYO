@@ -104,6 +104,12 @@ export const teacherResourceRoutes = [
     { id: 'edit-resource', label: 'Editar Recurso', path: '/maestro/recursos/editar/:editId', icon: 'edit', roles: [Roles.TEACHER] },
 ];
 
+// ─── Rutas de admin (crear/editar actividades) ───────────────
+export const adminResourceRoutes = [
+    { id: 'admin-create-activity', label: 'Crear Actividad', path: '/admin/actividades/crear', icon: 'add_circle', roles: [Roles.ADMIN] },
+    { id: 'admin-edit-activity', label: 'Editar Actividad', path: '/admin/actividades/editar/:editId', icon: 'edit', roles: [Roles.ADMIN] },
+];
+
 // ─── Ruta de admin login ──────────────────────────────────────
 export const adminAuthRoute = {
     id: 'admin-login', label: 'Admin Login', path: '/admin', icon: 'shield_person', roles: [Roles.ADMIN],

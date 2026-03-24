@@ -1,7 +1,7 @@
 // client/src/components/Games/Quiz/QuizGameView.js
 // Vista de juego de Quiz para estudiantes
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import GameSummary from '../GameSummary';
 import GameAlert from '../GameAlert';
@@ -10,6 +10,8 @@ import './Quiz.css';
 function QuizGameView() {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnToMap = location.state?.returnToMap;
     const { currentGameData } = useGame();
 
     const [activity, setActivity] = useState(null);
@@ -142,7 +144,11 @@ function QuizGameView() {
     };
 
     const handleExit = () => {
-        navigate('/games/quiz');
+        if (returnToMap) {
+            navigate('/estudiante/mapa');
+        } else {
+            navigate('/games/quiz');
+        }
     };
 
     if (loading) {

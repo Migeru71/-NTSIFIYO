@@ -89,6 +89,17 @@ const TeacherDashboard = () => {
 
                     {!loading && !error && data && (
                         <>
+                            {/* No-group notice */}
+                            {data.noGroup && (
+                                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6 text-amber-800">
+                                    <span className="material-symbols-outlined text-amber-500 text-2xl flex-shrink-0">info</span>
+                                    <div>
+                                        <p className="font-semibold text-sm">No hay actividades activas</p>
+                                        <p className="text-xs text-amber-700 mt-0.5">Actualmente no tienes actividades asignadas a tu grupo. Cuando asignes actividades aparecerán aquí.</p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* 4 Main Stat Cards */}
                             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                                 <StatCard icon="groups" label="Total de Estudiantes" value={totalStudents} colorClass="text-gray-800" bgColorClass="bg-blue-50" iconColorClass="text-blue-500" />

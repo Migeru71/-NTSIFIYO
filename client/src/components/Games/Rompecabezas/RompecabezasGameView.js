@@ -1,7 +1,7 @@
 // client/src/components/Games/Rompecabezas/RompecabezasGameView.js
 // Vista de juego de Rompecabezas — Fase 2: Juego (con API real)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import GameSummary from '../GameSummary';
 import GameAlert from '../GameAlert';
@@ -10,6 +10,8 @@ import './Rompecabezas.css';
 const RompecabezasGameView = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnToMap = location.state?.returnToMap;
     const { currentGameData } = useGame();
 
     // ─── Estado general ────────────────────────────────────────────────────
@@ -208,7 +210,7 @@ const RompecabezasGameView = () => {
                     </h2>
                     <p style={{ color: '#374151', marginBottom: '1.5rem' }}>{loadError}</p>
                     <button
-                        onClick={() => navigate('/games/rompecabezas')}
+                        onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/rompecabezas')}
                         style={{
                             background: '#1E3A8A', color: 'white', padding: '0.75rem 1.5rem',
                             border: 'none', borderRadius: '8px', cursor: 'pointer',
@@ -234,7 +236,7 @@ const RompecabezasGameView = () => {
                 correctAnswers={score}
                 totalQuestions={totalOriginal}
                 responseLogs={responseLogs}
-                onExit={() => navigate('/games/rompecabezas')}
+                onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/rompecabezas')}
                 onRetry={() => window.location.reload()}
             />
         );
@@ -247,7 +249,7 @@ const RompecabezasGameView = () => {
         <div className="rp-container">
             {/* ── Barra superior ── */}
             <div className="rp-top-bar">
-                <button className="rp-back-btn" onClick={() => navigate('/games/rompecabezas')} title="Salir">
+                <button className="rp-back-btn" onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/rompecabezas')} title="Salir">
                     ‹
                 </button>
                 <span className="rp-title">{activityTitle}</span>

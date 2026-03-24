@@ -3,19 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import ActivityApiService from '../../services/ActivityApiService';
 import { useGame } from '../../context/GameContext';
+import mapImg from '../../assets/map/map.webp';
+import kitchenHL from '../../assets/map/kitchen.webp';
+import farmHL from '../../assets/map/farm.webp';
+import parkHL from '../../assets/map/park.webp';
+import clinicHL from '../../assets/map/clinic.webp';
+import marketHL from '../../assets/map/market.webp';
+import schoolHL from '../../assets/map/school.webp';
+import forestHL from '../../assets/map/forest.webp';
+import plainHL from '../../assets/map/plain.webp';
+import communityHL from '../../assets/map/community.webp';
 import './GameMap.css';
 
-// Approximate coordinates to spread the 8 categories around the map
-const CATEGORY_POSITIONS = {
-    'SCHOOL': { top: '30%', left: '25%', icon: '🏫' },
-    'COMMUNITY': { top: '25%', left: '60%', icon: '🏘️' },
-    'KITCHEN': { top: '45%', left: '50%', icon: '🍳' },
-    'FOREST': { top: '20%', left: '15%', icon: '🌲' },
-    'FARM': { top: '55%', left: '30%', icon: '🐄' },
-    'MARKET': { top: '48%', left: '70%', icon: '🏪' },
-    'CLINIC': { top: '70%', left: '80%', icon: '🏥' },
-    'PARK': { top: '75%', left: '50%', icon: '⛲' }
-};
+/**
+ * Natural dimensions of map.webp (px).
+ * All zone coordinates are expressed in this coordinate space.
+ */
+const MAP_NATURAL_W = 2729;
+const MAP_NATURAL_H = 1521;
+
+/**
+ * Zone definitions.
+ * x / y  → top-left corner of the highlight image on the base map
+ * w / h  → size of the highlight image
+ * categoryId must match the id used in GAME_CATEGORIES
+ */
+const ZONES = [
+    { id: 'FOREST', img: forestHL, x: 278, y: 196, w: 542, h: 232 },
+    { id: 'PARK', img: parkHL, x: 1057, y: 920, w: 1363, h: 589 },
+    { id: 'COMMUNITY', img: communityHL, x: 1791, y: 119, w: 918, h: 546 },
+    { id: 'SCHOOL', img: schoolHL, x: 169, y: 832, w: 660, h: 565 },
+    { id: 'CLINIC', img: clinicHL, x: 2207, y: 818, w: 502, h: 406 },
+    { id: 'MARKET', img: marketHL, x: 1760, y: 642, w: 504, h: 279 },
+    { id: 'KITCHEN', img: kitchenHL, x: 1047, y: 474, w: 620, h: 547 },
+    { id: 'PLAIN', img: plainHL, x: 1102, y: 287, w: 656, h: 281 },
+    { id: 'FARM', img: farmHL, x: 505, y: 657, w: 551, h: 299 },
+];
 
 const BASE_PATHS = {
     'QUESTIONNAIRE': '/games/quiz',
@@ -23,12 +46,13 @@ const BASE_PATHS = {
     'INTRUDER': '/games/intruso',
     'PUZZLE': '/games/rompecabezas',
     'MEMORY_GAME': '/games/memorama',
-    'LOTTERY': '/games/loteria'
+    'LOTTERY': '/games/loteria',
 };
 
 function GameMap() {
     const navigate = useNavigate();
     const { saveGameData } = useGame();
+
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [activeTopic, setActiveTopic] = useState(null);
     const [games, setGames] = useState([]);
@@ -36,7 +60,7 @@ function GameMap() {
     const [startingGameId, setStartingGameId] = useState(null);
 
     // Get topics for the currently selected category
-    const categoryTopics = selectedCategory 
+    const categoryTopics = selectedCategory
         ? GAME_TOPICS.filter(t => t.categoryId === selectedCategory.id)
         : [];
 
@@ -50,7 +74,6 @@ function GameMap() {
     // When the active topic changes, fetch games
     useEffect(() => {
         if (!activeTopic) return;
-        
         async function fetchGames() {
             setLoading(true);
             const result = await ActivityApiService.getGamesByTopic(activeTopic, 0, 0);
@@ -61,14 +84,12 @@ function GameMap() {
             }
             setLoading(false);
         }
-        
         fetchGames();
     }, [activeTopic]);
 
-    // Preload media
+    // Preload media assets for a game before navigation
     async function preloadAssets(data) {
         const cache = new Map();
-
         const fetchAsBlobUrl = async (url) => {
             if (!url) return null;
             if (cache.has(url)) return cache.get(url);
@@ -79,11 +100,10 @@ function GameMap() {
                 cache.set(url, blobUrl);
                 return blobUrl;
             } catch (err) {
-                console.error("Failed to fetch asset", url, err);
+                console.error('Failed to fetch asset', url, err);
                 return url;
             }
         };
-
         if (data.words) {
             for (let w of data.words) {
                 if (w.imageUrl) w.imageUrl = await fetchAsBlobUrl(w.imageUrl);
@@ -108,22 +128,20 @@ function GameMap() {
         }
     }
 
-    const handlePlayGame = async (gameId) => {
-        setStartingGameId(gameId);
-        try {
-            const result = await ActivityApiService.startGame(gameId);
-            if (result.success && result.data) {
-                const { gameType } = result.data;
-                const basePath = BASE_PATHS[gameType];
-                
-                if (!basePath) {
-                    alert('Tipo de juego desconocido: ' + gameType);
-                    return;
-                }
+    const handlePlayGame = async (game) => {
+        const basePath = BASE_PATHS[game.gameType];
+        if (!basePath) {
+            alert('Tipo de juego desconocido: ' + game.gameType);
+            return;
+        }
 
+        setStartingGameId(game.id);
+        try {
+            const result = await ActivityApiService.startGame(game.id);
+            if (result.success && result.data) {
                 await preloadAssets(result.data);
                 saveGameData(result.data);
-                navigate(`${basePath}/jugar/${gameId}`);
+                navigate(`${basePath}/jugar/${game.id}`, { state: { returnToMap: true } });
             } else {
                 alert(`Error al iniciar el juego: ${result.error}`);
             }
@@ -140,34 +158,66 @@ function GameMap() {
         return map[diff] || diff;
     }
 
-    return (
-        <div className="game-map-container">
-            {GAME_CATEGORIES.map(cat => {
-                const pos = CATEGORY_POSITIONS[cat.id] || { top: '50%', left: '50%', icon: '📍' };
-                return (
-                    <div 
-                        key={cat.id} 
-                        className="map-point"
-                        style={{ top: pos.top, left: pos.left }}
-                        onClick={() => setSelectedCategory(cat)}
-                    >
-                        <div className="map-point-icon">{pos.icon}</div>
-                        <div className="map-point-label">{cat.label}</div>
-                    </div>
-                );
-            })}
+    const handleZoneClick = (zoneId) => {
+        const cat = GAME_CATEGORIES.find(c => c.id === zoneId);
+        if (cat) {
+            setSelectedCategory(cat);
+        }
+    };
 
-            {/* Popup / Modal */}
+    const handleMapClick = () => {
+        // Clicking the bare map deselects any active zone but does NOT close the popup
+        // The popup has its own close mechanism
+    };
+
+    return (
+        <div className="game-map-wrapper">
+            {/* ── Map canvas ─────────────────────────────────────────── */}
+            <div className="game-map-canvas" onClick={handleMapClick}>
+                {/* Base map */}
+                <img
+                    src={mapImg}
+                    alt="Mapa del juego"
+                    className="game-map-base"
+                    draggable={false}
+                />
+
+                {/* Highlight overlays – one per zone */}
+                {ZONES.map(zone => {
+                    const isActive = selectedCategory && selectedCategory.id === zone.id;
+                    return (
+                        <img
+                            key={zone.id}
+                            src={zone.img}
+                            alt={zone.id}
+                            draggable={false}
+                            className={`game-map-zone${isActive ? ' active' : ''}`}
+                            style={{
+                                left: `${(zone.x / MAP_NATURAL_W) * 100}%`,
+                                top: `${(zone.y / MAP_NATURAL_H) * 100}%`,
+                                width: `${(zone.w / MAP_NATURAL_W) * 100}%`,
+                                height: `${(zone.h / MAP_NATURAL_H) * 100}%`,
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleZoneClick(zone.id);
+                            }}
+                        />
+                    );
+                })}
+            </div>
+
+            {/* ── Popup ─────────────────────────────────────────────── */}
             {selectedCategory && (
                 <div className="map-popup-overlay" onClick={() => setSelectedCategory(null)}>
                     <div className="map-popup-content" onClick={e => e.stopPropagation()}>
                         <button className="map-popup-close" onClick={() => setSelectedCategory(null)}>✕</button>
-                        
+
                         <div className="map-popup-header">
                             <h2 className="map-popup-title">{selectedCategory.label}</h2>
                             <div className="map-tabs-container">
                                 {categoryTopics.map(topic => (
-                                    <div 
+                                    <div
                                         key={topic.id}
                                         className={`map-tab ${activeTopic === topic.id ? 'active' : ''}`}
                                         onClick={() => setActiveTopic(topic.id)}
@@ -198,10 +248,10 @@ function GameMap() {
                                                 <div className="map-game-questions">
                                                     🎯 {game.totalQuestions || 0} ítems
                                                 </div>
-                                                <button 
+                                                <button
                                                     className="map-game-btn"
                                                     disabled={startingGameId === game.id}
-                                                    onClick={() => handlePlayGame(game.id)}
+                                                    onClick={() => handlePlayGame(game)}
                                                 >
                                                     {startingGameId === game.id ? 'Cargando...' : '▶ Comenzar'}
                                                 </button>

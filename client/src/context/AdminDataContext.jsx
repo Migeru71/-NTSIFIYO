@@ -1,5 +1,6 @@
 import { createContext, useState, useCallback, useContext, useRef } from 'react';
 import AdminService from '../services/AdminService';
+import apiConfig from '../services/apiConfig';
 
 const AdminDataContext = createContext();
 
@@ -43,6 +44,10 @@ const fetchOverview = async () => await AdminService.getAdminDashboard();
 const fetchStudents = async () => await AdminService.getStudents();
 const fetchTeachers = async () => await AdminService.getTeachers();
 const fetchGroups = async () => await AdminService.getGroups();
+const fetchActivities = async () => {
+    const response = await apiConfig.get('/api/activities/teacher');
+    return response;
+};
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -51,9 +56,10 @@ export const AdminDataProvider = ({ children }) => {
     const students = useCachedSection(useCallback(fetchStudents, []));
     const teachers = useCachedSection(useCallback(fetchTeachers, []));
     const groups = useCachedSection(useCallback(fetchGroups, []));
+    const activities = useCachedSection(useCallback(fetchActivities, []));
 
     return (
-        <AdminDataContext.Provider value={{ overview, students, teachers, groups }}>
+        <AdminDataContext.Provider value={{ overview, students, teachers, groups, activities }}>
             {children}
         </AdminDataContext.Provider>
     );

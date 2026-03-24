@@ -7,6 +7,7 @@ import StudentsSection from './sections/StudentsSection';
 import GroupsSection from './sections/GroupsSection';
 import WordsSection from './sections/WordsSection';
 import AdminOverviewSection from './sections/AdminOverviewSection';
+import AdminActivitiesSection from './sections/AdminActivitiesSection';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumb from '../../components/common/Breadcrumb';
 
@@ -25,6 +26,8 @@ const AdminDashboard = () => {
                 return <GroupsSection />;
             case '/admin/palabras':
                 return <WordsSection />;
+            case '/admin/actividades':
+                return <AdminActivitiesSection />;
             default:
                 return <AdminOverviewSection />;
         }

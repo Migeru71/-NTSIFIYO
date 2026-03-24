@@ -1,10 +1,11 @@
 // client/src/components/Games/Memorama/MemoramaGameView.js
 // Fase 2 — Juego: Tablero de cartas para emparejar (Memorama clásico)
-// POST /api/activities/start/game/{gameId} → wordIds + gameConfigs → construir pares de cartas
+// Lee datos del GameContext (pre-cargados con blob URLs por GameAccessPanel)
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import MemoramaService from '../../../services/MemoramaService';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useGame } from '../../../context/GameContext';
 import MemoramaFinalView from './MemoramaFinalView';
+import GameCard from '../GameCard/GameCard';
 import './Memorama.css';
 
 // Construir cartas a partir de words y gameConfigs
@@ -52,20 +53,21 @@ function buildCards(words, gameConfigs) {
 const MemoramaGameView = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnToMap = location.state?.returnToMap;
+    const { currentGameData } = useGame();
 
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState(null);
-    const [activityTitle, setActivityTitle] = useState('Memorama');
     const [activityXP, setActivityXP] = useState(100);
 
     // Estado del tablero
     const [cards, setCards] = useState([]);
-    const [flippedUids, setFlippedUids] = useState([]); // máx 2 uids seleccionados
+    const [flippedUids, setFlippedUids] = useState([]);   // máx 2 uids seleccionados
     const [matchedWordIds, setMatchedWordIds] = useState(new Set());
-    const [wrongUids, setWrongUids] = useState([]);     // animación de error
-    const [lockBoard, setLockBoard] = useState(false);  // bloquear clics durante verificación
-    const [attempts, setAttempts] = useState(0);        // cuántos pares se intentaron
-    const [feedback, setFeedback] = useState(null);     // 'correct' | 'incorrect' | null
+    const [wrongUids, setWrongUids] = useState([]);        // animación de error
+    const [lockBoard, setLockBoard] = useState(false);     // bloquear clics durante verificación
+    const [attempts, setAttempts] = useState(0);           // cuántos pares se intentaron
+    const [feedback, setFeedback] = useState(null);        // 'correct' | 'incorrect' | null
 
     const [gameState, setGameState] = useState('loading'); // loading | playing | finished | error
     const [elapsed, setElapsed] = useState(0);
@@ -74,39 +76,40 @@ const MemoramaGameView = () => {
 
     const totalPairs = cards.length / 2;
 
-    // ─── Cargar juego ────────────────────────────────────────────────────────
+    // ─── Cargar datos del contexto (igual que IntrusoGameView) ────────────────
     useEffect(() => {
-        initGame();
+        setLoading(true);
+
+        if (!currentGameData) {
+            console.error('No hay datos de juego activos en el contexto.');
+            setLoading(false);
+            setGameState('error');
+            return;
+        }
+
+        if (currentGameData.words && currentGameData.words.length > 0) {
+            const sorted = currentGameData.gameConfigs
+                ? [...currentGameData.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                : [];
+            const built = buildCards(currentGameData.words, sorted);
+            setCards(built);
+            setActivityXP(currentGameData.experience || 100);
+            setGameState('playing');
+        } else {
+            console.error('La actividad de Memorama no tiene palabras.');
+            setGameState('error');
+        }
+
+        setLoading(false);
+    }, [currentGameData]);
+
+    // Cleanup on unmount
+    useEffect(() => {
         return () => {
             clearInterval(timerRef.current);
             clearTimeout(feedbackTimeout.current);
         };
-    }, [activityId]);
-
-    async function initGame() {
-        setLoading(true);
-        setLoadError(null);
-
-        const gameId = parseInt(activityId);
-        const result = await MemoramaService.startGame(gameId);
-
-        if (result.success && result.data?.words?.length) {
-            loadFromApiData(result.data);
-        } else {
-            setLoadError('No se encontró la actividad o no tiene palabras.');
-            setGameState('error');
-        }
-        setLoading(false);
-    }
-
-    function loadFromApiData(data) {
-        const built = buildCards(data.words, data.gameConfigs);
-        setCards(built);
-        setActivityXP(data.experience || 100);
-        setGameState('playing');
-    }
-
-
+    }, []);
 
     // ─── Cronómetro ─────────────────────────────────────────────────────────
     useEffect(() => {
@@ -131,14 +134,13 @@ const MemoramaGameView = () => {
         // Reproducir audio si existe
         const card = cards.find(c => c.uid === uid);
         if (card && card.playAudio && card.audioUrl) {
-            new Audio(card.audioUrl).play().catch(e => console.error("Error reproduciendo audio:", e));
+            new Audio(card.audioUrl).play().catch(e => console.error('Error reproduciendo audio:', e));
         }
 
         const newFlipped = [...flippedUids, uid];
         setFlippedUids(newFlipped);
 
         if (newFlipped.length === 2) {
-            // Buscar wordIds de las dos cartas
             const [uid1, uid2] = newFlipped;
             const wid1 = uid1.split('-')[0];
             const wid2 = uid2.split('-')[0];
@@ -177,7 +179,6 @@ const MemoramaGameView = () => {
     useEffect(() => {
         if (gameState === 'playing' && totalPairs > 0 && matchedWordIds.size === totalPairs) {
             clearInterval(timerRef.current);
-            // Pequeño delay para ver la última carta
             setTimeout(() => setGameState('finished'), 700);
         }
     }, [matchedWordIds, totalPairs, gameState]);
@@ -186,7 +187,6 @@ const MemoramaGameView = () => {
     const boardCols = () => {
         if (cards.length <= 8) return 'cols-4';
         return 'cols-8';
-
     };
 
     // ─── Render: Loading ──────────────────────────────────────────────────────
@@ -207,8 +207,8 @@ const MemoramaGameView = () => {
             }}>
                 <p style={{ fontSize: '48px', marginBottom: '1rem' }}>😕</p>
                 <h2 style={{ color: '#E65100', fontFamily: 'Poppins, sans-serif' }}>Actividad no encontrada</h2>
-                <p style={{ color: '#374151', margin: '0.5rem 0 1.5rem' }}>{loadError}</p>
-                <button onClick={() => navigate('/games/memorama')} style={{
+                <p style={{ color: '#374151', margin: '0.5rem 0 1.5rem' }}>No se pudo cargar la actividad.</p>
+                <button onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/memorama')} style={{
                     background: '#1E3A8A', color: 'white', padding: '0.75rem 1.5rem',
                     border: 'none', borderRadius: '8px', cursor: 'pointer',
                     fontFamily: 'Poppins, sans-serif', fontWeight: '600'
@@ -225,10 +225,9 @@ const MemoramaGameView = () => {
             elapsed={elapsed}
             experience={activityXP}
             onRetry={() => window.location.reload()}
-            onExit={() => navigate('/games/memorama')}
+            onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/memorama')}
         />
     );
-
 
     const progressPercent = totalPairs > 0
         ? (matchedWordIds.size / totalPairs) * 100 : 0;
@@ -237,11 +236,10 @@ const MemoramaGameView = () => {
         <div className="mem-container">
             {/* Barra superior */}
             <div className="mem-top-bar">
-                <button className="mem-back-btn" onClick={() => navigate('/games/memorama')} title="Salir">‹</button>
-                <span className="mem-title">{activityTitle}</span>
+                <button className="mem-back-btn" onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/memorama')} title="Salir">‹</button>
+                <span className="mem-title">Memorama</span>
                 <div className="mem-timer-badge">⏱ {formatTime(elapsed)}</div>
             </div>
-
 
             {/* Barra de progreso */}
             <div className="mem-progress-row">
@@ -259,8 +257,6 @@ const MemoramaGameView = () => {
                     const isFlipped = flippedUids.includes(card.uid);
                     const isMatched = matchedWordIds.has(card.wordId);
                     const isWrong = wrongUids.includes(card.uid);
-                    const isSelected = isFlipped && !isMatched && !isWrong;
-
 
                     return (
                         <div
@@ -269,9 +265,8 @@ const MemoramaGameView = () => {
                                 'mem-card',
                                 isFlipped || isMatched ? 'flipped' : '',
                                 isMatched ? 'matched' : '',
-                                isSelected ? 'selected' : '',
                                 isWrong ? 'wrong' : '',
-                            ].join(' ')}
+                            ].filter(Boolean).join(' ')}
                             onClick={() => handleCardClick(card.uid, card.wordId)}
                         >
                             <div className="mem-card-inner">
@@ -279,23 +274,15 @@ const MemoramaGameView = () => {
                                 <div className="mem-card-front">
                                     <span className="mem-card-front-icon">?</span>
                                 </div>
-                                {/* Frente */}
+                                {/* Frente — usa GameCard para consistencia visual */}
                                 <div className="mem-card-back">
-                                    {card.playAudio && (
-                                        <span className="mem-card-emoji">🔊</span>
-                                    )}
-                                    {card.imageUrl && (
-                                        <img src={card.imageUrl} alt="pair" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
-                                    )}
-                                    {card.showText && card.text && (
-                                        <span className={`mem-card-text ${card.isMazahua ? 'mazahua' : ''}`} style={{ position: card.imageUrl ? 'absolute' : 'relative', bottom: card.imageUrl ? '8px' : 'auto', background: card.imageUrl ? 'rgba(255,255,255,0.8)' : 'transparent', padding: card.imageUrl ? '2px 8px' : '0', borderRadius: '8px' }}>
-                                            {card.text}
-                                        </span>
-                                    )}
-                                    {/* Si playAudio o imageUrl fallan como fallback visual */}
-                                    {card.showImage && !card.imageUrl && !card.playAudio && (
-                                        <span style={{ fontSize: '28px' }}>🖼️</span>
-                                    )}
+                                    <GameCard
+                                        text={card.showText ? card.text : undefined}
+                                        imageUrl={card.imageUrl || undefined}
+                                        audioUrl={card.audioUrl || undefined}
+                                        disabled={true}
+                                        selected={isMatched ? 'correct' : isWrong ? 'incorrect' : null}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -308,14 +295,12 @@ const MemoramaGameView = () => {
                 ¡Encuentra las parejas de cartas! — Intentos: {attempts}
             </p>
 
-
             {/* Feedback flash */}
             {feedback && (
                 <div className={`mem-feedback-banner ${feedback}`}>
                     {feedback === 'correct' ? '¡Par encontrado! 🎉' : 'Inténtalo de nuevo 😅'}
                 </div>
             )}
-
         </div>
     );
 };

@@ -1,9 +1,10 @@
 // client/src/components/Games/Intruso/IntrusoGameView.js
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import GameSummary from '../GameSummary';
 import GameAlert from '../GameAlert';
+import GameCard from '../GameCard/GameCard';
 import './Intruso.css';
 
 const GAME_DURATION = 45; // 45 seconds
@@ -11,6 +12,8 @@ const GAME_DURATION = 45; // 45 seconds
 const IntrusoGameView = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnToMap = location.state?.returnToMap;
     const { currentGameData } = useGame();
 
     const [activity, setActivity] = useState(null);
@@ -166,7 +169,7 @@ const IntrusoGameView = () => {
                 correctAnswers={correctCount}
                 totalQuestions={activity?.questions?.length || 0}
                 responseLogs={responseLogs}
-                onExit={() => navigate('/estudiante/actividades')}
+                onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/estudiante/actividades')}
                 onRetry={() => window.location.reload()}
             />
         );
@@ -182,7 +185,7 @@ const IntrusoGameView = () => {
         <div className="intruso-container">
             {/* Top Bar */}
             <div className="intruso-top-bar">
-                <button className="intruso-pause-btn" onClick={() => navigate(-1)}>
+                <button className="intruso-pause-btn" onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate(-1)}>
                     ⏸
                 </button>
                 <div className="intruso-score-badge">
@@ -237,39 +240,26 @@ const IntrusoGameView = () => {
             {/* Grid — config2 */}
             <div className="intruso-grid">
                 {currentQuestion.responseList.map((option, idx) => (
-                    <div
+                    <GameCard
                         key={idx}
-                        className={`intruso-option-card animate-pop 
-                            ${feedback && option.isCorrect && feedback.type === 'correct' ? 'correct' : ''}
-                            ${feedback && !option.isCorrect && feedback.type === 'incorrect' ? 'incorrect' : ''} 
-                        `}
+                        text={config2.showText
+                            ? (config2.isMazahua && option.word
+                                ? option.word.mazahuaWord
+                                : (option.answerText || (option.word ? option.word.spanishWord : '')))
+                            : undefined}
+                        imageUrl={config2.showImage ? option.word?.imageUrl : undefined}
+                        audioUrl={config2.playAudio ? option.word?.audioUrl : undefined}
                         onClick={() => handleAnswer(option)}
-                        style={{ animationDelay: `${idx * 0.1}s`, pointerEvents: feedback ? 'none' : 'auto' }}
-                    >
-                        {config2.showImage && option.word?.imageUrl ? (
-                            <div className="intruso-option-icon">
-                                <img src={option.word.imageUrl} alt=""
-                                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
-                            </div>
-                        ) : (
-                            <div className="intruso-option-icon">❔</div>
-                        )}
-
-                        {config2.showText && (
-                            <span className="intruso-option-text">
-                                {config2.isMazahua && option.word
-                                    ? option.word.mazahuaWord
-                                    : (option.answerText || (option.word ? option.word.spanishWord : ''))}
-                            </span>
-                        )}
-
-                        {config2.playAudio && option.word?.audioUrl && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); playAudio(option.word.audioUrl); }}
-                                style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer', marginTop: '4px' }}
-                            >🔊</button>
-                        )}
-                    </div>
+                        selected={
+                            feedback && option.isCorrect && feedback.type === 'correct'
+                                ? 'correct'
+                                : feedback && !option.isCorrect && feedback.type === 'incorrect'
+                                    ? 'incorrect'
+                                    : null
+                        }
+                        disabled={!!feedback}
+                        animationDelay={`${idx * 0.1}s`}
+                    />
                 ))}
             </div>
 
