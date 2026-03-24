@@ -1,66 +1,75 @@
 // client/src/components/Games/Loteria/LoteriaGameView.jsx
 // Fase 2 — Juego: Baraja (izquierda) + Tabla 3×3 (derecha)
-// Estilo visual basado en la referencia de Lotería digital
+// Usa GameCard para las cartas del tablero
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import LoteriService from '../../../services/LoteriService';
+import GameCard from '../GameCard/GameCard';
 import LoteriaFinalView from './LoteriaFinalView';
 import './Loteria.css';
 
-// ─── Mock data de 9 palabras (desarrollo sin API) ────────────────────────────
-const MOCK_WORDS = [
-    { id: 1, mazahuaWord: "nzäthi", spanishWord: "El Sol", imageUrl: null, audioUrl: null },
-    { id: 2, mazahuaWord: "ndeje", spanishWord: "La Luna", imageUrl: null, audioUrl: null },
-    { id: 3, mazahuaWord: "dehe", spanishWord: "El Agua", imageUrl: null, audioUrl: null },
-    { id: 4, mazahuaWord: "yju", spanishWord: "El Árbol", imageUrl: null, audioUrl: null },
-    { id: 5, mazahuaWord: "mfeni", spanishWord: "El Gallo", imageUrl: null, audioUrl: null },
-    { id: 6, mazahuaWord: "ngümi", spanishWord: "La Rosa", imageUrl: null, audioUrl: null },
-    { id: 7, mazahuaWord: "zithu", spanishWord: "La Flor", imageUrl: null, audioUrl: null },
-    { id: 8, mazahuaWord: "pjäri", spanishWord: "El Viento", imageUrl: null, audioUrl: null },
-    { id: 9, mazahuaWord: "nzöni", spanishWord: "La Montaña", imageUrl: null, audioUrl: null },
+// ─── Pool COMPLETO de cartas (baraja grande — incluye cartas que pueden no estar en la tabla) ──
+const ALL_WORDS = [
+    { id: 1, mazahuaWord: "nzäthi", spanishWord: "El Sol", emoji: '☀️' },
+    { id: 2, mazahuaWord: "ndeje", spanishWord: "La Luna", emoji: '🌙' },
+    { id: 3, mazahuaWord: "dehe", spanishWord: "El Agua", emoji: '💧' },
+    { id: 4, mazahuaWord: "yju", spanishWord: "El Árbol", emoji: '🌳' },
+    { id: 5, mazahuaWord: "mfeni", spanishWord: "El Gallo", emoji: '🐓' },
+    { id: 6, mazahuaWord: "ngümi", spanishWord: "La Rosa", emoji: '🌹' },
+    { id: 7, mazahuaWord: "zithu", spanishWord: "La Flor", emoji: '🌸' },
+    { id: 8, mazahuaWord: "pjäri", spanishWord: "El Viento", emoji: '💨' },
+    { id: 9, mazahuaWord: "nzöni", spanishWord: "La Montaña", emoji: '⛰️' },
+    { id: 10, mazahuaWord: "ngubu", spanishWord: "La Casa", emoji: '🏠' },
+    { id: 11, mazahuaWord: "ndoxi", spanishWord: "El Maíz", emoji: '🌽' },
+    { id: 12, mazahuaWord: "tembé", spanishWord: "El Corazón", emoji: '❤️' },
+    { id: 13, mazahuaWord: "botsi", spanishWord: "La Mano", emoji: '✋' },
+    { id: 14, mazahuaWord: "nzöxi", spanishWord: "El Fuego", emoji: '🔥' },
+    { id: 15, mazahuaWord: "pjeni", spanishWord: "La Estrella", emoji: '⭐' },
 ];
-
-const WORD_EMOJIS = { 1: '☀️', 2: '🌙', 3: '💧', 4: '🌳', 5: '🐓', 6: '🌹', 7: '🌸', 8: '💨', 9: '⛰️' };
-const CARD_SUITS = ['♠', '♣', '♦', '♥'];
-const CARD_RANKS = ['A', 'Q', 'K', 'J'];
 
 const CARD_INTERVAL_MS = 5000;
 const PENALTY_PTS = 5;
 const CORRECT_PTS = 10;
 
-function randomSuit() { return CARD_SUITS[Math.floor(Math.random() * CARD_SUITS.length)]; }
-function randomRank() { return CARD_RANKS[Math.floor(Math.random() * CARD_RANKS.length)]; }
-
+/**
+ * Construye la tabla (9 palabras aleatorias del pool) y la pila (todas + extras barajadas).
+ * La pila incluye TODAS las palabras del pool, no solo las de la tabla.
+ * Así algunas cartas que salen en la pila no estarán en la tabla (como en lotería real).
+ */
 function buildGameData(words, gameConfigs) {
     const cfg0 = gameConfigs[0] || { showText: true, showImage: false, playAudio: false, isMazahua: false };
     const cfg1 = gameConfigs[1] || { showText: true, showImage: false, playAudio: false, isMazahua: false };
 
-    const pile = [...words].sort(() => Math.random() - 0.5).map((w) => ({
-        wordId: w.id,
-        text: cfg0.isMazahua ? w.mazahuaWord : w.spanishWord,
-        altText: cfg0.isMazahua ? w.spanishWord : w.mazahuaWord,
-        imageUrl: cfg0.showImage ? w.imageUrl : null,
-        audioUrl: cfg0.playAudio ? w.audioUrl : null,
-        showText: cfg0.showText,
-        showImage: cfg0.showImage,
-        playAudio: cfg0.playAudio,
-        isMazahua: cfg0.isMazahua,
-        emoji: WORD_EMOJIS[w.id] || '🃏',
-    }));
+    // Tomar los primeros 9 (o todos si hay menos) como tabla del jugador
+    const boardWords = [...words].sort(() => Math.random() - 0.5).slice(0, 9);
 
-    const board = [...words].sort(() => Math.random() - 0.5).map((w) => ({
+    // La pila incluye TODOS los words disponibles mezclados aleatoriamente
+    const pileWords = [...words].sort(() => Math.random() - 0.5);
+
+    const board = boardWords.map((w) => ({
         wordId: w.id,
         text: cfg1.isMazahua ? w.mazahuaWord : w.spanishWord,
-        imageUrl: cfg1.showImage ? w.imageUrl : null,
-        audioUrl: cfg1.playAudio ? w.audioUrl : null,
+        imageUrl: cfg1.showImage ? (w.imageUrl || null) : null,
+        audioUrl: cfg1.playAudio ? (w.audioUrl || null) : null,
         showText: cfg1.showText,
         showImage: cfg1.showImage,
         playAudio: cfg1.playAudio,
         isMazahua: cfg1.isMazahua,
-        emoji: WORD_EMOJIS[w.id] || '🃏',
-        suit: randomSuit(),
-        rank: randomRank(),
+        emoji: w.emoji || '🃏',
+    }));
+
+    const pile = pileWords.map((w) => ({
+        wordId: w.id,
+        text: cfg0.isMazahua ? w.mazahuaWord : w.spanishWord,
+        altText: cfg0.isMazahua ? w.spanishWord : w.mazahuaWord,
+        imageUrl: cfg0.showImage ? (w.imageUrl || null) : null,
+        audioUrl: cfg0.playAudio ? (w.audioUrl || null) : null,
+        showText: cfg0.showText,
+        showImage: cfg0.showImage,
+        playAudio: cfg0.playAudio,
+        isMazahua: cfg0.isMazahua,
+        emoji: w.emoji || '🃏',
     }));
 
     return { pile, board };
@@ -77,18 +86,21 @@ const LoteriaGameView = () => {
     const [activityTitle, setActivityTitle] = useState('Lotería');
     const [activityXP, setActivityXP] = useState(100);
 
-    const [pile, setPile] = useState([]);
-    const [board, setBoard] = useState([]);
+    const [pile, setPile] = useState([]);   // baraja completa (incluyendo cartas fuera de la tabla)
+    const [board, setBoard] = useState([]);   // 9 cartas de la tabla del jugador
 
     const [pileIndex, setPileIndex] = useState(-1);
-    const [revealedIds, setRevealedIds] = useState(new Set());
-    const [matchedIds, setMatchedIds] = useState(new Set());
-    const [wrongIds, setWrongIds] = useState(new Set());
-    const [highlightId, setHighlightId] = useState(null);
+    const [revealedIds, setRevealedIds] = useState(new Set());  // wordIds ya mencionados en la baraja
+    const [matchedIds, setMatchedIds] = useState(new Set());  // wordIds seleccionados correctamente
+    const [wrongIds, setWrongIds] = useState(new Set());  // para animación de error temporal
     const [score, setScore] = useState(0);
     const [penaltyCount, setPenaltyCount] = useState(0);
-    const [feedback, setFeedback] = useState(null);
-    const [gameState, setGameState] = useState('loading');
+    const [feedback, setFeedback] = useState(null);       // 'correct' | 'incorrect' | null
+
+    // Modal de validación del botón Lotería
+    const [loteriaAlert, setLoteriaAlert] = useState(null); // null | 'not_all_selected' | 'not_all_revealed'
+
+    const [gameState, setGameState] = useState('loading'); // loading | playing | finished | error
     const [elapsed, setElapsed] = useState(0);
 
     const timerRef = useRef(null);
@@ -98,11 +110,13 @@ const LoteriaGameView = () => {
     const revealedIdsRef = useRef(new Set());
     const matchedIdsRef = useRef(new Set());
     const pileRef = useRef([]);
+    const boardRef = useRef([]);
 
     pileIndexRef.current = pileIndex;
     revealedIdsRef.current = revealedIds;
     matchedIdsRef.current = matchedIds;
     pileRef.current = pile;
+    boardRef.current = board;
 
     // ─── Init ─────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -138,7 +152,7 @@ const LoteriaGameView = () => {
             { showText: true, showImage: false, playAudio: false, isMazahua: false },
             { showText: true, showImage: false, playAudio: false, isMazahua: false },
         ];
-        const { pile: p, board: b } = buildGameData(MOCK_WORDS, cfgs);
+        const { pile: p, board: b } = buildGameData(ALL_WORDS, cfgs);
         setPile(p); setBoard(b);
         setActivityTitle('¡Lotería!');
         setActivityXP(100);
@@ -146,8 +160,14 @@ const LoteriaGameView = () => {
     }
 
     function loadFromApiData(data) {
-        const words = data.words || MOCK_WORDS;
-        const { pile: p, board: b } = buildGameData(words, data.gameConfigs || []);
+        // Combinar palabras del API con el pool completo para tener cartas "decoy" en la pila
+        const apiWords = data.words || [];
+        // Crear pool extendido mezclando palabras del API con mock si son pocas
+        const pool = apiWords.length >= 9 ? apiWords : [
+            ...apiWords,
+            ...ALL_WORDS.filter(w => !apiWords.find(aw => aw.id === w.id)).slice(0, 15 - apiWords.length)
+        ];
+        const { pile: p, board: b } = buildGameData(pool, data.gameConfigs || []);
         setPile(p); setBoard(b);
         setActivityTitle(data.title || '¡Lotería!');
         setActivityXP(data.experience || 100);
@@ -164,7 +184,7 @@ const LoteriaGameView = () => {
         return () => clearInterval(timerRef.current);
     }, [gameState]);
 
-    // ─── Auto-reveal ─────────────────────────────────────────────────────
+    // ─── Auto-reveal de la baraja ──────────────────────────────────────────
     useEffect(() => {
         if (gameState !== 'playing' || pile.length === 0) return;
         revealNext();
@@ -184,29 +204,23 @@ const LoteriaGameView = () => {
             const n = new Set(prev); n.add(card.wordId);
             revealedIdsRef.current = n; return n;
         });
-        setHighlightId(card.wordId);
-        setTimeout(() => setHighlightId(null), 1400);
+        // ── NO se resalta la carta en el tablero: el jugador debe identificarla solo ──
         if (card.playAudio && card.audioUrl) {
             new Audio(card.audioUrl).play().catch(() => { });
         }
     }
 
-    // ─── Fin del juego ────────────────────────────────────────────────────
-    useEffect(() => {
-        if (gameState === 'playing' && board.length > 0 && matchedIds.size >= board.length) {
-            clearInterval(timerRef.current);
-            clearInterval(pileTimerRef.current);
-            setTimeout(() => setGameState('finished'), 700);
-        }
-    }, [matchedIds, board.length, gameState]);
+    // ─── Fin del juego (cuando se presiona Lotería correctamente) ─────────
+    // (ya no termina automáticamente — se requiere presionar el botón)
 
     // ─── Click en carta del tablero ───────────────────────────────────────
     const handleCardClick = useCallback((wordId) => {
         if (gameState !== 'playing') return;
-        if (matchedIdsRef.current.has(wordId)) return;
+        if (matchedIdsRef.current.has(wordId)) return; // ya seleccionada
         clearTimeout(feedbackTimeout.current);
 
         if (revealedIdsRef.current.has(wordId)) {
+            // Correcto: la carta ya fue mencionada en la baraja
             setMatchedIds(prev => {
                 const n = new Set(prev); n.add(wordId);
                 matchedIdsRef.current = n; return n;
@@ -214,6 +228,7 @@ const LoteriaGameView = () => {
             setScore(p => p + CORRECT_PTS);
             setFeedback('correct');
         } else {
+            // Penalización: la carta aún no ha sido mencionada
             setWrongIds(prev => new Set([...prev, wordId]));
             setPenaltyCount(p => p + 1);
             setScore(p => Math.max(0, p - PENALTY_PTS));
@@ -222,8 +237,36 @@ const LoteriaGameView = () => {
                 setWrongIds(prev => { const n = new Set(prev); n.delete(wordId); return n; });
             }, 700);
         }
-        feedbackTimeout.current = setTimeout(() => setFeedback(null), 900);
+        feedbackTimeout.current = setTimeout(() => setFeedback(null), 1000);
     }, [gameState]);
+
+    // ─── Botón ¡Lotería! ──────────────────────────────────────────────────
+    const handleLoteriaButton = useCallback(() => {
+        const board = boardRef.current;
+        const matched = matchedIdsRef.current;
+        const revealed = revealedIdsRef.current;
+
+        const boardIds = board.map(c => c.wordId);
+        const allSelected = boardIds.every(id => matched.has(id));
+
+        if (!allSelected) {
+            // El jugador aún no ha seleccionado todas sus cartas
+            setLoteriaAlert('not_all_selected');
+            return;
+        }
+
+        // Verificar que todas las cartas seleccionadas fueron mencionadas
+        const allMentioned = boardIds.every(id => !matched.has(id) || revealed.has(id));
+        if (!allMentioned) {
+            setLoteriaAlert('not_all_revealed');
+            return;
+        }
+
+        // ¡Todo correcto! Terminar el juego
+        clearInterval(timerRef.current);
+        clearInterval(pileTimerRef.current);
+        setTimeout(() => setGameState('finished'), 400);
+    }, []);
 
     const formatTime = (s) =>
         `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -265,6 +308,7 @@ const LoteriaGameView = () => {
     );
 
     const currentCard = pileIndex >= 0 && pileIndex < pile.length ? pile[pileIndex] : null;
+    const allBoardSelected = board.length > 0 && board.every(c => matchedIds.has(c.wordId));
 
     return (
         <div className="lot-container">
@@ -275,22 +319,13 @@ const LoteriaGameView = () => {
                     <div className="lot-logo-icon">🎰</div>
                     <span className="lot-logo-text">¡Lotería!</span>
                 </div>
-
                 <div className="lot-topbar-right">
-                    <div className="lot-badge lot-badge-points">
-                        ⭐ Puntos: {score}
-                    </div>
+                    <div className="lot-badge lot-badge-points">⭐ Puntos: {score}</div>
                     {penaltyCount > 0 && (
-                        <div className="lot-badge lot-badge-penalty">
-                            ❌ -{penaltyCount * PENALTY_PTS}
-                        </div>
+                        <div className="lot-badge lot-badge-penalty">❌ -{penaltyCount * PENALTY_PTS}</div>
                     )}
-                    <div className="lot-badge lot-badge-timer">
-                        ⏱ {formatTime(elapsed)}
-                    </div>
-                    <button className="lot-topbar-icon-btn" onClick={() => navigate('/games/loteria')} title="Salir">
-                        ✕
-                    </button>
+                    <div className="lot-badge lot-badge-timer">⏱ {formatTime(elapsed)}</div>
+                    <button className="lot-topbar-icon-btn" onClick={() => navigate('/games/loteria')} title="Salir">✕</button>
                 </div>
             </div>
 
@@ -316,7 +351,7 @@ const LoteriaGameView = () => {
                             </div>
                             <div className="lot-baraja-card-footer">
                                 <div className="lot-baraja-card-name">{currentCard.text}</div>
-                                {currentCard.isMazahua && (
+                                {currentCard.isMazahua && currentCard.altText && (
                                     <div className="lot-baraja-card-subtitle">"{currentCard.altText}"</div>
                                 )}
                                 {currentCard.playAudio && currentCard.audioUrl && (
@@ -325,9 +360,7 @@ const LoteriaGameView = () => {
                                         style={{ margin: '8px auto 0', display: 'flex' }}
                                         onClick={() => new Audio(currentCard.audioUrl).play().catch(() => { })}
                                         title="Reproducir audio"
-                                    >
-                                        🔊
-                                    </button>
+                                    >🔊</button>
                                 )}
                             </div>
                         </div>
@@ -340,7 +373,7 @@ const LoteriaGameView = () => {
 
                     <div className="lot-find-btn">
                         {currentCard
-                            ? `¡Busca esta carta en tu tabla!`
+                            ? '¡Busca esta carta en tu tabla!'
                             : 'Las cartas aparecerán pronto'}
                     </div>
 
@@ -349,50 +382,30 @@ const LoteriaGameView = () => {
                     </span>
                 </div>
 
-                {/* Columna derecha — Tabla */}
+                {/* Columna derecha — Tabla 3×3 con GameCard */}
                 <div className="lot-tabla-col">
                     <span className="lot-tabla-pill">TABLA #{String(activityId || '01').padStart(2, '0')}</span>
 
                     <div className="lot-tabla-board">
                         <div className="lot-board-grid">
-                            {board.map((card) => {
+                            {board.map((card, idx) => {
                                 const isMatched = matchedIds.has(card.wordId);
                                 const isWrong = wrongIds.has(card.wordId);
-                                const isHighlighted = highlightId === card.wordId && !isMatched;
-
+                                // ⚠️ NO se resalta cuando sale en la baraja — el jugador debe identificar la carta
                                 return (
                                     <div
                                         key={card.wordId}
-                                        className={[
-                                            'lot-board-card',
-                                            isMatched ? 'matched' : '',
-                                            isWrong ? 'wrong' : '',
-                                            isHighlighted ? 'highlighted' : '',
-                                        ].join(' ').trim()}
+                                        className={`lot-gameboard-cell ${isWrong ? 'wrong' : ''}`}
                                         onClick={() => handleCardClick(card.wordId)}
-                                        title={card.text}
                                     >
-                                        {/* Contenido de la carta */}
-                                        {card.showImage && card.imageUrl ? (
-                                            <img
-                                                src={card.imageUrl}
-                                                alt={card.text}
-                                                className="lot-board-card-image"
-                                            />
-                                        ) : (
-                                            <span className="lot-board-card-emoji">{card.emoji}</span>
-                                        )}
-
-                                        {card.showText && (
-                                            <span className="lot-board-card-label">{card.text}</span>
-                                        )}
-
-                                        {/* Overlay de checkmark cuando está seleccionada */}
-                                        {isMatched && (
-                                            <div className="lot-board-card-check">
-                                                <div className="lot-board-card-check-circle">✓</div>
-                                            </div>
-                                        )}
+                                        <GameCard
+                                            text={card.showText ? card.text : undefined}
+                                            imageUrl={card.imageUrl || undefined}
+                                            audioUrl={card.audioUrl || undefined}
+                                            selected={isMatched ? 'correct' : isWrong ? 'incorrect' : null}
+                                            disabled={isMatched}
+                                            animationDelay={`${idx * 0.04}s`}
+                                        />
                                     </div>
                                 );
                             })}
@@ -407,16 +420,43 @@ const LoteriaGameView = () => {
 
             {/* ── Botón ¡Lotería! ── */}
             <div className="lot-loteria-btn-row">
-                <button className="lot-loteria-btn" disabled>
+                <button
+                    className={`lot-loteria-btn ${allBoardSelected ? '' : 'lot-loteria-btn--waiting'}`}
+                    onClick={handleLoteriaButton}
+                >
                     🎊 ¡Lotería!
                 </button>
             </div>
 
-            {/* Feedback flash */}
+            {/* ── Modal de alerta del botón Lotería ── */}
+            {loteriaAlert && (
+                <div className="lot-modal-overlay" onClick={() => setLoteriaAlert(null)}>
+                    <div className="lot-modal" onClick={e => e.stopPropagation()}>
+                        <div className="lot-modal-icon">
+                            {loteriaAlert === 'not_all_selected' ? '🃏' : '⏳'}
+                        </div>
+                        <h3 className="lot-modal-title">
+                            {loteriaAlert === 'not_all_selected'
+                                ? '¡Aún no has seleccionado todas tus cartas!'
+                                : '¡Algunas cartas no han sido mencionadas aún!'}
+                        </h3>
+                        <p className="lot-modal-desc">
+                            {loteriaAlert === 'not_all_selected'
+                                ? 'Selecciona todas las cartas de tu tabla antes de gritar ¡Lotería!'
+                                : 'Espera a que todas tus cartas seleccionadas sean mencionadas en la baraja. ¡Continúa con el juego!'}
+                        </p>
+                        <button className="lot-modal-btn" onClick={() => setLoteriaAlert(null)}>
+                            Continuar el juego
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Feedback flash rápido */}
             {feedback && (
                 <div className={`lot-feedback-banner ${feedback}`}>
                     {feedback === 'correct'
-                        ? `¡Lotería! +${CORRECT_PTS} pts 🎉`
+                        ? `¡Correcto! +${CORRECT_PTS} pts 🎉`
                         : `¡Aún no ha salido! -${PENALTY_PTS} pts 😅`}
                 </div>
             )}

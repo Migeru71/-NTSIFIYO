@@ -457,6 +457,24 @@
 }
 
 /* ============================================
+   WRAPPER PARA GAMECARD EN EL TABLERO
+   ============================================ */
+.lot-gameboard-cell {
+    cursor: pointer;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.15s;
+}
+
+.lot-gameboard-cell:hover {
+    transform: translateY(-3px);
+}
+
+.lot-gameboard-cell.wrong {
+    animation: lotShake 0.4s ease-out;
+}
+
+/* ============================================
    BOTÓN ¡LOTERÍA!
    ============================================ */
 .lot-loteria-btn-row {
@@ -487,6 +505,80 @@
     background: #c43d07;
     transform: translateY(-2px);
     box-shadow: 0 10px 28px rgba(232, 76, 10, 0.45);
+}
+
+.lot-loteria-btn--waiting {
+    background: #aaa;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.lot-loteria-btn--waiting:hover {
+    background: #999;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ============================================
+   MODAL DE VALIDACIÓN LOTERÍA
+   ============================================ */
+.lot-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 400;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.lot-modal {
+    background: #fff;
+    border-radius: 24px;
+    padding: 2rem 2rem 1.5rem;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lot-modal-icon {
+    font-size: 56px;
+    margin-bottom: 0.5rem;
+}
+
+.lot-modal-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+}
+
+.lot-modal-desc {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+}
+
+.lot-modal-btn {
+    background: var(--lot-orange);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: background 0.15s;
+}
+
+.lot-modal-btn:hover {
+    background: #c43d07;
 }
 
 /* ============================================
