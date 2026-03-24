@@ -29,7 +29,7 @@
 
 .game-card--disabled {
     cursor: default;
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 /* ── State feedback ── */
