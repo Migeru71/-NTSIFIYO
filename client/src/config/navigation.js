@@ -96,6 +96,16 @@ export const gameRoutes = [
             { id: 'intruso-play', label: 'Jugar Intruso', path: '/games/intruso/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
         ],
     },
+    {
+        id: 'loteria',
+        label: 'Lotería',
+        path: '/games/loteria',
+        icon: 'casino',
+        roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR],
+        children: [
+            { id: 'loteria-play', label: 'Jugar Lotería', path: '/games/loteria/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
+        ],
+    },
 ];
 
 // ─── Rutas del maestro (crear/editar recursos) ────────────────
