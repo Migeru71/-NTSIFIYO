@@ -19,6 +19,9 @@ import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGa
 // Memorama imports
 import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
 import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
+// Lotería imports
+import LoteriaAccessPanel from './components/Games/Loteria/LoteriaAccessPanel';
+import LoteriaGameView from './components/Games/Loteria/LoteriaGameView';
 // Student Dashboard
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentActivities from './pages/student/StudentActivities';
@@ -188,6 +191,10 @@ function App() {
                             {/* Rompecabezas */}
                             <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
                             <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
+
+                            {/* Lotería */}
+                            <Route path="/games/loteria" element={<LoteriaAccessPanel />} />
+                            <Route path="/games/loteria/jugar/:activityId" element={<LoteriaGameView />} />
                         </Route>
                     </Route>
 

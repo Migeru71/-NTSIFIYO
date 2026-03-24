@@ -100,6 +100,23 @@ const StudentActivities = () => {
                 { icon: 'psychology', label: 'Memoria' },
                 { icon: 'emoji_events', label: 'XP' }
             ]
+        },
+        {
+            id: 'loteria',
+            title: 'Lotería',
+            subtitle: 'Selecciona las cartas',
+            description: 'Selecciona las cartas de tu tablero que coincidan con las que van apareciendo en la pila. ¡Rápido y sin penalizaciones para ganar más puntos!',
+            icon: '🎰',
+            iconBg: 'bg-gradient-to-br from-amber-100 to-yellow-100',
+            borderColor: 'border-amber-200',
+            accentColor: 'text-amber-600',
+            btnColor: 'bg-amber-500 hover:bg-amber-600',
+            path: '/games/loteria',
+            stats: [
+                { icon: 'casino', label: 'Cartas' },
+                { icon: 'timer', label: 'Velocidad' },
+                { icon: 'emoji_events', label: 'XP' }
+            ]
         }
     ];
 
