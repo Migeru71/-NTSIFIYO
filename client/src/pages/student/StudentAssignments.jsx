@@ -6,6 +6,7 @@ import { useGame } from '../../context/GameContext';
 import { useAlert } from '../../context/AlertContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useStudentData } from '../../context/StudentDataContext';
+import { getGameBasePath, getGameIcon } from '../../config/gameConfig';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();
@@ -62,25 +63,7 @@ const StudentAssignments = () => {
         }
     }
 
-    const getGameIcon = (gameType) => {
-        switch (gameType) {
-            case 'FAST_MEMORY': return '🎴';
-            case 'QUIZ': return '❓';
-            case 'INTRUDER': return '🕵️';
-            case 'PUZZLE': return '🧩';
-            default: return '🎮';
-        }
-    };
-
-    const getGameBasePath = (gameType) => {
-        switch (gameType) {
-            case 'FAST_MEMORY': return '/games/memorama';
-            case 'QUIZ': return '/games/quiz';
-            case 'INTRUDER': return '/games/intruso';
-            case 'PUZZLE': return '/games/rompecabezas';
-            default: return '/dashboard';
-        }
-    };
+    // Local implementations of getGameIcon and getGameBasePath removed in favor of central config
 
     async function handlePlayGame(activityId, gameType) {
         const selectedActivity = activities.find(a => a.id === activityId);

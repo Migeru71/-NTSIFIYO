@@ -70,6 +70,9 @@
 
 /* Image layout — fills the whole card */
 .gc-body--image {
+    position: relative;
+    width: 100%;
+    height: 100%;
     align-items: stretch;
     justify-content: flex-end;
 }
@@ -78,15 +81,13 @@
    IMAGE
    ══════════════════════════════════════════ */
 .gc-image {
-    /* position: absolute; */
+    position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* contain so white bg blends seamlessly */
     object-position: center;
     border-radius: 17px;
-    /* match card radius - border width */
 }
 
 /* ══════════════════════════════════════════

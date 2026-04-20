@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
+import { getActivitiesList } from '../../config/gameConfig';
 
 /**
  * Página de actividades de aprendizaje
@@ -14,111 +15,8 @@ const StudentActivities = () => {
         } catch { return {}; }
     })();
 
-    // Actividades generales (una tarjeta por tipo de juego)
-    const games = [
-        {
-            id: 'memoria_rapida',
-            title: 'Memoria Rapida',
-            subtitle: 'Tarjetas de Memoria',
-            description: 'Aprende vocabulario y pronunciación mazahua emparejando tarjetas interactivas. Ejercita tu memoria mientras descubres nuevas palabras.',
-            icon: '🎴',
-            iconBg: 'bg-gradient-to-br from-orange-100 to-amber-100',
-            borderColor: 'border-orange-200',
-            accentColor: 'text-orange-600',
-            btnColor: 'bg-orange-500 hover:bg-orange-600',
-            path: '/games/memoria_rapida',
-            stats: [
-                { icon: 'style', label: 'Tarjetas' },
-                { icon: 'timer', label: 'Memoria' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        },
-        {
-            id: 'quiz',
-            title: 'Quiz',
-            subtitle: 'Preguntas y Respuestas',
-            description: 'Pon a prueba tus conocimientos del idioma mazahua con preguntas desafiantes. Evalúa gramática, vocabulario y comprensión.',
-            icon: '❓',
-            iconBg: 'bg-gradient-to-br from-purple-100 to-indigo-100',
-            borderColor: 'border-purple-200',
-            accentColor: 'text-purple-600',
-            btnColor: 'bg-purple-500 hover:bg-purple-600',
-            path: '/games/quiz',
-            stats: [
-                { icon: 'quiz', label: 'Preguntas' },
-                { icon: 'psychology', label: 'Conocimiento' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        },
-        {
-            id: 'intruso',
-            title: 'El Intruso',
-            subtitle: 'Encuentra al Intruso',
-            description: 'Identifica qué palabra no pertenece al grupo. Mejora tu vocabulario y capacidad de categorización.',
-            icon: '🕵️',
-            iconBg: 'bg-gradient-to-br from-green-100 to-emerald-100',
-            borderColor: 'border-green-200',
-            accentColor: 'text-green-600',
-            btnColor: 'bg-green-500 hover:bg-green-600',
-            path: '/games/intruso',
-            stats: [
-                { icon: 'search', label: 'Atención' },
-                { icon: 'category', label: 'Lógica' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        },
-        {
-            id: 'rompecabezas',
-            title: 'Rompecabezas',
-            subtitle: 'Completa la Frase',
-            description: 'Selecciona la pieza correcta para completar la frase. Aprende vocabulario mazahua a través de frases contextuales en 5 ejercicios por lección.',
-            icon: '🧩',
-            iconBg: 'bg-gradient-to-br from-blue-100 to-cyan-100',
-            borderColor: 'border-blue-200',
-            accentColor: 'text-blue-600',
-            btnColor: 'bg-blue-500 hover:bg-blue-600',
-            path: '/games/rompecabezas',
-            stats: [
-                { icon: 'extension', label: 'Frases' },
-                { icon: 'lightbulb', label: 'Contexto' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        },
-        {
-            id: 'memorama',
-            title: 'Memorama',
-            subtitle: 'Emparejar Pares',
-            description: 'Voltea las cartas y encuentra todas las parejas. Aprende vocabulario mazahua emparejando palabras con su significado en español o imágenes.',
-            icon: '🃏',
-            iconBg: 'bg-gradient-to-br from-rose-100 to-pink-100',
-            borderColor: 'border-rose-200',
-            accentColor: 'text-rose-600',
-            btnColor: 'bg-rose-500 hover:bg-rose-600',
-            path: '/games/memorama',
-            stats: [
-                { icon: 'style', label: 'Pares' },
-                { icon: 'psychology', label: 'Memoria' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        },
-        {
-            id: 'loteria',
-            title: 'Lotería',
-            subtitle: 'Selecciona las cartas',
-            description: 'Selecciona las cartas de tu tablero que coincidan con las que van apareciendo en la pila. ¡Rápido y sin penalizaciones para ganar más puntos!',
-            icon: '🎰',
-            iconBg: 'bg-gradient-to-br from-amber-100 to-yellow-100',
-            borderColor: 'border-amber-200',
-            accentColor: 'text-amber-600',
-            btnColor: 'bg-amber-500 hover:bg-amber-600',
-            path: '/games/loteria',
-            stats: [
-                { icon: 'casino', label: 'Cartas' },
-                { icon: 'timer', label: 'Velocidad' },
-                { icon: 'emoji_events', label: 'XP' }
-            ]
-        }
-    ];
+    // Actividades generales (obtenidas desde la configuración centralizada)
+    const games = getActivitiesList();
 
     return (
         <div className="w-full flex-1 relative min-h-screen">
@@ -134,7 +32,7 @@ const StudentActivities = () => {
                         {games.map((game) => (
                             <Link
                                 key={game.id}
-                                to={game.path}
+                                to={game.basePath}
                                 className={`group bg-white rounded-2xl border ${game.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full`}
                             >
                                 {/* Icon Header */}

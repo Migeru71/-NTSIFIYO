@@ -1,4 +1,5 @@
 import Roles from '../utils/roles';
+import { getNavigationRoutes } from './gameConfig';
 
 /**
  * Configuración centralizada de navegación.
@@ -62,51 +63,7 @@ export const publicRoutes = [
 ];
 
 // ─── Rutas de juegos (compartidas) ────────────────────────────
-export const gameRoutes = [
-    {
-        id: 'memorama',
-        label: 'Memorama',
-        path: '/games/memorama',
-        icon: 'style',
-        roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR],
-        children: [
-            { id: 'memorama-create', label: 'Crear Memorama', path: '/games/memorama/crear', roles: [Roles.TEACHER] },
-            { id: 'memorama-edit', label: 'Editar Memorama', path: '/games/memorama/editar/:editId', roles: [Roles.TEACHER] },
-            { id: 'memorama-play', label: 'Jugar Memorama', path: '/games/memorama/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
-        ],
-    },
-    {
-        id: 'quiz',
-        label: 'Quiz',
-        path: '/games/quiz',
-        icon: 'quiz',
-        roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR],
-        children: [
-            { id: 'quiz-edit', label: 'Editar Quiz', path: '/games/quiz/editar/:editId', roles: [Roles.TEACHER] },
-            { id: 'quiz-play', label: 'Jugar Quiz', path: '/games/quiz/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
-        ],
-    },
-    {
-        id: 'intruso',
-        label: 'Intruso',
-        path: '/games/intruso',
-        icon: 'psychology',
-        roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR],
-        children: [
-            { id: 'intruso-play', label: 'Jugar Intruso', path: '/games/intruso/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
-        ],
-    },
-    {
-        id: 'loteria',
-        label: 'Lotería',
-        path: '/games/loteria',
-        icon: 'casino',
-        roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR],
-        children: [
-            { id: 'loteria-play', label: 'Jugar Lotería', path: '/games/loteria/jugar/:activityId', roles: [Roles.STUDENT, Roles.TEACHER, Roles.VISITOR] },
-        ],
-    },
-];
+export const gameRoutes = getNavigationRoutes();
 
 // ─── Rutas del maestro (crear/editar recursos) ────────────────
 export const teacherResourceRoutes = [

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import ActivityApiService from '../../services/ActivityApiService';
 import { useGame } from '../../context/GameContext';
+import { getGameBasePath } from '../../config/gameConfig';
 import mapImg from '../../assets/map/map.webp';
 import kitchenHL from '../../assets/map/kitchen.webp';
 import farmHL from '../../assets/map/farm.webp';
@@ -40,14 +41,7 @@ const ZONES = [
     { id: 'FARM', img: farmHL, x: 505, y: 657, w: 551, h: 299 },
 ];
 
-const BASE_PATHS = {
-    'QUESTIONNAIRE': '/games/quiz',
-    'FAST_MEMORY': '/games/memoria_rapida',
-    'INTRUDER': '/games/intruso',
-    'PUZZLE': '/games/rompecabezas',
-    'MEMORY_GAME': '/games/memorama',
-    'LOTTERY': '/games/loteria',
-};
+// BASE_PATHS replaced with central gameConfig
 
 function GameMap() {
     const navigate = useNavigate();
@@ -129,9 +123,9 @@ function GameMap() {
     }
 
     const handlePlayGame = async (game) => {
-        const basePath = BASE_PATHS[game.gameType];
-        if (!basePath) {
-            alert('Tipo de juego desconocido: ' + game.gameType);
+        const basePath = getGameBasePath(game.gameType);
+        if (!basePath || basePath === '/dashboard') {
+            alert('Tipo de juego desconocido o no configurado: ' + game.gameType);
             return;
         }
 
