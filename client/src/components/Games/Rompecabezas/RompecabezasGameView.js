@@ -292,10 +292,10 @@ const RompecabezasGameView = () => {
                 <div className={`rp-piece-slot ${selectedOption ? 'filled' : ''}`}>
                     {selectedOption ? (
                         <span style={{
-                            fontSize: '18px', fontWeight: '700',
-                            color: feedback === 'correct' ? 'var(--success)'
-                                : feedback === 'incorrect' ? 'var(--error)'
-                                    : 'var(--primary-orange)',
+                            fontSize: '16px', fontWeight: '700',
+                            color: feedback === 'correct' ? '#065F46'
+                                : feedback === 'incorrect' ? '#7F1D1D'
+                                    : '#5D3A00',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
                         }}>
                             {gameConfigs[1]?.showImage && selectedOption.word?.imageUrl && (
@@ -309,7 +309,7 @@ const RompecabezasGameView = () => {
                             )}
                         </span>
                     ) : (
-                        <span style={{ fontSize: '28px' }}>+</span>
+                        <span style={{ fontSize: '24px', color: 'rgba(255,255,255,0.7)' }}>+</span>
                     )}
                 </div>
             </div>
