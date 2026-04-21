@@ -6,6 +6,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import MemoramaFinalView from './MemoramaFinalView';
 import GameCard from '../GameCard/GameCard';
+import GameAlert from '../GameAlert';
 import './Memorama.css';
 
 // Construir cartas a partir de words y gameConfigs
@@ -158,22 +159,26 @@ const MemoramaGameView = () => {
                     });
                     setFlippedUids([]);
                     setFeedback('correct');
-                    feedbackTimeout.current = setTimeout(() => setFeedback(null), 800);
-                    setLockBoard(false);
                 }, 300);
             } else {
                 // No coincide — voltear de vuelta
                 setWrongUids(newFlipped);
                 setFeedback('incorrect');
-                setTimeout(() => {
-                    setFlippedUids([]);
-                    setWrongUids([]);
-                    setFeedback(null);
-                    setLockBoard(false);
-                }, 900);
             }
         }
     }, [lockBoard, matchedWordIds, flippedUids, cards]);
+
+    const handleFeedbackClose = useCallback(() => {
+        if (feedback === 'correct') {
+            setFeedback(null);
+            setLockBoard(false);
+        } else if (feedback === 'incorrect') {
+            setFlippedUids([]);
+            setWrongUids([]);
+            setFeedback(null);
+            setLockBoard(false);
+        }
+    }, [feedback]);
 
     // ─── Fin del juego ───────────────────────────────────────────────────────
     useEffect(() => {
@@ -295,12 +300,13 @@ const MemoramaGameView = () => {
                 ¡Encuentra las parejas de cartas! — Intentos: {attempts}
             </p>
 
-            {/* Feedback flash */}
-            {feedback && (
-                <div className={`mem-feedback-banner ${feedback}`}>
-                    {feedback === 'correct' ? '¡Par encontrado! 🎉' : 'Inténtalo de nuevo 😅'}
-                </div>
-            )}
+            {/* Feedback Alert */}
+            <GameAlert
+                isOpen={!!feedback}
+                type={feedback}
+                autoCloseDuration={900}
+                onClose={handleFeedbackClose}
+            />
         </div>
     );
 };
