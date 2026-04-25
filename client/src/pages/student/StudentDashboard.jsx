@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import StatsCards from '../../components/Dashboard/StatsCards';
 import NextLessonCard from '../../components/Dashboard/NextLessonCard';
 import CurrentProgress from '../../components/Dashboard/CurrentProgress';
@@ -7,19 +7,17 @@ import DailyWisdom from '../../components/Dashboard/DailyWisdom';
 import TopLearners from '../../components/Dashboard/TopLearners';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useAuth } from '../../context/AuthContext';
-import { useStudentData } from '../../context/StudentDataContext';
+import { useStudentDashboardQuery, useStudentInvalidate } from '../../hooks/useStudentQueries';
 
 /**
- * Dashboard principal del estudiante
+ * Dashboard principal del estudiante.
+ * Usa TanStack Query: los datos se cargan una sola vez y se mantienen
+ * en caché (staleTime: Infinity). El botón "Actualizar" llama a invalidateQueries.
  */
 const StudentDashboard = () => {
     const { user } = useAuth();
-    const { dashboard } = useStudentData();
-    const { data, loading, error, fetch, reload } = dashboard;
-
-    useEffect(() => {
-        fetch();
-    }, [fetch]);
+    const { data, isLoading, error } = useStudentDashboardQuery();
+    const { reloadDashboard } = useStudentInvalidate();
 
     const {
         level = 1,
@@ -37,25 +35,25 @@ const StudentDashboard = () => {
                     <SectionHeader
                         title={`¡Bienvenido de nuevo, ${user?.firstname || user?.username}!`}
                         subtitle="Continuemos tu camino para dominar el idioma Mazahua. ¡Lo estás haciendo muy bien!"
-                        onReload={reload}
+                        onReload={reloadDashboard}
                     />
 
-                    {loading && (
+                    {isLoading && (
                         <div className="flex flex-col items-center justify-center py-20">
                             <div className="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-medium tracking-wide">Cargando tu progreso...</p>
                         </div>
                     )}
 
-                    {error && !loading && (
+                    {error && !isLoading && (
                         <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 text-center max-w-sm mx-auto">
                             <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
                             <h3 className="text-lg font-bold">¡Uy! Algo salió mal</h3>
-                            <p className="text-sm mt-1">{error}</p>
+                            <p className="text-sm mt-1">{error.message}</p>
                         </div>
                     )}
 
-                    {!loading && !error && data && (
+                    {!isLoading && !error && data && (
                         <>
                             {/* Stats Cards */}
                             <section className="mb-8">

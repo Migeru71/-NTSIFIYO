@@ -2,12 +2,12 @@ import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import SideBar from '../../components/Dashboard/SideBar';
 import Roles from '../../utils/roles';
-import TeachersSection from './sections/TeachersSection';
-import StudentsSection from './sections/StudentsSection';
-import GroupsSection from './sections/GroupsSection';
-import WordsSection from './sections/WordsSection';
-import AdminOverviewSection from './sections/AdminOverviewSection';
-import AdminActivitiesSection from './sections/AdminActivitiesSection';
+import TeachersSection from './TeachersSection';
+import StudentsSection from './StudentsSection';
+import GroupsSection from './GroupsSection';
+import WordsSection from './WordsSection';
+import AdminOverviewSection from './AdminOverviewSection';
+import AdminActivitiesSection from './AdminActivitiesSection';
 import { useAuth } from '../../context/AuthContext';
 import Breadcrumb from '../../components/common/Breadcrumb';
 

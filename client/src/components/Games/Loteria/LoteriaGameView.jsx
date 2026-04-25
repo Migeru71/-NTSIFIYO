@@ -4,10 +4,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
-import LoteriService from '../../../services/LoteriService';
+import GameService from '../../../services/GameService';
 import GameCard from '../GameCard/GameCard';
-import LoteriaFinalView from './LoteriaFinalView';
-import './Loteria.css';
+import GameSummary from '../GamePanel/GameSummary';
+import '../../../styles/components/games/GameBase.css';
+import '../../../styles/components/games/loteria/Loteria.css';
 
 // ─── Pool COMPLETO de cartas (baraja grande — incluye cartas que pueden no estar en la tabla) ──
 const ALL_WORDS = [
@@ -134,7 +135,7 @@ const LoteriaGameView = () => {
 
         let data = currentGameData || null;
         if (!data) {
-            const result = await LoteriService.startGame(parseInt(activityId));
+            const result = await GameService.startGame(parseInt(activityId));
             if (result.success && result.data) { data = result.data; }
         }
 
@@ -294,39 +295,51 @@ const LoteriaGameView = () => {
         </div>
     );
 
-    if (gameState === 'finished') return (
-        <LoteriaFinalView
-            totalCards={board.length}
-            matchedCards={matchedIds.size}
-            score={score}
-            penaltyCount={penaltyCount}
-            elapsed={elapsed}
-            experience={activityXP}
-            onRetry={() => window.location.reload()}
-            onExit={() => navigate('/games/loteria')}
-        />
-    );
+    if (gameState === 'finished') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
+
+        // Generar un log único por cada carta en la tabla
+        const finalResponseLogs = board.map(card => ({
+            questionId: null,
+            answerId: card.wordId,
+            isCorrect: matchedIds.has(card.wordId),
+            wordText: card.text
+        }));
+
+        return (
+            <GameSummary
+                activityId={activityId}
+                gameId={gameIdParam || 6}
+                startDate={new Date().toISOString()}
+                correctAnswers={matchedIds.size}
+                totalQuestions={board.length}
+                responseLogs={finalResponseLogs}
+                onExit={() => navigate('/games/loteria')}
+                onRetry={() => window.location.reload()}
+            />
+        );
+    }
 
     const currentCard = pileIndex >= 0 && pileIndex < pile.length ? pile[pileIndex] : null;
     const allBoardSelected = board.length > 0 && board.every(c => matchedIds.has(c.wordId));
 
     return (
-        <div className="lot-container">
+        <div className="game-container">
 
             {/* ── Barra superior ── */}
-            <div className="lot-topbar">
-                <div className="lot-logo">
-                    <div className="lot-logo-icon">🎰</div>
-                    <span className="lot-logo-text">¡Lotería!</span>
-                </div>
-                <div className="lot-topbar-right">
-                    <div className="lot-badge lot-badge-points">⭐ Puntos: {score}</div>
-                    {penaltyCount > 0 && (
-                        <div className="lot-badge lot-badge-penalty">❌ -{penaltyCount * PENALTY_PTS}</div>
-                    )}
-                    <div className="lot-badge lot-badge-timer">⏱ {formatTime(elapsed)}</div>
-                    <button className="lot-topbar-icon-btn" onClick={() => navigate('/games/loteria')} title="Salir">✕</button>
-                </div>
+            <div className="game-top-bar">
+                <button className="game-top-bar__back-btn" onClick={() => navigate('/games/loteria')} title="Salir">‹</button>
+                <span className="game-top-bar__title">Lotería</span>
+                <div className="game-top-bar__timer">⏱ {formatTime(elapsed)}</div>
+            </div>
+
+            {/* Fila secundaria para puntos de lotería */}
+            <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: 'var(--game-max-width)', marginBottom: '0.75rem', justifyContent: 'center' }}>
+                <div className="lot-badge lot-badge-points">⭐ {score} pts</div>
+                {penaltyCount > 0 && (
+                    <div className="lot-badge lot-badge-penalty">❌ -{penaltyCount * PENALTY_PTS}</div>
+                )}
             </div>
 
             {/* ── Área principal ── */}
@@ -384,7 +397,7 @@ const LoteriaGameView = () => {
 
                 {/* Columna derecha — Tabla 3×3 con GameCard */}
                 <div className="lot-tabla-col">
-                    <span className="lot-tabla-pill">TABLA #{String(activityId || '01').padStart(2, '0')}</span>
+
 
                     <div className="lot-tabla-board">
                         <div className="lot-board-grid">
@@ -412,9 +425,7 @@ const LoteriaGameView = () => {
                         </div>
                     </div>
 
-                    <span style={{ fontSize: '12px', color: 'rgba(30,58,138,0.6)', fontWeight: 600 }}>
-                        Seleccionadas: {matchedIds.size} / {board.length}
-                    </span>
+
                 </div>
             </div>
 

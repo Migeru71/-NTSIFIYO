@@ -1,30 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ActivityApiService from '../../services/ActivityApiService';
-import { useStudents } from '../../context/StudentsContext';
 import SectionHeader from '../../components/common/SectionHeader';
-import { useTeacherData } from '../../context/TeacherDataContext';
-import ActivityTypes from '../../utils/activityTypes';
+import { useTeacherAssignmentsQuery, useTeacherStudentsQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
+import { getGameTypeInfo } from '../../utils/activityTypes';
+import { getDifficultyBadge } from '../../utils/difficultyBadges';
 
 // ── Helpers ──
-
-// Build a lookup keyed by the backend value (e.g. "QUESTIONNAIRE")
-const GAME_TYPE_MAP = Object.fromEntries(
-    Object.values(ActivityTypes).map(({ value, label, color }) => {
-        // label from enum already includes the emoji, e.g. "❓ Quiz"
-        const [icon, ...rest] = label.split(' ');
-        return [value, { label: rest.join(' '), icon, color: color || '#6b7280' }];
-    })
-);
-
-const DIFFICULTY_MAP = {
-    'EASY': { label: 'Fácil', color: 'bg-green-100 text-green-700', dot: '🟢' },
-    'MEDIUM': { label: 'Medio', color: 'bg-amber-100 text-amber-700', dot: '🟡' },
-    'HARD': { label: 'Difícil', color: 'bg-red-100 text-red-700', dot: '🔴' },
-};
-
-const getGameType = (type) => GAME_TYPE_MAP[type] || { label: type, icon: '🎮', color: '#6b7280' };
-const getDifficulty = (diff) => DIFFICULTY_MAP[diff] || { label: diff, color: 'bg-gray-100 text-gray-700', dot: '⚪' };
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '—';
@@ -144,23 +126,14 @@ const StudentResponseRow = ({ student, activityId }) => {
 // ── Main Component ──
 
 const TeacherAssignments = () => {
-    const { assignments } = useTeacherData();
-    const { data, loading, error, fetch, reload } = assignments;
+    const { data, isLoading, error } = useTeacherAssignmentsQuery();
+    const { data: students = [] } = useTeacherStudentsQuery();
+    const { reloadAssignments } = useTeacherInvalidate();
     const activities = data?.activities || [];
 
     const [expandedId, setExpandedId] = useState(null);
 
-    // Student list from shared context (cached across teacher views)
-    const { students, fetchStudents: loadStudents } = useStudents();
-
-    useEffect(() => {
-        fetch();
-    }, [fetch]);
-
-    const toggleExpand = async (gameId) => {
-        if (expandedId !== gameId) {
-            await loadStudents();
-        }
+    const toggleExpand = (gameId) => {
         setExpandedId(prev => (prev === gameId ? null : gameId));
     };
 
@@ -172,11 +145,11 @@ const TeacherAssignments = () => {
                     <SectionHeader
                         title="Asignaciones Activas"
                         subtitle="Actividades asignadas y su progreso en el grupo."
-                        onReload={reload}
+                        onReload={reloadAssignments}
                     />
 
                     {/* Content */}
-                    {loading ? (
+                    {isLoading ? (
                         <div className="text-center py-20">
                             <div className="w-10 h-10 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin mx-auto mb-4" />
                             <p className="text-gray-500">Cargando asignaciones...</p>
@@ -185,9 +158,9 @@ const TeacherAssignments = () => {
                         <div className="text-center py-16 bg-white rounded-2xl border border-red-100 shadow-sm">
                             <span className="text-5xl block mb-4">⚠️</span>
                             <h3 className="text-lg font-bold text-red-600 mb-2">Error al cargar</h3>
-                            <p className="text-gray-500 text-sm mb-6">{error}</p>
+                            <p className="text-gray-500 text-sm mb-6">{error.message}</p>
                             <button
-                                onClick={reload}
+                                onClick={reloadAssignments}
                                 className="px-5 py-2.5 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
                             >
                                 Reintentar
@@ -211,8 +184,8 @@ const TeacherAssignments = () => {
 
                             {/* Activities list */}
                             {activities.map((activity) => {
-                                const gameType = getGameType(activity.gameType);
-                                const difficulty = getDifficulty(activity.difficult);
+                                const gameType = getGameTypeInfo(activity.gameType);
+                                const difficulty = getDifficultyBadge(activity.difficult);
                                 const isExpanded = expandedId === activity.gameId;
                                 const progressPercent = activity.totalCount > 0
                                     ? Math.round((activity.completedCount / activity.totalCount) * 100)

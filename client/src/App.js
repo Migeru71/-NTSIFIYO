@@ -34,7 +34,7 @@ import TeacherStudents from './pages/teacher/TeacherStudents';
 import TeacherAssignments from './pages/teacher/TeacherAssignments';
 // Admin
 
-import AdminLogin from './pages/admin/AdminLogin';
+import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import TeacherContent from './pages/teacher/TeacherContent';
 import DictionaryPage from './pages/common/DictionaryPage';

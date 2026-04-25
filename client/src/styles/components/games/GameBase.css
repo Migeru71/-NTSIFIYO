@@ -1,0 +1,197 @@
+/* ============================================================
+   GameBase.css — Estilos compartidos para todos los juegos
+   Importar en cada GameView junto con el CSS específico del juego
+   ============================================================ */
+
+/* ============================================================
+   VARIABLES GLOBALES
+   ============================================================ */
+:root {
+    --primary-orange: #E65100;
+    --primary-orange-dark: #D84315;
+    --primary-blue: #1E3A8A;
+    --success: #10B981;
+    --error: #EF4444;
+    --warning: #F59E0B;
+    --text-primary: #374151;
+    --text-secondary: #6B7280;
+    --card-bg: #FFFFFF;
+    --game-max-width: 420px;
+}
+
+/* ============================================================
+   CONTENEDOR PRINCIPAL
+   El fondo degradado viene de la página/layout contenedora:
+   background: linear-gradient(180deg, #b8f0d5 0%, #e8f5c8 40%, #fef9c3 100%);
+   ============================================================ */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: calc(100vh - 64px); /* 64px = altura de la navbar */
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+    padding: 0.75rem 1rem;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   BARRA SUPERIOR — idéntica en todos los juegos
+   Estructura: [botón volver] [título] [timer]
+   ============================================================ */
+.game-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: var(--game-max-width);
+    padding: 0.25rem 0;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+.game-top-bar__back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+    font-weight: 700;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.game-top-bar__back-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.08);
+}
+
+.game-top-bar__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    text-align: center;
+    flex: 1;
+    padding: 0 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.game-top-bar__timer {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 5px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   BARRA DE PROGRESO — compartida
+   ============================================================ */
+.game-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: var(--game-max-width);
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.game-progress-bar-bg {
+    flex: 1;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.game-progress-fill {
+    height: 100%;
+    background: var(--primary-orange);
+    border-radius: 5px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-progress-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    min-width: 36px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   ESTADOS: LOADING / ERROR
+   Sin background propio — el gradiente viene del layout contenedor
+   ============================================================ */
+.game-loading-container,
+.game-error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 64px);
+    gap: 1rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ── Spinner ── */
+.spinner {
+    border: 4px solid rgba(30, 58, 138, 0.2);
+    border-top: 4px solid var(--primary-blue);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   ANIMACIONES COMPARTIDAS
+   ============================================================ */
+
+/* Usada en la vista de resultados / trofeo */
+@keyframes trophyPop {
+    0%   { transform: scale(0.5); opacity: 0; }
+    65%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+/* Usada en GameCard y animaciones generales de aparición */
+@keyframes popIn {
+    0%   { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Usada para elementos que aparecen deslizando desde abajo */
+@keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.animate-pop {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}

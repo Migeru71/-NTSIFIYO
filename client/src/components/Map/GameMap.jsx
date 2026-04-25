@@ -14,7 +14,7 @@ import schoolHL from '../../assets/map/school.webp';
 import forestHL from '../../assets/map/forest.webp';
 import plainHL from '../../assets/map/plain.webp';
 import communityHL from '../../assets/map/community.webp';
-import './GameMap.css';
+import '../../styles/components/map/GameMap.css';
 
 /**
  * Natural dimensions of map.webp (px).

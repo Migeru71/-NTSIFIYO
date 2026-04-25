@@ -1,20 +1,16 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import List from '../../components/common/List';
-import { useStudents } from '../../context/StudentsContext';
+import { useTeacherStudentsQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
 import SectionHeader from '../../components/common/SectionHeader';
 
 /**
  * Página de Estudiantes del Maestro.
  * Obtiene el listado de estudiantes del grupo asignado al maestro autenticado
- * usando el caché compartido de StudentsContext.
+ * usando TanStack Query para caché compartida entre vistas.
  */
 const TeacherStudents = () => {
-    const { students, isLoading, error, fetchStudents, refreshStudents } = useStudents();
-
-    useEffect(() => {
-        fetchStudents();
-    }, [fetchStudents]);
+    const { data: students = [], isLoading, error } = useTeacherStudentsQuery();
+    const { reloadStudents } = useTeacherInvalidate();
 
     const tableHeaders = [
         { label: 'Nº Lista', align: 'center' },
@@ -62,7 +58,7 @@ const TeacherStudents = () => {
                 <div className="max-w-6xl mx-auto p-8">
                     <SectionHeader
                         title="Mis Estudiantes"
-                        onReload={refreshStudents}
+                        onReload={reloadStudents}
                     />
 
                     {/* Table */}
@@ -85,7 +81,7 @@ const TeacherStudents = () => {
                             renderRow={renderStudentRow}
                             actions={renderStudentActions}
                             isLoading={isLoading}
-                            error={error}
+                            error={error?.message}
                             emptyMessage="No hay estudiantes inscritos en tu grupo."
                             emptyIcon="group_off"
                         />

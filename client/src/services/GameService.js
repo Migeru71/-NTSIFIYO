@@ -1,8 +1,8 @@
-// client/src/services/RompecabezasService.js
-// Servicio de API para el juego de Rompecabezas
+// client/src/services/GameService.js
+// Servicio general de API para los juegos
 import apiConfig from './apiConfig';
 
-const RompecabezasService = {
+const GameService = {
 
     /**
      * Obtiene la lista de actividades de tipo PUZZLE
@@ -37,4 +37,4 @@ const RompecabezasService = {
     }
 };
 
-export default RompecabezasService;
+export default GameService;

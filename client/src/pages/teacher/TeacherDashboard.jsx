@@ -1,18 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
-import { useTeacherData } from '../../context/TeacherDataContext';
+import { useTeacherDashboardQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
 
 /**
- * Dashboard principal del maestro
+ * Dashboard principal del maestro.
+ * Usa TanStack Query — datos cacheados con staleTime: Infinity.
  */
 const TeacherDashboard = () => {
-    const { dashboard } = useTeacherData();
-    const { data, loading, error, fetch, reload } = dashboard;
-
-    useEffect(() => {
-        fetch();
-    }, [fetch]);
+    const { data, isLoading, error } = useTeacherDashboardQuery();
+    const { reloadDashboard } = useTeacherInvalidate();
 
     const {
         totalStudents = 0,
@@ -66,28 +63,28 @@ const TeacherDashboard = () => {
                     <SectionHeader
                         title="Panel de Control"
                         subtitle="Monitorea el progreso de tu grupo estudiantil."
-                        onReload={reload}
+                        onReload={reloadDashboard}
                     />
 
-                    {loading && (
+                    {isLoading && (
                         <div className="text-center py-20">
                             <div className="w-12 h-12 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin mx-auto mb-4" />
                             <p className="text-gray-500 font-medium">Actualizando métricas de tu grupo...</p>
                         </div>
                     )}
 
-                    {error && !loading && (
+                    {error && !isLoading && (
                         <div className="text-center py-16 bg-white rounded-3xl border border-red-100 mt-6 shadow-sm">
                             <span className="text-6xl block mb-4">⚠️</span>
                             <h3 className="text-xl font-bold text-red-600 mb-2">Error cargando el panel</h3>
-                            <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">{error}</p>
-                            <button onClick={reload} className="px-6 py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
+                            <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">{error.message}</p>
+                            <button onClick={reloadDashboard} className="px-6 py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
                                 Reintentar conexión
                             </button>
                         </div>
                     )}
 
-                    {!loading && !error && data && (
+                    {!isLoading && !error && data && (
                         <>
                             {/* No-group notice */}
                             {data.noGroup && (

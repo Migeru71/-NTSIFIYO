@@ -1,7 +1,7 @@
 // client/src/components/Games/Loteria/LoteriaAccessPanel.jsx
 // Fase 1 — Acceso: Panel de actividades disponibles para el juego de Lotería
 import React from 'react';
-import GameAccessPanel from '../GameAccessPanel';
+import GameAccessPanel from '../GamePanel/GameAccessPanel';
 import ActivityTypes from '../../../utils/activityTypes';
 
 function LoteriaAccessPanel() {

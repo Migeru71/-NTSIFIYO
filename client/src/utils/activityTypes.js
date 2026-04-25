@@ -30,4 +30,13 @@ export const PAIR_TYPES = [
     ActivityTypes.lottery
 ];
 
+export const getGameTypeInfo = (type) => {
+    const activity = Object.values(ActivityTypes).find(a => a.value === type);
+    if (activity) {
+        const [icon, ...rest] = activity.label.split(' ');
+        return { label: rest.join(' '), icon, color: activity.color || '#6b7280' };
+    }
+    return { label: type, icon: '🎮', color: '#6b7280' };
+};
+
 export default ActivityTypes;

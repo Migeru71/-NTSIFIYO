@@ -1,26 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ActivityApiService from '../../services/ActivityApiService';
-import ActivityCard from '../../components/Games/ActivityCard';
+import ActivityCard from '../../components/Games/GamePanel/ActivityCard';
 import { useGame } from '../../context/GameContext';
 import { useAlert } from '../../context/AlertContext';
 import SectionHeader from '../../components/common/SectionHeader';
-import { useStudentData } from '../../context/StudentDataContext';
+import { useStudentAssignmentsQuery, useStudentInvalidate } from '../../hooks/useStudentQueries';
 import { getGameBasePath, getGameIcon } from '../../config/gameConfig';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();
     const { saveGameData } = useGame();
     const { showAlert, hideAlert } = useAlert();
-    const { assignments } = useStudentData();
-    const { data, loading, fetch, reload } = assignments;
+
+    const [page, setPage] = useState(0);
+    const { data, isLoading, error } = useStudentAssignmentsQuery(page);
+    const { reloadAssignments } = useStudentInvalidate();
 
     const activities = data?.activities || [];
     const pageData = data?.pageData || { totalPages: 0, number: 0, first: true, last: true };
-
-    useEffect(() => {
-        fetch();
-    }, [fetch]);
 
     // Preload images and audio
     async function preloadAssets(data) {
@@ -63,8 +61,6 @@ const StudentAssignments = () => {
         }
     }
 
-    // Local implementations of getGameIcon and getGameBasePath removed in favor of central config
-
     async function handlePlayGame(activityId, gameType) {
         const selectedActivity = activities.find(a => a.id === activityId);
         showAlert({
@@ -100,14 +96,20 @@ const StudentAssignments = () => {
                     <SectionHeader
                         title="Tus Asignaciones"
                         subtitle="Completa las actividades asignadas por tu maestro para ganar experiencia"
-                        onReload={reload}
+                        onReload={() => reloadAssignments(page)}
                     />
 
                     <div>
-                        {loading ? (
+                        {isLoading ? (
                             <div className="flex flex-col items-center justify-center p-12">
                                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
                                 <p className="text-indigo-600 font-medium">Cargando tus asignaciones...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-red-100 max-w-2xl mx-auto">
+                                <span className="text-6xl block mb-4">⚠️</span>
+                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Error al cargar</h3>
+                                <p className="text-gray-500">{error.message}</p>
                             </div>
                         ) : activities.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-indigo-100 max-w-2xl mx-auto">
@@ -134,7 +136,7 @@ const StudentAssignments = () => {
                                     <div className="flex justify-center items-center gap-4 mt-10 p-4">
                                         <button
                                             className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.first ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}
-                                            onClick={() => assignments.fetchPage(pageData.number - 1)}
+                                            onClick={() => setPage(p => Math.max(0, p - 1))}
                                             disabled={pageData.first}
                                         >
                                             Anterior
@@ -144,7 +146,7 @@ const StudentAssignments = () => {
                                         </span>
                                         <button
                                             className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.last ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}
-                                            onClick={() => assignments.fetchPage(pageData.number + 1)}
+                                            onClick={() => setPage(p => p + 1)}
                                             disabled={pageData.last}
                                         >
                                             Siguiente

@@ -1,6 +1,6 @@
 // client/src/components/Games/GameCard/GameCard.jsx
 import React, { useState } from 'react';
-import './GameCard.css';
+import '../../../styles/components/games/gameCard/GameCard.css';
 
 /**
  * GameCard - Componente reutilizable para mostrar una carta con texto, imagen y/o audio.

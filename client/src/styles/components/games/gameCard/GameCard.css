@@ -1,0 +1,230 @@
+/* client/src/components/Games/GameCard/GameCard.css */
+
+/* ══════════════════════════════════════════
+   BASE CARD
+   ══════════════════════════════════════════ */
+.game-card {
+    border-radius: 20px;
+    aspect-ratio: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    border: 3px solid transparent;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    user-select: none;
+
+    /* Default background — used when there's no image */
+    background: #ffffff;
+}
+
+.game-card:hover:not(.game-card--disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+}
+
+.game-card:active:not(.game-card--disabled) {
+    transform: scale(0.95);
+}
+
+.game-card--disabled {
+    cursor: default;
+    /* pointer-events: none; */
+}
+
+/* ── State feedback ── */
+.game-card--correct {
+    border-color: #10B981;
+    background-color: #ecfdf5;
+}
+
+.game-card--incorrect {
+    border-color: #EF4444;
+    background-color: #fef2f2;
+}
+
+/* Image-mode cards should stay white so the image bg blends */
+.game-card--image-only,
+.game-card--image-audio,
+.game-card--image-text,
+.game-card--image-text-audio {
+    background: #ffffff;
+}
+
+/* ══════════════════════════════════════════
+   INNER BODY
+   ══════════════════════════════════════════ */
+.gc-body {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Centered layout (text-only, audio-only, text+audio top section) */
+.gc-body--center {
+    align-items: center;
+    justify-content: center;
+}
+
+/* Image layout — fills the whole card */
+.gc-body--image {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+    justify-content: flex-end;
+}
+
+/* ══════════════════════════════════════════
+   IMAGE
+   ══════════════════════════════════════════ */
+.gc-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 17px;
+}
+
+/* ══════════════════════════════════════════
+   TEXT
+   ══════════════════════════════════════════ */
+.gc-text-center {
+    font-size: clamp(14px, 4vw, 22px);
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+    padding: 0.5rem;
+    word-break: break-word;
+}
+
+/* Footer strip — used for text on top of image or below audio */
+.gc-text-footer {
+    position: relative;
+    /* stacks above the absolute image */
+    z-index: 2;
+    width: 100%;
+    background: rgba(30, 41, 59, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 6px 10px;
+    text-align: center;
+    border-radius: 0 0 17px 17px;
+}
+
+.gc-text-footer span {
+    font-size: clamp(11px, 3vw, 15px);
+    font-weight: 700;
+    color: #ffffff;
+    word-break: break-word;
+}
+
+/* When text-audio mode — footer lives outside the body (normal flow) */
+.game-card--text-audio {
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: unset;
+    /* allow footer to extend height */
+    min-height: 130px;
+}
+
+.game-card--text-audio .gc-body--center {
+    flex: 1;
+}
+
+.game-card--text-audio .gc-text-footer {
+    position: static;
+    border-radius: 0 0 17px 17px;
+    background: rgba(30, 41, 59, 0.08);
+    backdrop-filter: none;
+}
+
+.game-card--text-audio .gc-text-footer span {
+    color: #1e293b;
+}
+
+/* ══════════════════════════════════════════
+   AUDIO BUTTON
+   ══════════════════════════════════════════ */
+.gc-audio-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: #E65100;
+    color: #ffffff;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(230, 81, 0, 0.35);
+}
+
+.gc-audio-btn:hover {
+    background: #BF360C;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(230, 81, 0, 0.45);
+}
+
+.gc-audio-btn--playing {
+    background: #FF6D00;
+    animation: gc-pulse 0.8s infinite alternate;
+}
+
+.gc-audio-btn .material-symbols-outlined {
+    font-size: 22px;
+}
+
+/* Smaller audio button when combined with image */
+.game-card--image-audio .gc-audio-btn,
+.game-card--image-text-audio .gc-audio-btn {
+    width: 32px;
+    height: 32px;
+}
+.game-card--image-audio .gc-audio-btn .material-symbols-outlined,
+.game-card--image-text-audio .gc-audio-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* Corner placement for image cards */
+.gc-corner-audio {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+}
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════ */
+@keyframes gc-pulse {
+    from {
+        box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.6);
+    }
+
+    to {
+        box-shadow: 0 0 0 8px rgba(230, 81, 0, 0);
+    }
+}
+
+/* Re-use intruso's popIn if available, else define it locally */
+@keyframes popIn {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-pop {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
