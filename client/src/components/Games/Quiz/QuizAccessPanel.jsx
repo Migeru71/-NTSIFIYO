@@ -1,12 +1,12 @@
 // client/src/components/Games/Quiz/QuizAccessPanel.js
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes'
+import { ActivityTypes } from '../../../config/activityConfig'
 
 function QuizAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.questionnaire.value}
+            gameType={ActivityTypes.QUESTIONNAIRE}
             icon="❓"
             title="Centro de Quiz"
             subtitle="Pon a prueba tus conocimientos de Mazahua"

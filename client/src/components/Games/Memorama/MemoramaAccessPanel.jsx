@@ -1,11 +1,11 @@
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes';
+import { ActivityTypes } from '../../../config/activityConfig';
 
 function MemoramaAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.memoryGame.value}
+            gameType={ActivityTypes.MEMORY_GAME}
             icon="🃏"
             title="Memorama"
             subtitle="Emparejar Pares"

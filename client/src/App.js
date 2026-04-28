@@ -22,6 +22,9 @@ import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
 // Lotería imports
 import LoteriaAccessPanel from './components/Games/Loteria/LoteriaAccessPanel';
 import LoteriaGameView from './components/Games/Loteria/LoteriaGameView';
+// Laberinto imports
+import LaberintoGameView from './components/Games/Laberinto/LaberintoGameView';
+import LaberintoAccessPanel from './components/Games/Laberinto/LaberintoAccessPanel';
 // Student Dashboard
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentActivities from './pages/student/StudentActivities';
@@ -201,6 +204,10 @@ function App() {
                             {/* Lotería */}
                             <Route path="/games/loteria" element={<LoteriaAccessPanel />} />
                             <Route path="/games/loteria/jugar/:activityId" element={<LoteriaGameView />} />
+
+                            {/* Laberinto */}
+                            <Route path="/games/laberinto" element={<LaberintoAccessPanel />} />
+                            <Route path="/games/laberinto/jugar/:activityId" element={<LaberintoGameView />} />
                         </Route>
                     </Route>
 

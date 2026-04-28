@@ -1,12 +1,12 @@
 // client/src/components/Games/Intruso/IntrusoAccessPanel.js
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes'
+import { ActivityTypes } from '../../../config/activityConfig'
 
 function IntrusoAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.intruder.value}
+            gameType={ActivityTypes.INTRUDER}
             icon="🕵️"
             title="Encuentra al Intruso"
             subtitle="Selecciona la palabra que no pertenece al grupo"

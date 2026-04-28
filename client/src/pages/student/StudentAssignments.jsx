@@ -6,7 +6,7 @@ import { useGame } from '../../context/GameContext';
 import { useAlert } from '../../context/AlertContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useStudentAssignmentsQuery, useStudentInvalidate } from '../../hooks/useStudentQueries';
-import { getGameBasePath, getGameIcon } from '../../config/gameConfig';
+import { getGameBasePath, getGameIcon } from '../../config/activityConfig';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();

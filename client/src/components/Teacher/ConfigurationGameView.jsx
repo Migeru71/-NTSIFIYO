@@ -4,7 +4,7 @@ import '../../styles/components/teacher/configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
 import CustomAlert from '../common/CustomAlert';
-import { QUESTIONNAIRE_TYPES, PAIR_TYPES } from '../../utils/activityTypes';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES } from '../../config/activityConfig';
 import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import { useAlert } from '../../context/AlertContext';
 

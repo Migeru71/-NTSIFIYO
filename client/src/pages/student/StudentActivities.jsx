@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
-import { getActivitiesList } from '../../config/gameConfig';
+import { getActivitiesList } from '../../config/activityConfig';
 
 /**
  * Página de actividades de aprendizaje
@@ -33,14 +33,15 @@ const StudentActivities = () => {
                             <Link
                                 key={game.id}
                                 to={game.basePath}
-                                className={`group bg-white rounded-2xl border ${game.borderColor} shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full`}
+                                className="group bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full"
+                                style={{ borderColor: game.color + '40' }}
                             >
                                 {/* Icon Header */}
-                                <div className={`${game.iconBg} p-8 flex flex-col items-center justify-center shrink-0`}>
+                                <div className="p-8 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: game.color + '15' }}>
                                     <span className="text-7xl mb-3 group-hover:scale-110 transition-transform duration-300">
                                         {game.icon}
                                     </span>
-                                    <h2 className={`text-2xl font-bold ${game.accentColor}`}>{game.title}</h2>
+                                    <h2 className="text-2xl font-bold" style={{ color: game.color }}>{game.title}</h2>
                                     <p className="text-sm text-gray-500 mt-1">{game.subtitle}</p>
                                 </div>
 
@@ -54,7 +55,7 @@ const StudentActivities = () => {
                                     <div className="flex items-center justify-around mb-5 py-3 bg-gray-50 rounded-xl shrink-0">
                                         {game.stats.map((stat, idx) => (
                                             <div key={idx} className="flex flex-col items-center gap-1">
-                                                <span className={`material-symbols-outlined text-lg ${game.accentColor}`}>
+                                                <span className="material-symbols-outlined text-lg" style={{ color: game.color }}>
                                                     {stat.icon}
                                                 </span>
                                                 <span className="text-xs text-gray-500 font-medium min-w-[60px] text-center">{stat.label}</span>
@@ -63,7 +64,7 @@ const StudentActivities = () => {
                                     </div>
 
                                     {/* CTA */}
-                                    <div className={`w-full py-3 text-center text-white font-semibold rounded-xl ${game.btnColor} transition-colors shrink-0`}>
+                                    <div className="w-full py-3 text-center text-white font-semibold rounded-xl transition-colors shrink-0" style={{ backgroundColor: game.color }}>
                                         ▶️ Entrar
                                     </div>
                                 </div>

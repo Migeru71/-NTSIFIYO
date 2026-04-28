@@ -2,12 +2,12 @@
 // Fase 1 — Acceso: Panel de actividades disponibles para el juego de Lotería
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes';
+import { ActivityTypes } from '../../../config/activityConfig';
 
 function LoteriaAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.lottery.value}
+            gameType={ActivityTypes.LOTTERY}
             icon="🎰"
             title="Lotería"
             subtitle="Selecciona las cartas"

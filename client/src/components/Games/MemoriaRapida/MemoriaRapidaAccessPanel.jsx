@@ -1,11 +1,11 @@
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes';
+import { ActivityTypes } from '../../../config/activityConfig';
 
 function MemoriaRapidaAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.fastMemory.value}
+            gameType={ActivityTypes.FAST_MEMORY}
             icon="⚡"
             title="Memoria Rápida"
             subtitle="Desliza a la derecha si coincide, a la izquierda si no"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ActivityTypes from '../../utils/activityTypes';
+import ActivityTypes from '../../config/activityConfig';
 
 /**
  * Tarjeta de la próxima lección con preview (actividades pendientes)

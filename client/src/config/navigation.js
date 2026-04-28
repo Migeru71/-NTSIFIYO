@@ -1,5 +1,5 @@
 import Roles from '../utils/roles';
-import { getNavigationRoutes } from './gameConfig';
+import { getNavigationRoutes } from './activityConfig';
 
 /**
  * Configuración centralizada de navegación.

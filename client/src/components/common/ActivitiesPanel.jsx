@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlert } from '../../context/AlertContext';
-import { QUESTIONNAIRE_TYPES, PAIR_TYPES, getGameTypeInfo } from '../../utils/activityTypes';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES, getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 import SectionHeader from './SectionHeader';
 
@@ -56,6 +56,8 @@ const ActivitiesPanel = ({
     const [activeTab,   setActiveTab]   = useState('mine');
     const [filterType,  setFilterType]  = useState('ALL');
     const [deletingId,  setDeletingId]  = useState(null);
+    const [assigningId, setAssigningId] = useState(null);
+    const [togglingId,  setTogglingId]  = useState(null);
     const [toast,       setToast]       = useState('');
 
     const showToast = (msg) => {
@@ -95,19 +97,24 @@ const ActivitiesPanel = ({
 
     const handleAssign = async (activity) => {
         if (!onAssignActivity) return;
+        setAssigningId(activity.id);
         try {
             await onAssignActivity(activity);
+            onReload();
             showToast(`✅ "${activity.title}" asignada al grupo exitosamente.`);
         } catch (err) {
             const status = err?.status || err?.response?.status;
             if (status === 404)       showToast('❌ Juego o grupo no encontrado.');
             else if (status === 409)  showToast('⚠️ Este juego ya está asignado o el grupo no te pertenece.');
             else                      showToast(`❌ Error al asignar: ${err.message || 'Error desconocido'}`);
+        } finally {
+            setAssigningId(null);
         }
     };
 
     const handleToggle = async (activityId, inst) => {
         if (!onToggleInstance) return;
+        setTogglingId(activityId);
         try {
             await onToggleInstance(activityId, !inst.isActive);
             onReload();
@@ -118,12 +125,14 @@ const ActivitiesPanel = ({
                 title: 'Error de actualización',
                 message: err.message || 'No se pudo cambiar el estado.',
             });
+        } finally {
+            setTogglingId(null);
         }
     };
 
     // ── Stats ─────────────────────────────────────────────────────────────────
-    const quizValues    = new Set(QUESTIONNAIRE_TYPES.map(t => t.value));
-    const pairValues    = new Set(PAIR_TYPES.map(t => t.value));
+    const quizValues    = new Set(QUESTIONNAIRE_TYPES);
+    const pairValues    = new Set(PAIR_TYPES);
     const quizCount     = activities.filter(a => quizValues.has(a.gameType)).length;
     const pairsCount    = activities.filter(a => pairValues.has(a.gameType)).length;
     const assignedCount = instances.filter(i => i.isActive).length;
@@ -254,25 +263,33 @@ const ActivitiesPanel = ({
                             !inst ? (
                                 <button
                                     onClick={() => handleAssign(activity)}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors"
+                                    disabled={assigningId === activity.id}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors disabled:opacity-50"
                                     title="Asignar"
                                 >
-                                    <span className="material-symbols-outlined text-[16px]">group_add</span>
+                                    {assigningId === activity.id
+                                        ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                                        : <span className="material-symbols-outlined text-[16px]">group_add</span>
+                                    }
                                     <span className="hidden sm:inline lg:hidden xl:inline">Asignar</span>
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => handleToggle(activity.id, inst)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                                    disabled={togglingId === activity.id}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 ${
                                         inst.isActive
                                             ? 'text-red-600 bg-red-50 hover:bg-red-100'
                                             : 'text-green-600 bg-green-50 hover:bg-green-100'
                                     }`}
                                     title={inst.isActive ? 'Desactivar' : 'Activar'}
                                 >
-                                    <span className="material-symbols-outlined text-[16px]">
-                                        {inst.isActive ? 'block' : 'check_circle'}
-                                    </span>
+                                    {togglingId === activity.id
+                                        ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                                        : <span className="material-symbols-outlined text-[16px]">
+                                            {inst.isActive ? 'block' : 'check_circle'}
+                                        </span>
+                                    }
                                     <span className="hidden sm:inline lg:hidden xl:inline">
                                         {inst.isActive ? 'Desactivar' : 'Activar'}
                                     </span>

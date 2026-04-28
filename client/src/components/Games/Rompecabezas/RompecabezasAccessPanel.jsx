@@ -1,12 +1,12 @@
 // client/src/components/Games/Rompecabezas/RompecabezasAccessPanel.js
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
-import ActivityTypes from '../../../utils/activityTypes'
+import { ActivityTypes } from '../../../config/activityConfig'
 
 function RompecabezasAccessPanel() {
     return (
         <GameAccessPanel
-            gameType={ActivityTypes.puzzle.value}
+            gameType={ActivityTypes.PUZZLE}
             icon="🧩"
             title="Rompecabezas"
             subtitle="Completa la frase eligiendo la pieza correcta"

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import ActivityApiService from '../../services/ActivityApiService';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useTeacherAssignmentsQuery, useTeacherStudentsQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
-import { getGameTypeInfo } from '../../utils/activityTypes';
+import { getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 
 // ── Helpers ──

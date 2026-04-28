@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import ActivityApiService from '../../services/ActivityApiService';
 import { useGame } from '../../context/GameContext';
-import { getGameBasePath } from '../../config/gameConfig';
+import { getGameBasePath } from '../../config/activityConfig';
 import mapImg from '../../assets/map/map.webp';
 import kitchenHL from '../../assets/map/kitchen.webp';
 import farmHL from '../../assets/map/farm.webp';
