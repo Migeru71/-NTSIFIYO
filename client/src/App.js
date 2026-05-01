@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
@@ -62,6 +62,20 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
 import Roles from './utils/roles';
 
+/**
+ * Wrapper that adds top-padding equal to the fixed navbar height (64px = h-16)
+ * on every page EXCEPT the home page, where the hero is intentionally fullscreen.
+ */
+function PageContent({ children }) {
+    const location = useLocation();
+    const isHome = location.pathname === '/';
+    return (
+        <div className={isHome ? '' : 'pt-16'}>
+            {children}
+        </div>
+    );
+}
+
 function App() {
     const { user, isAuthenticated } = useAuth();
 
@@ -88,6 +102,7 @@ function App() {
         <Router>
             <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark">
                 <Navbar />
+                <PageContent>
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
@@ -235,6 +250,7 @@ function App() {
                     </Route>
 
                 </Routes>
+                </PageContent>
             </div>
         </Router>
     );

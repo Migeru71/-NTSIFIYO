@@ -22,7 +22,7 @@ const AboutTeaser = () => (
                     Un Proyecto Hecho con el Corazón
                 </h2>
                 <p className="landing-section__subtitle mx-auto mt-3">
-                    Detrás de cada palabra, juego y sonido hay personas reales de las comunidades de San Felipe del Progreso y San José del Rincón.
+                    Detrás de cada palabra, juego y sonido hay personas reales de la Escuela primaria de manzanillos, Zitácuaro.
                 </p>
             </div>
 

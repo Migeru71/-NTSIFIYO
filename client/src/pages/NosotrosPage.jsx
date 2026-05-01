@@ -14,14 +14,7 @@ const sections = [
         gradient: 'linear-gradient(135deg, #6C63FF22 0%, #a78bfa22 100%)',
         border: '#6C63FF',
         description: 'El equipo que diseñó, programó y dio vida a esta plataforma educativa.',
-        members: [
-            { name: 'Alejandra Morales Soto', role: 'Diseño UI/UX & Frontend' },
-            { name: 'Diego Ramírez Fuentes', role: 'Desarrollo Backend & API' },
-            { name: 'Camila Torres Mendoza', role: 'Frontend & Animaciones' },
-            { name: 'Óscar Hernández Ríos', role: 'Base de datos & DevOps' },
-            { name: 'Sofía Vargas Pimentel', role: 'QA & Pruebas de usuario' },
-            { name: 'Iván Cruz Delgado', role: 'Integración de audio y media' },
-        ],
+        members: [],
     },
     {
         id: 'ninos',
@@ -31,16 +24,7 @@ const sections = [
         gradient: 'linear-gradient(135deg, #F59E0B22 0%, #fde68a22 100%)',
         border: '#F59E0B',
         description: 'Pequeños que grabaron palabras, frases y canciones en Mazahua para dar vida a los juegos.',
-        members: [
-            { name: 'Emiliano Sánchez Juárez', role: 'Vocabulario – Nivel 1' },
-            { name: 'Valentina Reyes Ávila', role: 'Canciones tradicionales' },
-            { name: 'Mateo González Flores', role: 'Vocabulario – Nivel 2' },
-            { name: 'Lucía Benítez Castro', role: 'Cuentos cortos' },
-            { name: 'Sebastián López Ortega', role: 'Frases cotidianas' },
-            { name: 'Isabella Martínez León', role: 'Vocabulario – Nivel 1' },
-            { name: 'Tomás Gutiérrez Peña', role: 'Canciones tradicionales' },
-            { name: 'Mía Romero Salinas', role: 'Frases cotidianas' },
-        ],
+        members: [],
     },
     {
         id: 'maestros',
@@ -50,14 +34,7 @@ const sections = [
         gradient: 'linear-gradient(135deg, #10B98122 0%, #a7f3d022 100%)',
         border: '#10B981',
         description: 'Maestros bilingües y adultos de la comunidad que grabaron historias y validaron el contenido lingüístico.',
-        members: [
-            { name: 'Profa. Rosa Elena Chávez', role: 'Revisión lingüística & grabación' },
-            { name: 'Prof. Aurelio Jiménez Nava', role: 'Historias tradicionales' },
-            { name: 'Doña Carmen Rojas Barrera', role: 'Canciones y refranes' },
-            { name: 'Prof. Ernesto Velázquez Mora', role: 'Grabación – Nivel avanzado' },
-            { name: 'Profa. Graciela Mondragón', role: 'Corrección fonética' },
-            { name: 'Don Felipe Ángeles Cruz', role: 'Narración de cuentos' },
-        ],
+        members: [],
     },
     {
         id: 'colaboradores',
@@ -67,14 +44,7 @@ const sections = [
         gradient: 'linear-gradient(135deg, #EC489922 0%, #fbcfe822 100%)',
         border: '#EC4899',
         description: 'Personas de la comunidad y organizaciones que compartieron historias, canciones y materiales culturales.',
-        members: [
-            { name: 'Sra. Dolores Estrada Vega', role: 'Recopilación de canciones' },
-            { name: 'Lic. Héctor Muñoz Paredes', role: 'Asesoría cultural' },
-            { name: 'Centro Comunitario "Raíces"', role: 'Espacios de grabación' },
-            { name: 'Familia Pérez Xicotencatl', role: 'Cuentos y tradiciones orales' },
-            { name: 'Sra. Bertha Álvarez Lozano', role: 'Canciones de cuna Mazahua' },
-            { name: 'INALI – Delegación Estado de México', role: 'Materiales de referencia' },
-        ],
+        members: [],
     },
 ];
 
@@ -132,9 +102,13 @@ const Section = ({ section }) => {
             {/* Members grid */}
             {expanded && (
                 <div className="nosotros-members-grid">
-                    {section.members.map((m, i) => (
-                        <MemberCard key={i} {...m} color={section.color} />
-                    ))}
+                    {section.members.length > 0 ? (
+                        section.members.map((m, i) => (
+                            <MemberCard key={i} {...m} color={section.color} />
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-400 italic py-4">Próximamente se listarán los participantes de esta categoría.</p>
+                    )}
                 </div>
             )}
         </section>
@@ -189,8 +163,7 @@ const NosotrosPage = () => {
             <div className="nosotros-footer-note">
                 <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#6C63FF', opacity: 0.6 }}>auto_stories</span>
                 <p>
-                    Este proyecto fue posible gracias al apoyo de las comunidades Mazahua de
-                    San Felipe del Progreso y San José del Rincón, Estado de México.
+                    Este proyecto fue posible gracias al apoyo de la Escuela primaria de manzanillos, Zitácuaro.
                 </p>
             </div>
         </div>
