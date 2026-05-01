@@ -1,34 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import RoleSelection from '../components/RoleSelection';
-import CultureSection from '../components/CultureSection';
-import FeaturesGrid from '../components/FeaturesGrid';
+import React from 'react';
+import HeroCinematic from '../components/landing/HeroCinematic';
+import MarqueeStrip from '../components/landing/MarqueeStrip';
+import GamesShowcase from '../components/landing/GamesShowcase';
+import CategoriesMarquee from '../components/landing/CategoriesMarquee';
+import CulturalContent from '../components/landing/CulturalContent';
+import CommonPhrases from '../components/landing/CommonPhrases';
+import MultimodalSection from '../components/landing/MultimodalSection';
+import AboutTeaser from '../components/landing/AboutTeaser';
+import FinalCTA from '../components/landing/FinalCTA';
 import Footer from '../components/Footer';
-import apiConfig from '../services/apiConfig';
-import Hero from '../components/Hero';
+import useScrollAnimations from '../hooks/useScrollAnimations';
+import '../styles/components/landing/LandingAnimations.css';
 
 const Home = () => {
-    const [pageData, setPageData] = useState(null);
-
-    useEffect(() => {
-        // Obtener la palabra del día (GET /api/dictionary/words/daily)
-        apiConfig.get('/api/dictionary/words/daily')
-            .then(data => setPageData(data))
-            .catch(err => {
-                console.warn("Usando datos locales por falta de conexión al backend:", err);
-                setPageData({
-                    id: 0,
-                    spanishText: "Habla bien",
-                    mazahuaText: "Ki jñaa kjo"
-                });
-            });
-    }, []);
+    useScrollAnimations();
 
     return (
         <>
-            <Hero />
-            <RoleSelection />
-            <CultureSection />
-            <FeaturesGrid />
+            <HeroCinematic />
+            <MarqueeStrip />
+            <GamesShowcase />
+            <CategoriesMarquee />
+            <CulturalContent />
+            <CommonPhrases />
+            <MultimodalSection />
+            <AboutTeaser />
+            <FinalCTA />
             <Footer />
         </>
     );

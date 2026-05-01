@@ -1,0 +1,235 @@
+/* ════════════════════════════════════════════════════════════════
+   LandingAnimations.css — Shared animation & section styles
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Reveal on Scroll ────────────────────────────────────────── */
+.reveal,
+.reveal-left,
+.reveal-right,
+.reveal-scale {
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Fallback: if JS never fires, show after 2s via animation delay */
+@keyframes reveal-fallback {
+    to { opacity: 1; transform: none; }
+}
+
+.reveal {
+    transform: translateY(40px);
+    animation: reveal-fallback 0s 2.5s forwards;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none;
+}
+
+/* Staggered delays */
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4 { transition-delay: 0.32s; }
+.reveal-delay-5 { transition-delay: 0.40s; }
+.reveal-delay-6 { transition-delay: 0.48s; }
+.reveal-delay-7 { transition-delay: 0.56s; }
+.reveal-delay-8 { transition-delay: 0.64s; }
+
+/* Slide variants — transform only (opacity/transition from shared rule above) */
+.reveal-left {
+    transform: translateX(-60px);
+    animation: reveal-fallback 0s 2.5s forwards;
+}
+
+.reveal-right {
+    transform: translateX(60px);
+    animation: reveal-fallback 0s 2.5s forwards;
+}
+
+.reveal-left.visible,
+.reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+    animation: none;
+}
+
+/* Scale-up variant */
+.reveal-scale {
+    transform: scale(0.85);
+    animation: reveal-fallback 0s 2.5s forwards;
+}
+
+.reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+    animation: none;
+}
+
+/* ── Marquee ─────────────────────────────────────────────────── */
+@keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-scroll-reverse {
+    0%   { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+/* ── Section shared styles ───────────────────────────────────── */
+.landing-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.landing-section__title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.landing-section__subtitle {
+    font-size: 1.05rem;
+    color: #64748b;
+    line-height: 1.7;
+    max-width: 600px;
+}
+
+.landing-section__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+}
+
+/* ── Parallax background ─────────────────────────────────────── */
+.parallax-bg {
+    position: absolute;
+    inset: -20% 0;
+    background-size: cover;
+    background-position: center;
+    will-change: transform;
+    z-index: 0;
+}
+
+/* ── Glassmorphism card ──────────────────────────────────────── */
+.glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark glass variant */
+.glass-card--dark {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.glass-card--dark:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Scroll hint bounce ──────────────────────────────────────── */
+@keyframes bounce-down {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50%      { transform: translateY(8px); opacity: 1; }
+}
+
+/* ── Pulse icon ──────────────────────────────────────────────── */
+@keyframes icon-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.1); }
+}
+
+/* ── Marquee Strip ───────────────────────────────────────────── */
+.marquee-strip {
+    background: linear-gradient(135deg, #E65100 0%, #1E3A8A 100%);
+    overflow: hidden;
+    padding: 1rem 0;
+    position: relative;
+}
+
+.marquee-strip::before,
+.marquee-strip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.marquee-strip::before {
+    left: 0;
+    background: linear-gradient(90deg, #E65100, transparent);
+}
+
+.marquee-strip::after {
+    right: 0;
+    background: linear-gradient(270deg, #1E3A8A, transparent);
+}
+
+.marquee-strip__track {
+    overflow: hidden;
+}
+
+.marquee-strip__content {
+    display: flex;
+    width: max-content;
+    animation: marquee-scroll 40s linear infinite;
+}
+
+.marquee-strip__content:hover {
+    animation-play-state: paused;
+}
+
+.marquee-strip__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-size: 0.95rem;
+    padding: 0 0.75rem;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.marquee-strip__item strong {
+    font-weight: 700;
+}
+
+.marquee-strip__item em {
+    font-style: normal;
+    opacity: 0.75;
+}
+
+.marquee-strip__separator {
+    opacity: 0.4;
+    font-size: 0.7rem;
+}
+
+.marquee-strip__separator--dim {
+    opacity: 0.25;
+}

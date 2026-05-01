@@ -1,16 +1,37 @@
-import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Roles from '../utils/roles';
 import { useAuth } from '../context/AuthContext';
 
 /**
  * Componente de Navegación Principal.
- * Muestra botones de login/registro si NO hay sesión,
- * o nombre de usuario + cerrar sesión si SÍ hay sesión.
+ * Auto-hide: se oculta al hacer scroll down, reaparece al scroll up.
+ * Transparente en el top (sobre el hero oscuro) en la ruta /.
  */
 const Navbar = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, logout } = useAuth();
+
+    // ── Auto-hide logic ──────────────────────────────────
+    const [hidden, setHidden] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const lastScrollY = useRef(0);
+
+    const isHome = location.pathname === '/';
+
+    useEffect(() => {
+        const onScroll = () => {
+            const y = window.scrollY;
+            setScrolled(y > 50);
+            // Only hide/show after passing a small threshold
+            if (Math.abs(y - lastScrollY.current) < 8) return;
+            setHidden(y > lastScrollY.current && y > 100);
+            lastScrollY.current = y;
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -47,17 +68,36 @@ const Navbar = () => {
         return roleMap[user.userType] || { label: user.userType, color: 'bg-gray-100 text-gray-700' };
     };
 
+    // ── Dynamic styles ───────────────────────────────────
+    const isTransparent = isHome && !scrolled;
+
+    const headerClasses = [
+        'fixed top-0 z-50 w-full transition-all duration-350 ease-in-out',
+        hidden ? '-translate-y-full' : 'translate-y-0',
+        isTransparent
+            ? 'bg-transparent border-b border-transparent'
+            : 'bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10 shadow-sm',
+    ].join(' ');
+
+    const logoTextColor = isTransparent
+        ? 'text-white'
+        : 'text-text-main-light dark:text-text-main-dark';
+
+    const linkTextColor = isTransparent
+        ? 'text-white/80 hover:text-white'
+        : 'text-text-sub-light hover:text-primary dark:text-text-sub-dark';
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md">
+        <header className={headerClasses}>
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
                 {/* Logo + Nav agrupados a la izquierda */}
                 <div className="flex items-center gap-8">
                     <Link to="/" className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary-dark dark:text-primary">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isTransparent ? 'bg-white/20' : 'bg-primary/20'} ${isTransparent ? 'text-white' : 'text-primary-dark dark:text-primary'}`}>
                             <span className="material-symbols-outlined">school</span>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark">
+                        <h1 className={`text-xl font-bold tracking-tight ${logoTextColor}`}>
                             NTS'I FÍYO
                         </h1>
                     </Link>
@@ -69,8 +109,8 @@ const Navbar = () => {
                             className={({ isActive }) =>
                                 `text-sm font-semibold transition-colors px-2 py-1 rounded-md ${
                                     isActive
-                                        ? 'text-primary bg-primary/10'
-                                        : 'text-text-sub-light hover:text-primary dark:text-text-sub-dark'
+                                        ? (isTransparent ? 'text-white bg-white/15' : 'text-primary bg-primary/10')
+                                        : linkTextColor
                                 }`
                             }
                         >
@@ -94,12 +134,12 @@ const Navbar = () => {
                             {/* Avatar + nombre */}
                             <Link
                                 to={getRouteAuthenticated()}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${isTransparent ? 'hover:bg-white/10' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`}
                             >
                                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                                     {getInitial()}
                                 </div>
-                                <span className="hidden sm:block text-sm font-medium text-text-main-light dark:text-text-main-dark max-w-[120px] truncate">
+                                <span className={`hidden sm:block text-sm font-medium max-w-[120px] truncate ${logoTextColor}`}>
                                     {user.firstname}
                                 </span>
                             </Link>
@@ -120,7 +160,11 @@ const Navbar = () => {
                             <Link
                                 to="/auth"
                                 state={{ mode: 'login' }}
-                                className="hidden sm:flex items-center justify-center h-9 px-4 text-sm font-medium text-text-main-light dark:text-text-main-dark hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                                className={`hidden sm:flex items-center justify-center h-9 px-4 text-sm font-medium rounded-lg transition-colors ${
+                                    isTransparent
+                                        ? 'text-white hover:bg-white/10'
+                                        : 'text-text-main-light dark:text-text-main-dark hover:bg-gray-100 dark:hover:bg-white/5'
+                                }`}
                             >
                                 Iniciar Sesión
                             </Link>
@@ -138,7 +182,11 @@ const Navbar = () => {
                     {/* Menú Móvil */}
                     <button
                         onClick={() => window.dispatchEvent(new Event('toggle-sidebar'))}
-                        className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100 text-text-main-light dark:text-text-main-dark transition-colors"
+                        className={`lg:hidden flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                            isTransparent
+                                ? 'text-white hover:bg-white/10'
+                                : 'text-text-main-light dark:text-text-main-dark hover:bg-gray-100'
+                        }`}
                     >
                         <span className="material-symbols-outlined">menu</span>
                     </button>
