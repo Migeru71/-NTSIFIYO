@@ -249,7 +249,7 @@ const MemoriaRapidaGameView = ({ studentId = 'student_001' }) => {
                 totalQuestions={totalCards}
                 responseLogs={responseLogs}
                 onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/estudiante/actividades')}
-                onRetry={() => window.location.reload()}
+                onRetry={initGame}
             />
     }
 

@@ -83,7 +83,7 @@ const AdminLogin = () => {
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-primary-dark">Usuario Administrador</label>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
                                 <input
                                     className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                     placeholder="Ej. admin_root"
@@ -97,7 +97,7 @@ const AdminLogin = () => {
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-primary-dark">Contraseña</label>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">lock</span>
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 flex items-center text-gray-400 material-symbols-outlined">lock</span>
                                 <input
                                     className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                     placeholder="••••••••"

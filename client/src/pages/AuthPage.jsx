@@ -130,7 +130,7 @@ const AuthPage = () => {
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Número de Lista</label>
                                     <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">tag</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 flex items-center text-gray-400 material-symbols-outlined">tag</span>
                                         <input
                                             type="number"
                                             className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${loginError ? 'border-red-300' : 'border-orange-100'}`}
@@ -174,7 +174,7 @@ const AuthPage = () => {
                                                 <option key={g.value} value={g.value}>{g.label}</option>
                                             ))}
                                         </select>
-                                        <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 material-symbols-outlined pointer-events-none">expand_more</span>
+                                        <span className="absolute right-0 top-1/2 -translate-y-1/2 pr-4 flex items-center text-gray-400 material-symbols-outlined pointer-events-none">expand_more</span>
                                     </div>
                                 </div>
 
@@ -239,7 +239,7 @@ const AuthPage = () => {
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-primary-dark">Correo Electrónico</label>
                                         <div className="relative">
-                                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">mail</span>
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 flex items-center text-gray-400 material-symbols-outlined">mail</span>
                                             <input
                                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                                 placeholder="nombre@ejemplo.com"

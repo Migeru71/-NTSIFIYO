@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Roles from '../utils/roles';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,23 +51,33 @@ const Navbar = () => {
         <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-                {/* Logo e Identidad */}
-                <Link to="/" className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary-dark dark:text-primary">
-                        <span className="material-symbols-outlined">school</span>
-                    </div>
-                    <h1 className="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark">
-                        NTS'I FÍYO
-                    </h1>
-                </Link>
+                {/* Logo + Nav agrupados a la izquierda */}
+                <div className="flex items-center gap-8">
+                    <Link to="/" className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary-dark dark:text-primary">
+                            <span className="material-symbols-outlined">school</span>
+                        </div>
+                        <h1 className="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark">
+                            NTS'I FÍYO
+                        </h1>
+                    </Link>
 
-                {/* Menú de Navegación (Escritorio) */}
-                <nav className="hidden md:flex items-center gap-8">
-                    <a className="text-sm font-medium text-text-sub-light hover:text-primary dark:text-text-sub-dark transition-colors" href="#nosotros">Nosotros</a>
-                    <a className="text-sm font-medium text-text-sub-light hover:text-primary dark:text-text-sub-dark transition-colors" href="#cursos">Cursos</a>
-                    <a className="text-sm font-medium text-text-sub-light hover:text-primary dark:text-text-sub-dark transition-colors" href="#recursos">Resources</a>
-                    <a className="text-sm font-medium text-text-sub-light hover:text-primary dark:text-text-sub-dark transition-colors" href="#contacto">Contacto</a>
-                </nav>
+                    {/* Menú de Navegación (Escritorio) */}
+                    <nav className="hidden md:flex items-center gap-6">
+                        <NavLink
+                            to="/nosotros"
+                            className={({ isActive }) =>
+                                `text-sm font-semibold transition-colors px-2 py-1 rounded-md ${
+                                    isActive
+                                        ? 'text-primary bg-primary/10'
+                                        : 'text-text-sub-light hover:text-primary dark:text-text-sub-dark'
+                                }`
+                            }
+                        >
+                            Nosotros
+                        </NavLink>
+                    </nav>
+                </div>
 
                 {/* Acciones de Usuario */}
                 <div className="flex items-center gap-3">

@@ -78,8 +78,7 @@ const MemoramaGameView = () => {
 
     const totalPairs = cards.length / 2;
 
-    // ─── Cargar datos del contexto (igual que IntrusoGameView) ────────────────
-    useEffect(() => {
+    const initGame = () => {
         setLoading(true);
 
         if (!currentGameData) {
@@ -96,6 +95,13 @@ const MemoramaGameView = () => {
             const built = buildCards(currentGameData.words, sorted);
             setCards(built);
             setActivityXP(currentGameData.experience || 100);
+            setFlippedUids([]);
+            setMatchedWordIds(new Set());
+            setWrongUids([]);
+            setLockBoard(false);
+            setAttempts(0);
+            setFeedback(null);
+            setElapsed(0);
             setGameState('playing');
         } else {
             console.error('La actividad de Memorama no tiene palabras.');
@@ -103,6 +109,11 @@ const MemoramaGameView = () => {
         }
 
         setLoading(false);
+    };
+
+    // ─── Cargar datos del contexto (igual que IntrusoGameView) ────────────────
+    useEffect(() => {
+        initGame();
     }, [currentGameData]);
 
     // Cleanup on unmount
@@ -248,7 +259,7 @@ const MemoramaGameView = () => {
                 totalQuestions={totalPairs}
                 responseLogs={finalResponseLogs}
                 onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/memorama')}
-                onRetry={() => window.location.reload()}
+                onRetry={initGame}
             />
         );
     }

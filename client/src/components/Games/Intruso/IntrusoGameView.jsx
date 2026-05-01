@@ -35,7 +35,7 @@ const IntrusoGameView = () => {
 
     const timerRef = useRef(null);
 
-    useEffect(() => {
+    const initGame = () => {
         setLoading(true);
 
         if (!currentGameData) {
@@ -62,10 +62,21 @@ const IntrusoGameView = () => {
             setActivity(shuffled);
             setStartDate(new Date().toISOString());
             setGameState('playing');
+            setCurrentQuestionIndex(0);
+            setScore(0);
+            setTimeLeft(GAME_DURATION);
+            setFeedback(null);
+            setCorrectCount(0);
+            setCombo(0);
+            setResponseLogs([]);
         } else {
             console.error("La actividad de Intruso no tiene preguntas.");
         }
         setLoading(false);
+    };
+
+    useEffect(() => {
+        initGame();
     }, [currentGameData]);
 
     // Timer Logic
@@ -171,7 +182,7 @@ const IntrusoGameView = () => {
                 totalQuestions={activity?.questions?.length || 0}
                 responseLogs={responseLogs}
                 onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/estudiante/actividades')}
-                onRetry={() => window.location.reload()}
+                onRetry={initGame}
             />
         );
     }

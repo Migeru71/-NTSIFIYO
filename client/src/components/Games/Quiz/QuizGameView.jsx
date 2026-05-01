@@ -141,6 +141,8 @@ function QuizGameView() {
         setAnswers([]);
         setScore(0);
         setShowResult(false);
+        setResponseLogs([]);
+        setStartDate(new Date().toISOString());
     };
 
     const handleExit = () => {
@@ -188,7 +190,7 @@ function QuizGameView() {
                 totalquestions={activity.questions.length}
                 responseLogs={responseLogs}
                 onExit={handleExit}
-                onRetry={() => window.location.reload()}
+                onRetry={handleRestart}
             />
         );
     }

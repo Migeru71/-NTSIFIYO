@@ -1,6 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css'; // Importante para que Tailwind funcione
+
+// Fuentes locales
+import "@fontsource/poppins/400.css";
+import "@fontsource/poppins/600.css";
+import "@fontsource/poppins/700.css";
+import "@fontsource/public-sans/300.css";
+import "@fontsource/public-sans/400.css";
+import "@fontsource/public-sans/500.css";
+import "@fontsource/public-sans/600.css";
+import "@fontsource-variable/material-symbols-outlined";
+
 import App from './App'; // Llama al componente principal
 
 import { AuthProvider } from './context/AuthContext';

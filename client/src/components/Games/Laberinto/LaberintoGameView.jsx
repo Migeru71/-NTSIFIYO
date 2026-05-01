@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
 import GameService from '../../../services/GameService';
 import GameSummary from '../GamePanel/GameSummary';
+import GameAlert from '../GamePanel/GameAlert';
 import { generateMaze, getMazeDimensions } from '../../../utils/mazeGenerator';
 import LaberintoBoard from './LaberintoBoard';
 import LaberintoControls from './LaberintoControls';
@@ -11,8 +12,11 @@ import './Laberinto.css';
 
 
 function buildGameData(words, gameConfigs, count = 8) {
-    const cfg0 = gameConfigs?.[0] || { showText: true, showImage: false, playAudio: false, isMazahua: false };
-    const cfg1 = gameConfigs?.[1] || { showText: true, showImage: false, playAudio: false, isMazahua: false };
+    const sorted = gameConfigs?.length
+        ? [...gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        : [];
+    const cfg0 = sorted[0];
+    const cfg1 = sorted[1];
 
     const selectedWords = [...words].sort(() => Math.random() - 0.5).slice(0, count);
 
@@ -25,19 +29,17 @@ function buildGameData(words, gameConfigs, count = 8) {
         showText: cfg0.showText,
         showImage: cfg0.showImage,
         playAudio: cfg0.playAudio,
-        emoji: w.emoji || '🃏',
     }));
 
     const itemsB = selectedWords.map(w => ({
         id: `b_${w.id}`,
         pairId: w.id,
         text: cfg1.isMazahua ? w.mazahuaWord : w.spanishWord,
-        imageUrl: cfg1.showImage ? (w.imageUrl || null) : null,
-        audioUrl: cfg1.playAudio ? (w.audioUrl || null) : null,
+        imageUrl: cfg1.showImage ? w.imageUrl : null,
+        audioUrl: cfg1.playAudio ? w.audioUrl : null,
         showText: cfg1.showText,
         showImage: cfg1.showImage,
         playAudio: cfg1.playAudio,
-        emoji: w.emoji || '🃏',
     }));
 
     return { itemsA, itemsB, wordList: selectedWords };
@@ -46,11 +48,14 @@ function buildGameData(words, gameConfigs, count = 8) {
 const LaberintoGameView = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
-    const { currentGameData, clearGameData } = useGame();
+    const location = useLocation();
+    const returnToMap = location.state?.returnToMap;
+    const { currentGameData } = useGame();
 
     const [loading, setLoading] = useState(true);
     const [activityTitle, setActivityTitle] = useState('Laberinto');
     const [gameState, setGameState] = useState('loading');
+    const startDateRef = useRef(null);
 
     const [grid, setGrid] = useState([]);
     const [entrances, setEntrances] = useState([]);
@@ -65,6 +70,7 @@ const LaberintoGameView = () => {
 
     const [elapsed, setElapsed] = useState(0);
     const [timeLeft, setTimeLeft] = useState(120);
+    const [alert, setAlert] = useState({ open: false, type: 'correct' });
 
     const timerRef = useRef(null);
     const difficulty = currentGameData?.difficulty || 'Medio';
@@ -100,6 +106,14 @@ const LaberintoGameView = () => {
     async function initGame() {
         setLoading(true);
 
+        // Reset all game state for retry
+        setCompletedPairs(new Set());
+        setActiveItem(null);
+        setPathTraced([]);
+        setResponseLogs([]);
+        setElapsed(0);
+        setAlert({ open: false, type: 'correct' });
+
         let data = currentGameData || null;
         if (!data) {
             const result = await GameService.startGame(parseInt(activityId));
@@ -111,7 +125,6 @@ const LaberintoGameView = () => {
 
         if (data?.words?.length) {
             loadFromApiData(data);
-            if (clearGameData) clearGameData();
         } else {
             setGameState('error');
         }
@@ -131,7 +144,6 @@ const LaberintoGameView = () => {
         const rowsLeft = getRandomRows(height, itemsA.length);
         const rowsRight = getRandomRows(height, itemsB.length);
 
-        // Shuffle items independently so rows don't mirror each other
         const shuffledA = [...itemsA].sort(() => Math.random() - 0.5);
         const shuffledB = [...itemsB].sort(() => Math.random() - 0.5);
 
@@ -150,6 +162,7 @@ const LaberintoGameView = () => {
         setActivityTitle(data.title || '¡Laberinto!');
         setGameState('playing');
         setTimeLeft(data.timeLimit || 120);
+        startDateRef.current = new Date().toISOString();
     }
 
     // Timer — single interval per gameState, no timeLeft in deps
@@ -218,41 +231,87 @@ const LaberintoGameView = () => {
         });
     }, [gameState, grid, activeItem]);
 
-    // Detect arrival at right border while carrying an item
-    useEffect(() => {
-        if (!activeItem) return;
-        const mazeWidth = grid[0]?.length;
-        if (!mazeWidth || avatarPos.x !== mazeWidth - 1) return;
+    // No hay useEffect de detección de borde: la validación es 100% manual (handleSelect)
 
-        const exitHit = exits.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
-        if (!exitHit) return;
-
-        if (exitHit.pairId === activeItem.pairId) {
-            const newPairs = new Set([...completedPairs, activeItem.pairId]);
-            setCompletedPairs(newPairs);
-            setActiveItem(null);
-            setPathTraced([]);
-            if (newPairs.size >= wordList.length) {
-                setTimeout(() => finishGame(newPairs), 500);
-            }
-        } else {
-            setActiveItem(null);
-            setPathTraced([]);
-        }
-    }, [avatarPos]); // eslint-disable-line
-
-    const handleSelect = () => {
-        if (activeItem) return;
-        if (avatarPos.x !== 0) return;
-        const entrance = entrances.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
-        if (entrance) {
-            setActiveItem(entrance);
-            setPathTraced([{ x: avatarPos.x, y: avatarPos.y }]);
-        }
+    const showAlert = (type) => {
+        setAlert({ open: true, type });
     };
 
-    const isSelectEnabled = !activeItem && avatarPos.x === 0 &&
-        entrances.some(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
+    const handleSelect = () => {
+        const mazeWidth = grid[0]?.length;
+        const atLeft = avatarPos.x === 0;
+        const atRight = mazeWidth && avatarPos.x === mazeWidth - 1;
+
+        if (!activeItem) {
+            if (atLeft) {
+                const entrance = entrances.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
+                if (entrance) {
+                    setActiveItem({ ...entrance, _side: 'entrance' });
+                    setPathTraced([{ x: avatarPos.x, y: avatarPos.y }]);
+                }
+            } else if (atRight) {
+                const exit = exits.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
+                if (exit) {
+                    setActiveItem({ ...exit, _side: 'exit' });
+                    setPathTraced([{ x: avatarPos.x, y: avatarPos.y }]);
+                }
+            }
+            return;
+        }
+
+        // Entregar entrance en borde derecho
+        if (activeItem._side === 'entrance' && atRight) {
+            const exitHit = exits.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
+            if (exitHit && exitHit.pairId === activeItem.pairId) {
+                const newPairs = new Set([...completedPairs, activeItem.pairId]);
+                setCompletedPairs(newPairs);
+                setActiveItem(null);
+                setPathTraced([]);
+                showAlert('correct');
+                if (newPairs.size >= wordList.length) {
+                    setTimeout(() => finishGame(newPairs), 1800);
+                }
+            } else {
+                setActiveItem(null);
+                setPathTraced([]);
+                showAlert('incorrect');
+            }
+            return;
+        }
+
+        // Entregar exit en borde izquierdo
+        if (activeItem._side === 'exit' && atLeft) {
+            const entranceHit = entrances.find(e => e.row === avatarPos.y && !completedPairs.has(e.pairId));
+            if (entranceHit && entranceHit.pairId === activeItem.pairId) {
+                const newPairs = new Set([...completedPairs, activeItem.pairId]);
+                setCompletedPairs(newPairs);
+                setActiveItem(null);
+                setPathTraced([]);
+                showAlert('correct');
+                if (newPairs.size >= wordList.length) {
+                    setTimeout(() => finishGame(newPairs), 1800);
+                }
+            } else {
+                setActiveItem(null);
+                setPathTraced([]);
+                showAlert('incorrect');
+            }
+            return;
+        }
+
+        // Soltar manualmente
+        setActiveItem(null);
+        setPathTraced([]);
+    };
+
+    const mazeWidth = grid[0]?.length;
+    const atLeftBorder = avatarPos.x === 0;
+    const atRightBorder = mazeWidth && avatarPos.x === mazeWidth - 1;
+
+    const isSelectEnabled =
+        !!activeItem ||
+        (atLeftBorder && entrances.some(e => e.row === avatarPos.y && !completedPairs.has(e.pairId))) ||
+        (atRightBorder && exits.some(e => e.row === avatarPos.y && !completedPairs.has(e.pairId)));
 
     if (loading) return <div className="game-loading-container">Cargando Laberinto...</div>;
 
@@ -264,16 +323,19 @@ const LaberintoGameView = () => {
     );
 
     if (gameState === 'finished') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdParam = urlParams.get('gameId');
+
         return (
             <GameSummary
                 activityId={activityId}
-                gameId={8}
-                startDate={new Date().toISOString()}
+                gameId={gameIdParam || 8}
+                startDate={startDateRef.current || new Date().toISOString()}
                 correctAnswers={completedPairs.size}
                 totalQuestions={wordList.length}
                 responseLogs={responseLogs}
-                onExit={() => navigate('/games')}
-                onRetry={() => window.location.reload()}
+                onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/laberinto')}
+                onRetry={initGame}
             />
         );
     }
@@ -281,7 +343,7 @@ const LaberintoGameView = () => {
     return (
         <div className="game-container">
             <div className="game-top-bar">
-                <button className="game-top-bar__back-btn" onClick={() => navigate('/games')} title="Salir">‹</button>
+                <button className="game-top-bar__back-btn" onClick={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/laberinto')} title="Salir">‹</button>
                 <span className="game-top-bar__title">{activityTitle}</span>
                 <div className="game-top-bar__timer">⏱ {formatTime(timeLeft)}</div>
             </div>
@@ -302,6 +364,14 @@ const LaberintoGameView = () => {
                 onMove={handleMove}
                 onSelect={handleSelect}
                 isSelectEnabled={isSelectEnabled}
+                hasActiveItem={!!activeItem}
+            />
+
+            <GameAlert
+                isOpen={alert.open}
+                type={alert.type}
+                onClose={() => setAlert(a => ({ ...a, open: false }))}
+                autoCloseDuration={1200}
             />
         </div>
     );

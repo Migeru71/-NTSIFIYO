@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const LaberintoControls = ({ onMove, onSelect, isSelectEnabled }) => {
+const LaberintoControls = ({ onMove, onSelect, isSelectEnabled, hasActiveItem }) => {
     // Escuchar el teclado
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -29,7 +29,8 @@ const LaberintoControls = ({ onMove, onSelect, isSelectEnabled }) => {
                     break;
                 case 'Enter':
                 case ' ':
-                    if (isSelectEnabled) onSelect();
+                    // Siempre llama a onSelect; el GameView decide si recoger o soltar
+                    onSelect();
                     break;
                 default:
                     break;
@@ -38,7 +39,10 @@ const LaberintoControls = ({ onMove, onSelect, isSelectEnabled }) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onMove, onSelect, isSelectEnabled]);
+    }, [onMove, onSelect]);
+
+    const btnLabel = hasActiveItem ? 'Soltar' : 'Seleccionar';
+    const btnClass = `laberinto-action-btn ${isSelectEnabled ? 'enabled' : 'disabled'} ${hasActiveItem ? 'dropping' : ''}`;
 
     return (
         <div className="laberinto-controls-container">
@@ -49,14 +53,14 @@ const LaberintoControls = ({ onMove, onSelect, isSelectEnabled }) => {
                 <button className="dpad-btn right" onClick={() => onMove(1, 0)}>▶</button>
                 <button className="dpad-btn down" onClick={() => onMove(0, 1)}>▼</button>
             </div>
-            
+
             <div className="laberinto-actions">
-                <button 
-                    className={`laberinto-action-btn ${isSelectEnabled ? 'enabled' : 'disabled'}`} 
+                <button
+                    className={btnClass}
                     onClick={onSelect}
                     disabled={!isSelectEnabled}
                 >
-                    Seleccionar
+                    {btnLabel}
                 </button>
             </div>
         </div>

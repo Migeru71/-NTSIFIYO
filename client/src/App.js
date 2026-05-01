@@ -16,6 +16,9 @@ import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
 import RompecabezasAccessPanel from './components/Games/Rompecabezas/RompecabezasAccessPanel';
 import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGameView';
 
+import ParesAccessPanel from './components/Games/Pares/ParesAccessPanel';
+import ParesGameView from './components/Games/Pares/ParesGameView';
+
 // Memorama imports
 import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
 import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
@@ -25,6 +28,12 @@ import LoteriaGameView from './components/Games/Loteria/LoteriaGameView';
 // Laberinto imports
 import LaberintoGameView from './components/Games/Laberinto/LaberintoGameView';
 import LaberintoAccessPanel from './components/Games/Laberinto/LaberintoAccessPanel';
+
+// Content
+import ContentSection from './pages/common/ContentSection';
+import NosotrosPage from './pages/NosotrosPage';
+import MediaPlayerView from './components/common/MediaPlayerView';
+
 // Student Dashboard
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentActivities from './pages/student/StudentActivities';
@@ -82,6 +91,7 @@ function App() {
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
+                    <Route path="/nosotros" element={<NosotrosPage />} />
                     <Route path="/auth" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
                     <Route path="/registro" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
                     <Route path="/admin" element={!isAuthenticated ? <AdminLogin /> : <Navigate to="/dashboard" replace />} />
@@ -147,7 +157,7 @@ function App() {
                             <Route path="/estudiante/actividades" element={<StudentActivities />} />
                             <Route path="/estudiante/mapa" element={<GameMap />} />
                             <Route path="/estudiante/asignaciones" element={<StudentAssignments />} />
-                            <Route path="/estudiante/contenido" element={<StudentActivities />} />
+                            <Route path="/estudiante/contenido" element={<ContentSection />} />
                             <Route path="/estudiante/diccionario" element={<DictionaryPage />} />
                         </Route>
 
@@ -156,12 +166,15 @@ function App() {
                             <Route path="/visitante/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/visitante/mapa" element={<GameMap />} />
                             <Route path="/visitante/actividades" element={<StudentActivities />} />
-                            <Route path="/visitante/contenido" element={<StudentActivities />} />
+                            <Route path="/visitante/contenido" element={<ContentSection />} />
                             <Route path="/visitante/diccionario" element={<DictionaryPage />} />
                         </Route>
 
                         {/* Games/Global Authenticated Routes */}
                         <Route element={<ProtectedRoute isAllowed={isAuthenticated} />}>
+                            {/* MediaPlayer */}
+                            <Route path="/reproductor/:id" element={<MediaPlayerView />} />
+
                             {/* Memoria Rápida */}
                             <Route path="/games/memoria_rapida" element={<MemoriaRapidaAccessPanel />} />
                             <Route path="/games/memoria_rapida/crear" element={
@@ -200,6 +213,16 @@ function App() {
                             {/* Rompecabezas */}
                             <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
                             <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
+
+                            {/* Pares */}
+                            <Route path="/games/pares" element={<ParesAccessPanel />} />
+                            <Route path="/games/pares/crear" element={
+                                <ConfigurationGameView redirectPath="/games/pares/jugar/{id}" />
+                            } />
+                            <Route path="/games/pares/editar/:editId" element={
+                                <ConfigurationGameView redirectPath="/games/pares" />
+                            } />
+                            <Route path="/games/pares/jugar/:activityId" element={<ParesGameView />} />
 
                             {/* Lotería */}
                             <Route path="/games/loteria" element={<LoteriaAccessPanel />} />

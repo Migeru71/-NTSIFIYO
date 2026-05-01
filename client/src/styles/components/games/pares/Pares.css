@@ -1,0 +1,112 @@
+.game-container {
+    height: calc(100dvh - 64px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    --game-max-width: 1100px;
+}
+
+.pares-board-scroller {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 60px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pares-container {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    gap: 80px; /* Espacio para las líneas entre los bloques de columnas */
+    touch-action: none;
+    min-height: 500px;
+}
+
+.pares-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas por lado */
+    gap: 12px;
+    width: 44%;
+    z-index: 2;
+    align-content: start;
+}
+
+.pares-card-wrapper {
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.2s, opacity 0.3s, filter 0.3s;
+    cursor: pointer;
+    width: 100%;
+    max-width: 160px; /* Cards más pequeñas */
+    margin: 0 auto;
+}
+
+.pares-card-wrapper:hover:not(.matched) {
+    transform: scale(1.05);
+}
+
+.pares-card-wrapper.matched {
+    opacity: 0.5;
+    filter: saturate(0.2) brightness(0.95);
+    pointer-events: none;
+    transform: scale(0.92);
+}
+
+.pares-svg-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.pares-line-matched {
+    stroke: #10B981;
+    stroke-width: 4;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.3));
+    stroke-opacity: 0.8;
+}
+
+.pares-line-dragging {
+    stroke: #F59E0B;
+    stroke-width: 3;
+    stroke-dasharray: 8 8;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4));
+    animation: dash 0.8s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -16;
+    }
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .pares-container {
+        gap: 40px;
+        padding: 10px;
+    }
+    .pares-column {
+        grid-template-columns: 1fr; /* Volver a 1 columna por lado en móvil para no saturar */
+        width: 42%;
+        gap: 10px;
+    }
+    .pares-card-wrapper {
+        max-width: 140px;
+    }
+}
+
+/* Si hay muy pocos elementos, centrarlos */
+.pares-column:only-child {
+    margin: 0 auto;
+}

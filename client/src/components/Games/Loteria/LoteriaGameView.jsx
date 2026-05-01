@@ -10,25 +10,6 @@ import GameSummary from '../GamePanel/GameSummary';
 import '../../../styles/components/games/GameBase.css';
 import '../../../styles/components/games/loteria/Loteria.css';
 
-// ─── Pool COMPLETO de cartas (baraja grande — incluye cartas que pueden no estar en la tabla) ──
-const ALL_WORDS = [
-    { id: 1, mazahuaWord: "nzäthi", spanishWord: "El Sol", emoji: '☀️' },
-    { id: 2, mazahuaWord: "ndeje", spanishWord: "La Luna", emoji: '🌙' },
-    { id: 3, mazahuaWord: "dehe", spanishWord: "El Agua", emoji: '💧' },
-    { id: 4, mazahuaWord: "yju", spanishWord: "El Árbol", emoji: '🌳' },
-    { id: 5, mazahuaWord: "mfeni", spanishWord: "El Gallo", emoji: '🐓' },
-    { id: 6, mazahuaWord: "ngümi", spanishWord: "La Rosa", emoji: '🌹' },
-    { id: 7, mazahuaWord: "zithu", spanishWord: "La Flor", emoji: '🌸' },
-    { id: 8, mazahuaWord: "pjäri", spanishWord: "El Viento", emoji: '💨' },
-    { id: 9, mazahuaWord: "nzöni", spanishWord: "La Montaña", emoji: '⛰️' },
-    { id: 10, mazahuaWord: "ngubu", spanishWord: "La Casa", emoji: '🏠' },
-    { id: 11, mazahuaWord: "ndoxi", spanishWord: "El Maíz", emoji: '🌽' },
-    { id: 12, mazahuaWord: "tembé", spanishWord: "El Corazón", emoji: '❤️' },
-    { id: 13, mazahuaWord: "botsi", spanishWord: "La Mano", emoji: '✋' },
-    { id: 14, mazahuaWord: "nzöxi", spanishWord: "El Fuego", emoji: '🔥' },
-    { id: 15, mazahuaWord: "pjeni", spanishWord: "La Estrella", emoji: '⭐' },
-];
-
 const CARD_INTERVAL_MS = 5000;
 const PENALTY_PTS = 5;
 const CORRECT_PTS = 10;
@@ -316,7 +297,7 @@ const LoteriaGameView = () => {
                 totalQuestions={board.length}
                 responseLogs={finalResponseLogs}
                 onExit={() => navigate('/games/loteria')}
-                onRetry={() => window.location.reload()}
+                onRetry={initGame}
             />
         );
     }

@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/static/css/main.063519c7.css",
+    "main.js": "/static/js/main.75606f32.js",
+    "static/media/map.webp": "/static/media/map.8d99857718a7344e6947.webp",
+    "static/media/park.webp": "/static/media/park.7d7083679c943885dbc2.webp",
+    "static/media/community.webp": "/static/media/community.f4f077730a572cd3ebae.webp",
+    "static/media/kitchen.webp": "/static/media/kitchen.a54fbfc2b3630b42df5f.webp",
+    "static/media/market.webp": "/static/media/market.a25ee5fcd4be73af7431.webp",
+    "static/media/school.webp": "/static/media/school.b138a41eb2fddef8e7b2.webp",
+    "static/media/clinic.webp": "/static/media/clinic.209b8c9630530800dd3c.webp",
+    "static/media/farm.webp": "/static/media/farm.432fcbc3d72395ff0593.webp",
+    "static/media/plain.webp": "/static/media/plain.6fa6bdaf9f5857d709d7.webp",
+    "static/media/forest.webp": "/static/media/forest.aca33b1b87ab1dddb3fb.webp",
+    "static/media/puzzle_right.webp": "/static/media/puzzle_right.b6927f3fd77e003d9f7b.webp",
+    "static/media/puzzle_left.webp": "/static/media/puzzle_left.89094a019a63755b651d.webp",
+    "index.html": "/index.html",
+    "main.063519c7.css.map": "/static/css/main.063519c7.css.map",
+    "main.75606f32.js.map": "/static/js/main.75606f32.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.063519c7.css",
+    "static/js/main.75606f32.js"
+  ]
+}

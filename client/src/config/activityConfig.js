@@ -14,10 +14,12 @@ export const ActivityTypes = Object.freeze({
     MEDIA_SONG: "MEDIA_SONG",
     MEDIA_ANECDOTE: "MEDIA_ANECDOTE",
     MEDIA_LEGEND: "MEDIA_LEGEND",
+    MEDIA_POEM: "MEDIA_POEM",
     PUZZLE: "PUZZLE",
     MEMORY_GAME: "MEMORY_GAME",
     LOTTERY: "LOTTERY",
     MAZE: "MAZE",
+    PAIRS: "PAIRS",
 });
 
 export const ACTIVITY_CONFIG = {
@@ -214,6 +216,41 @@ export const ACTIVITY_CONFIG = {
             { icon: 'map', label: 'Historia' },
             { icon: 'emoji_events', label: 'XP' }
         ]
+    },
+    [ActivityTypes.MEDIA_POEM]: {
+        id: 'poema',
+        value: ActivityTypes.MEDIA_POEM,
+        type: ActivityTypes.MEDIA_POEM,
+        title: 'Poema',
+        label: '📜 Poema',
+        subtitle: 'Actividad con poema',
+        description: 'Aprende vocabulario a través de la poesía y cultura mazahua.',
+        icon: '📜',
+        materialIcon: 'auto_stories',
+        basePath: '/games/poema',
+        color: '#f59e0b',
+        stats: [
+            { icon: 'auto_stories', label: 'Cultura' },
+            { icon: 'emoji_events', label: 'XP' }
+        ]
+    },
+    [ActivityTypes.PAIRS]: {
+        id: 'pares',
+        value: ActivityTypes.PAIRS,
+        type: ActivityTypes.PAIRS,
+        title: 'Pares',
+        label: '📜 Pares',
+        subtitle: 'Enlaza los pares',
+        description: 'Une las cartas del lado izquierdo con su par del lado derecho para completar los desafíos.',
+        icon: '📜',
+        materialIcon: 'auto_stories',
+        basePath: '/games/pares',
+        color: '#10b981',
+        stats: [
+            { icon: 'link', label: 'Relación' },
+            { icon: 'psychology', label: 'Lógica' },
+            { icon: 'emoji_events', label: 'XP' }
+        ]
     }
 };
 
@@ -223,16 +260,21 @@ export const QUESTIONNAIRE_TYPES = [
     ActivityTypes.FAST_MEMORY,
     ActivityTypes.INTRUDER,
     ActivityTypes.FIND_THE_WORD,
-    ActivityTypes.MEDIA_SONG,
-    ActivityTypes.MEDIA_ANECDOTE,
-    ActivityTypes.MEDIA_LEGEND,
     ActivityTypes.PUZZLE,
 ];
 
 export const PAIR_TYPES = [
     ActivityTypes.MEMORY_GAME,
     ActivityTypes.LOTTERY,
-    ActivityTypes.MAZE
+    ActivityTypes.MAZE,
+    ActivityTypes.PAIRS
+];
+
+export const MEDIA_TYPES = [
+    ActivityTypes.MEDIA_SONG,
+    ActivityTypes.MEDIA_ANECDOTE,
+    ActivityTypes.MEDIA_LEGEND,
+    ActivityTypes.MEDIA_POEM,
 ];
 
 /** Helpers */
@@ -262,7 +304,8 @@ export const getNavigationRoutes = () => {
         ActivityTypes.LOTTERY,
         ActivityTypes.PUZZLE,
         ActivityTypes.FAST_MEMORY,
-        ActivityTypes.MAZE
+        ActivityTypes.MAZE,
+        ActivityTypes.PAIRS
     ];
 
     return activeGames.map(type => {
@@ -281,5 +324,6 @@ export const getNavigationRoutes = () => {
         };
     });
 };
+
 
 export default ACTIVITY_CONFIG;

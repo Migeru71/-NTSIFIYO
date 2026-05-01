@@ -62,6 +62,14 @@ const RompecabezasGameView = () => {
 
         if (currentGameData) {
             loadFromApiData(currentGameData);
+            setScore(0);
+            setCurrentIndex(0);
+            setCompletedOriginal(0);
+            setFailedOnFirst(new Set());
+            setResponseLogs([]);
+            setElapsed(0);
+            setFeedback(null);
+            setSelectedOption(null);
         } else {
             console.warn('API no disponible, faltan datos de juego en el contexto.');
             setLoadError('No se encontró la actividad iniciada. Por favor, vuelve al panel.');
@@ -238,7 +246,7 @@ const RompecabezasGameView = () => {
                 totalQuestions={totalOriginal}
                 responseLogs={responseLogs}
                 onExit={() => returnToMap ? navigate('/estudiante/mapa') : navigate('/games/rompecabezas')}
-                onRetry={() => window.location.reload()}
+                onRetry={initGame}
             />
         );
     }

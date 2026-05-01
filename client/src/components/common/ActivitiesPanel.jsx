@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlert } from '../../context/AlertContext';
-import { QUESTIONNAIRE_TYPES, PAIR_TYPES, getGameTypeInfo } from '../../config/activityConfig';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES, ACTIVITY_CONFIG, getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 import SectionHeader from './SectionHeader';
 
 // ── Filter options built from activityTypes enums ──
+// QUESTIONNAIRE_TYPES y PAIR_TYPES son arrays de strings (ActivityTypes values).
+// Se mapea cada string a su config en ACTIVITY_CONFIG para obtener value y label.
 const ALL_ACTIVITY_TYPES = [...QUESTIONNAIRE_TYPES, ...PAIR_TYPES];
 const GAME_TYPE_FILTERS = [
     { value: 'ALL', label: 'Todos' },
-    ...ALL_ACTIVITY_TYPES.map(t => ({ value: t.value, label: t.label })),
+    ...ALL_ACTIVITY_TYPES.map(t => ({ value: t, label: ACTIVITY_CONFIG[t]?.label ?? t })),
 ];
 
 const TABS = [
