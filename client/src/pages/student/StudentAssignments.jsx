@@ -7,6 +7,7 @@ import { useAlert } from '../../context/AlertContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useStudentAssignmentsQuery, useStudentInvalidate } from '../../hooks/useStudentQueries';
 import { getGameBasePath, getGameIcon } from '../../config/activityConfig';
+import IconWarning from '../../assets/svgs/warning.svg';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();
@@ -107,7 +108,7 @@ const StudentAssignments = () => {
                             </div>
                         ) : error ? (
                             <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-red-100 max-w-2xl mx-auto">
-                                <span className="text-6xl block mb-4">⚠️</span>
+                                <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
                                 <h3 className="text-2xl font-bold text-gray-800 mb-2">Error al cargar</h3>
                                 <p className="text-gray-500">{error.message}</p>
                             </div>

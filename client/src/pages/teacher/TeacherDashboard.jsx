@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useTeacherDashboardQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
+import IconWarning from '../../assets/svgs/warning.svg';
+import IconEmptyBox from '../../assets/svgs/empty_box.svg';
 
 /**
  * Dashboard principal del maestro.
@@ -75,7 +77,7 @@ const TeacherDashboard = () => {
 
                     {error && !isLoading && (
                         <div className="text-center py-16 bg-white rounded-3xl border border-red-100 mt-6 shadow-sm">
-                            <span className="text-6xl block mb-4">⚠️</span>
+                            <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-red-600 mb-2">Error cargando el panel</h3>
                             <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">{error.message}</p>
                             <button onClick={reloadDashboard} className="px-6 py-3 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
@@ -120,7 +122,7 @@ const TeacherDashboard = () => {
                                         </div>
                                         {activeAssignments.length === 0 ? (
                                             <div className="flex-1 flex flex-col items-center justify-center text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                                                <span className="text-5xl mb-3 opacity-50">📭</span>
+                                                <img src={IconEmptyBox} alt="Vacío" className="w-16 h-16 mb-3 opacity-75" />
                                                 <p className="text-gray-500 font-medium">No hay actividades activas actualmente.</p>
                                                 <Link to="/maestro/recursos" className="mt-3 text-sm text-green-600 font-semibold hover:underline">Asignar nueva actividad</Link>
                                             </div>

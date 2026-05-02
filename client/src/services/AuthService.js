@@ -51,7 +51,7 @@ class AuthService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: error.message || 'Error desconocido'
             };
         }
     }
@@ -83,7 +83,7 @@ class AuthService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: error.message || 'Error desconocido'
             };
         }
     }

@@ -19,13 +19,14 @@ const AuthPage = () => {
     const [listNumber, setListNumber] = useState('');
     const [studentPassword, setStudentPassword] = useState('');
     const [grade, setGrade] = useState('');
-    const [loginError, setLoginError] = useState('');
+    const [studentLoginError, setStudentLoginError] = useState('');
 
     // Estados para login de maestro/visitante
     const [teacherUsername, setTeacherUsername] = useState('');
     const [guestUsername, setGuestUsername] = useState('');
     const [guestEmail, setGuestEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [standardLoginError, setStandardLoginError] = useState('');
 
     // Estados para registro de visitante
     const [registerName, setRegisterName] = useState('');
@@ -44,18 +45,40 @@ const AuthPage = () => {
     // Validar antes de enviar
     const handleStudentLogin = () => {
         if (!listNumber.trim()) {
-            setLoginError('Por favor ingresa tu número de lista');
+            setStudentLoginError('Por favor ingresa tu número de lista');
             return false;
         }
         if (!studentPassword.trim()) {
-            setLoginError('Por favor ingresa tu contraseña');
+            setStudentLoginError('Por favor ingresa tu contraseña');
             return false;
         }
         if (!grade) {
-            setLoginError('Por favor selecciona tu grado');
+            setStudentLoginError('Por favor selecciona tu grado');
             return false;
         }
         return true;
+    };
+
+    // Formatea el mensaje de error del backend, convirtiendo milisegundos a segundos
+    const formatErrorMessage = (message) => {
+        if (!message) return message;
+        // Buscar patrones como "30000ms" o "30000 millis" o "espera 30000" y convertir a segundos
+        const msMatch = message.match(/(\d{4,})\s*(?:ms|millis|milisegundos?)/i);
+        if (msMatch) {
+            const ms = parseInt(msMatch[1], 10);
+            const seconds = Math.ceil(ms / 1000);
+            return message.replace(/\d{4,}\s*(?:ms|millis|milisegundos?)/i, `${seconds} segundos`);
+        }
+        // Si el mensaje tiene un número grande que parece milisegundos (>= 10000) seguido de "segundos"
+        const secMatch = message.match(/(\d{4,})\s*segundos?/i);
+        if (secMatch) {
+            const likelyMs = parseInt(secMatch[1], 10);
+            if (likelyMs >= 10000) {
+                const seconds = Math.ceil(likelyMs / 1000);
+                return message.replace(/\d{4,}\s*segundos?/i, `${seconds} segundos`);
+            }
+        }
+        return message;
     };
 
     const onSuccess = async (response, role) => {
@@ -133,7 +156,7 @@ const AuthPage = () => {
                                         <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 flex items-center text-gray-400 material-symbols-outlined">tag</span>
                                         <input
                                             type="number"
-                                            className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${loginError ? 'border-red-300' : 'border-orange-100'}`}
+                                    className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${studentLoginError ? 'border-red-300' : 'border-orange-100'}`}
                                             placeholder="Ej. 15"
                                             value={listNumber}
                                             onChange={(e) => setListNumber(e.target.value)}
@@ -179,10 +202,10 @@ const AuthPage = () => {
                                 </div>
 
                                 {/* Mensaje de Error */}
-                                {loginError && (
+                                {studentLoginError && (
                                     <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                                         <span className="material-symbols-outlined text-lg">error</span>
-                                        <span>{loginError}</span>
+                                        <span>{formatErrorMessage(studentLoginError)}</span>
                                     </div>
                                 )}
                             </div>
@@ -264,6 +287,14 @@ const AuthPage = () => {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Mensaje de Error para Login/Registro estándar */}
+                                {standardLoginError && (
+                                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                                        <span className="material-symbols-outlined text-lg">error</span>
+                                        <span>{formatErrorMessage(standardLoginError)}</span>
+                                    </div>
+                                )}
                             </form>
                         )}
 
@@ -272,7 +303,8 @@ const AuthPage = () => {
                             disabled={isLoading}
                             onClick={async () => {
                                 setIsLoading(true);
-                                setLoginError('');
+                                setStudentLoginError('');
+                                setStandardLoginError('');
 
                                 try {
                                     // Si es estudiante y está haciendo login
@@ -293,11 +325,11 @@ const AuthPage = () => {
                                             onSuccess(response, Roles.STUDENT)
                                             navigate('/estudiante/dashboard');
                                         } else {
-                                            setLoginError(response.error || 'Error al iniciar sesión');
+                                            setStudentLoginError(response.error || 'Error al iniciar sesión');
                                         }
                                     } else if (authMode === 'login' && userType === 'teacher') {
                                         if (!teacherUsername || !password) {
-                                            setLoginError('Por favor completa todos los campos');
+                                            setStandardLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -312,11 +344,11 @@ const AuthPage = () => {
                                             onSuccess(response, Roles.TEACHER)
                                             navigate('/maestro/dashboard');
                                         } else {
-                                            setLoginError(response.error || 'Credenciales incorrectas');
+                                            setStandardLoginError(response.error || 'Credenciales incorrectas');
                                         }
                                     } else if (authMode === 'login' && userType === 'guest') {
                                         if (!guestUsername || !password) {
-                                            setLoginError('Por favor completa todos los campos');
+                                            setStandardLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -331,12 +363,12 @@ const AuthPage = () => {
                                             onSuccess(response, Roles.VISITOR)
                                             navigate('/estudiante/dashboard');
                                         } else {
-                                            setLoginError(response.error || 'Credenciales incorrectas');
+                                            setStandardLoginError(response.error || 'Credenciales incorrectas');
                                         }
                                     } else if (authMode === 'register') {
                                         // Registro de visitante
                                         if (!registerName || !guestEmail || !password || !registerUsername) {
-                                            setLoginError('Por favor completa todos los campos');
+                                            setStandardLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
@@ -352,18 +384,23 @@ const AuthPage = () => {
 
                                         if (response.success) {
                                             setAuthMode('login');
-                                            setLoginError('');
+                                            setStandardLoginError('');
                                             showAlert({
                                                 mode: 'success',
                                                 title: '¡Éxito!',
                                                 message: '¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.'
                                             });
                                         } else {
-                                            setLoginError(response.error || 'Error al crear cuenta');
+                                            setStandardLoginError(response.error || 'Error al crear cuenta');
                                         }
                                     }
                                 } catch (error) {
-                                    setLoginError('Error de conexión. Intenta de nuevo.');
+                                    const isStudent = authMode === 'login' && userType === 'student';
+                                    if (isStudent) {
+                                        setStudentLoginError('Error de conexión. Intenta de nuevo.');
+                                    } else {
+                                        setStandardLoginError('Error de conexión. Intenta de nuevo.');
+                                    }
                                     console.error('Login error:', error);
                                 } finally {
                                     setIsLoading(false);

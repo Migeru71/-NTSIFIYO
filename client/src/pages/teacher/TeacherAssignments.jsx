@@ -6,6 +6,9 @@ import { useTeacherAssignmentsQuery, useTeacherStudentsQuery, useTeacherInvalida
 import { getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 
+import IconWarning from '../../assets/svgs/warning.svg';
+import IconEmptyBox from '../../assets/svgs/empty_box.svg';
+
 // ── Helpers ──
 
 const formatDate = (dateStr) => {
@@ -156,7 +159,7 @@ const TeacherAssignments = () => {
                         </div>
                     ) : error ? (
                         <div className="text-center py-16 bg-white rounded-2xl border border-red-100 shadow-sm">
-                            <span className="text-5xl block mb-4">⚠️</span>
+                            <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
                             <h3 className="text-lg font-bold text-red-600 mb-2">Error al cargar</h3>
                             <p className="text-gray-500 text-sm mb-6">{error.message}</p>
                             <button
@@ -168,7 +171,7 @@ const TeacherAssignments = () => {
                         </div>
                     ) : activities.length === 0 ? (
                         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <span className="text-6xl block mb-4">📭</span>
+                            <img src={IconEmptyBox} alt="Vacío" className="w-20 h-20 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Sin asignaciones activas</h3>
                             <p className="text-gray-500">No hay actividades asignadas a tu grupo en este momento.</p>
                             <p className="text-gray-400 text-sm mt-2">Asigna actividades desde la sección de <Link to="/maestro/recursos" className="text-green-600 font-semibold hover:underline">Recursos</Link>.</p>

@@ -163,7 +163,7 @@ const NosotrosPage = () => {
             <div className="nosotros-footer-note">
                 <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#6C63FF', opacity: 0.6 }}>auto_stories</span>
                 <p>
-                    Este proyecto fue posible gracias al apoyo de la Escuela primaria de manzanillos, Zitácuaro.
+                    Este proyecto fue posible gracias al apoyo de la Escuela primaria bilingüe de manzanillos, Zitácuaro.
                 </p>
             </div>
         </div>

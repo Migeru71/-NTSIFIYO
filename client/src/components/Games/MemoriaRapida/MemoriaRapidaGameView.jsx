@@ -5,6 +5,8 @@ import { useGame } from '../../../context/GameContext';
 import MemoriaRapidaCard from './MemoriaRapidaCard';
 import GameSummary from '../GamePanel/GameSummary';
 import GameCard from '../GameCard/GameCard';
+import IconSuccess from '../../../assets/svgs/success_game.svg';
+import IconError from '../../../assets/svgs/error_cross.svg';
 import '../../../styles/components/games/GameBase.css';
 
 const GAME_DURATION = 60; // segundos
@@ -178,10 +180,10 @@ const MemoriaRapidaGameView = ({ studentId = 'student_001' }) => {
             });
             setCorrectCount(prev => prev + 1);
             setSpeed(prev => Math.max(MIN_SPEED, prev - SPEED_DECREASE));
-            setFeedback('✅');
+            setFeedback('correct');
         } else {
             setCombo(0);
-            setFeedback('❌');
+            setFeedback('incorrect');
         }
 
         setTimeout(() => setFeedback(null), 400);
@@ -218,7 +220,7 @@ const MemoriaRapidaGameView = ({ studentId = 'student_001' }) => {
         return (
             <div className="game-error-container">
                 <div className="error-box">
-                    <h2>❌ Error</h2>
+                    <h2><img src={IconError} alt="Error" className="inline w-8 h-8 align-middle mr-2" />Error</h2>
                     <p>{error}</p>
                     <button className="btn btn-secondary" onClick={() => window.history.back()}>
                         Volver Atrás
@@ -406,7 +408,9 @@ const MemoriaRapidaGameView = ({ studentId = 'student_001' }) => {
 
             {/* Feedback Flash */}
             {feedback && (
-                <div className="mr-feedback-flash">{feedback}</div>
+                <div className="mr-feedback-flash">
+                    {feedback === 'correct' ? <img src={IconSuccess} alt="Correcto" className="w-24 h-24" /> : <img src={IconError} alt="Incorrecto" className="w-24 h-24" />}
+                </div>
             )}
         </div>
     );

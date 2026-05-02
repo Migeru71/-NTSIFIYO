@@ -22,7 +22,7 @@ const AboutTeaser = () => (
                     Un Proyecto Hecho con el Corazón
                 </h2>
                 <p className="landing-section__subtitle mx-auto mt-3">
-                    Detrás de cada palabra, juego y sonido hay personas reales de la Escuela primaria de manzanillos, Zitácuaro.
+                    Detrás de cada palabra, juego y sonido hay personas reales de la Escuela primaria bilingüe de manzanillos, Zitácuaro.
                 </p>
             </div>
 

@@ -146,7 +146,7 @@ const IntrusoGameView = () => {
             setFeedback({ type: 'correct', title: '¡Correcto!', message: '¡Bien hecho!' });
         } else {
             setCombo(0);
-            setFeedback({ type: 'incorrect', title: 'Incorrecto ❌', message: 'Ese si pertenece al grupo...' });
+            setFeedback({ type: 'incorrect', title: 'Incorrecto', message: 'Ese si pertenece al grupo...' });
         }
     };
 

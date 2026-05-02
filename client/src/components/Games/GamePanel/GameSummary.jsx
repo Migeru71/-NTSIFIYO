@@ -5,6 +5,11 @@ import '../../../styles/components/games/gamePanel/GameSummary.css';
 import { useGame } from '../../../context/GameContext';
 import { PAIR_TYPES } from '../../../config/activityConfig';
 
+import IconCelebration from '../../../assets/svgs/celebration.svg';
+import IconMotivation from '../../../assets/svgs/motivation.svg';
+import IconSuccess from '../../../assets/svgs/success_game.svg';
+import IconError from '../../../assets/svgs/error_cross.svg';
+
 const PERFECT_THRESHOLD = 100;
 const EXCELENTE_THRESHOLD = 80;
 const BUENO_THRESHOLD = 60;
@@ -19,10 +24,10 @@ const getPerformance = (percentage) => {
 const getHeaderContent = (percentage) => {
     const perf = getPerformance(percentage);
     const messages = {
-        perfecto: { icon: '🎉', title: '¡PERFECTO!', sub: '¡No fallaste ni una!' },
+        perfecto: { icon: <img src={IconCelebration} alt="Perfecto" className="gs-header-icon-svg inline" />, title: '¡PERFECTO!', sub: '¡No fallaste ni una!' },
         excelente: { icon: '⭐', title: '¡Increíble!', sub: '¡Muy buen trabajo!' },
         bueno: { icon: '✓', title: '¡Bien hecho!', sub: '¡Sigue así!' },
-        'necesita-mejorar': { icon: '💪', title: '¡Sigue practicando!', sub: '¡Tú puedes!' }
+        'necesita-mejorar': { icon: <img src={IconMotivation} alt="Necesita Mejorar" className="gs-header-icon-svg inline" />, title: '¡Sigue practicando!', sub: '¡Tú puedes!' }
     };
     return messages[perf];
 };
@@ -137,7 +142,7 @@ const GameSummary = ({
         return { completed, incomplete };
     }, [responseLogs, isPairsGame]);
 
-    const ringOffset = `calc(283 - (283 * ${percentage}) / 100)`;
+    const ringOffset = `calc(251 - (251 * ${percentage}) / 100)`;
     const ringClass = percentage < 40 ? 'low' : percentage < 70 ? 'medium' : percentage < 100 ? 'high' : 'perfect';
 
     if (loading) {
@@ -170,11 +175,11 @@ const GameSummary = ({
                         <div className="gs-score-section">
                             <div className="gs-score-circle">
                                 <svg viewBox="0 0 100 100" className="gs-progress-ring">
-                                    <circle className="gs-ring-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle className="gs-ring-bg" cx="50" cy="50" r="40"></circle>
                                     <circle
                                         className={`gs-ring-fill ${ringClass}`}
-                                        cx="50" cy="50" r="45"
-                                        style={{ strokeDashoffset: ringOffset }}
+                                        cx="50" cy="50" r="40"
+                                        style={{ strokeDashoffset: ringOffset, '--ring-offset': ringOffset }}
                                     ></circle>
                                 </svg>
                                 <div className="gs-score-text">
@@ -230,7 +235,9 @@ const GameSummary = ({
                                 {isPairsGame && pairsSummary ? (
                                     <div className="gs-pairs-summary">
                                         <div className="gs-pairs-completed">
-                                            <h4 className="gs-pairs-title">✅ Completadas</h4>
+                                            <h4 className="gs-pairs-title">
+                                                <img src={IconSuccess} alt="Check" className="inline w-4 h-4 mr-1" /> Completadas
+                                            </h4>
                                             <ul className="gs-pairs-list">
                                                 {pairsSummary.completed.length > 0 ? (
                                                     pairsSummary.completed.map((word, i) => <li key={i}>{word}</li>)
@@ -240,7 +247,9 @@ const GameSummary = ({
                                             </ul>
                                         </div>
                                         <div className="gs-pairs-incomplete">
-                                            <h4 className="gs-pairs-title">❌ Incompletas</h4>
+                                            <h4 className="gs-pairs-title">
+                                                <img src={IconError} alt="Cross" className="inline w-4 h-4 mr-1" /> Incompletas
+                                            </h4>
                                             <ul className="gs-pairs-list">
                                                 {pairsSummary.incomplete.length > 0 ? (
                                                     pairsSummary.incomplete.map((word, i) => <li key={i}>{word}</li>)
@@ -254,7 +263,9 @@ const GameSummary = ({
                                     (responseLogs || []).map((log, index) => (
                                         <div key={index} className={`gs-log-item ${log.isCorrect ? 'log-correct' : 'log-wrong'}`}>
                                             <div className="gs-log-header">
-                                                <span className="gs-log-icon">{log.isCorrect ? '✅' : '❌'}</span>
+                                                <span className="gs-log-icon">
+                                                    {log.isCorrect ? <img src={IconSuccess} alt="Correcto" className="w-4 h-4" /> : <img src={IconError} alt="Incorrecto" className="w-4 h-4" />}
+                                                </span>
                                                 <span className="gs-log-question-num">Pregunta {index + 1}</span>
                                             </div>
 

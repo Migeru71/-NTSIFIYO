@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
+import IconConstruction from '../../assets/svgs/construction.svg';
 
 /**
  * Vista de 'Contenido' del Maestro
@@ -18,7 +19,7 @@ const TeacherContent = () => {
 
                     {/* Placeholder Content */}
                     <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <span className="text-6xl block mb-4">🚧</span>
+                        <img src={IconConstruction} alt="En construcción" className="w-24 h-24 mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Sección en Construcción</h3>
                         <p className="text-gray-500 mb-6">
                             Próximamente podrás estructurar aquí el contenido teórico para tus estudiantes.

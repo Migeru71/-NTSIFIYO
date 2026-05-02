@@ -5,6 +5,12 @@ import { QUESTIONNAIRE_TYPES, PAIR_TYPES, ACTIVITY_CONFIG, getGameTypeInfo } fro
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 import SectionHeader from './SectionHeader';
 
+import IconSuccess from '../../assets/svgs/success_game.svg';
+import IconInactive from '../../assets/svgs/inactive.svg';
+import IconWarning from '../../assets/svgs/warning.svg';
+import IconEmptyBox from '../../assets/svgs/empty_box.svg';
+import IconConstruction from '../../assets/svgs/construction.svg';
+
 // ── Filter options built from activityTypes enums ──
 // QUESTIONNAIRE_TYPES y PAIR_TYPES son arrays de strings (ActivityTypes values).
 // Se mapea cada string a su config en ACTIVITY_CONFIG para obtener value y label.
@@ -60,12 +66,6 @@ const ActivitiesPanel = ({
     const [deletingId,  setDeletingId]  = useState(null);
     const [assigningId, setAssigningId] = useState(null);
     const [togglingId,  setTogglingId]  = useState(null);
-    const [toast,       setToast]       = useState('');
-
-    const showToast = (msg) => {
-        setToast(msg);
-        setTimeout(() => setToast(''), 3000);
-    };
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleDelete = (id, actTitle) => {
@@ -81,7 +81,7 @@ const ActivitiesPanel = ({
                         try {
                             await onDeleteActivity(id);
                             onReload();
-                            showToast('Actividad eliminada correctamente.');
+                            showAlert({ mode: 'success', title: 'Éxito', message: 'Actividad eliminada correctamente.' });
                         } catch (err) {
                             showAlert({
                                 mode: 'error',
@@ -103,12 +103,12 @@ const ActivitiesPanel = ({
         try {
             await onAssignActivity(activity);
             onReload();
-            showToast(`✅ "${activity.title}" asignada al grupo exitosamente.`);
+            showAlert({ mode: 'success', title: 'Asignada', message: `"${activity.title}" asignada al grupo exitosamente.` });
         } catch (err) {
             const status = err?.status || err?.response?.status;
-            if (status === 404)       showToast('❌ Juego o grupo no encontrado.');
-            else if (status === 409)  showToast('⚠️ Este juego ya está asignado o el grupo no te pertenece.');
-            else                      showToast(`❌ Error al asignar: ${err.message || 'Error desconocido'}`);
+            if (status === 404)       showAlert({ mode: 'error', title: 'Error', message: 'Juego o grupo no encontrado.' });
+            else if (status === 409)  showAlert({ mode: 'alert', title: 'Atención', message: 'Este juego ya está asignado o el grupo no te pertenece.' });
+            else                      showAlert({ mode: 'error', title: 'Error', message: `Error al asignar: ${err.message || 'Error desconocido'}` });
         } finally {
             setAssigningId(null);
         }
@@ -120,7 +120,7 @@ const ActivitiesPanel = ({
         try {
             await onToggleInstance(activityId, !inst.isActive);
             onReload();
-            showToast(`Actividad ${inst.isActive ? 'desactivada' : 'activada'} correctamente.`);
+            showAlert({ mode: 'success', title: 'Actualizado', message: `Actividad ${inst.isActive ? 'desactivada' : 'activada'} correctamente.` });
         } catch (err) {
             showAlert({
                 mode: 'error',
@@ -192,8 +192,12 @@ const ActivitiesPanel = ({
                             </span>
                         </div>
                         {inst && (
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${inst.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {inst.isActive ? '✅ Activa' : '❌ Inactiva'}
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center ${inst.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {inst.isActive ? (
+                                    <><img src={IconSuccess} alt="Activa" className="inline w-3 h-3 mr-1" /> Activa</>
+                                ) : (
+                                    <><img src={IconInactive} alt="Inactiva" className="inline w-3 h-3 mr-1" /> Inactiva</>
+                                )}
                             </span>
                         )}
                     </div>
@@ -315,7 +319,7 @@ const ActivitiesPanel = ({
 
         if (error) return (
             <div className="text-center py-16 bg-white rounded-2xl border border-red-100">
-                <span className="text-5xl block mb-4">⚠️</span>
+                <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-red-600 mb-2">Error al cargar</h3>
                 <p className="text-gray-500 text-sm mb-6">{error}</p>
                 <button
@@ -329,7 +333,7 @@ const ActivitiesPanel = ({
 
         if (filteredActivities.length === 0) return (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <span className="text-6xl block mb-4">📭</span>
+                <img src={IconEmptyBox} alt="Vacío" className="w-20 h-20 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-800 mb-2">
                     {filterType !== 'ALL' ? 'Sin resultados' : 'Aún no hay actividades'}
                 </h3>
@@ -431,7 +435,7 @@ const ActivitiesPanel = ({
                     {/* Tab "all" — placeholder */}
                     {showTabs && activeTab === 'all' ? (
                         <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <span className="text-6xl mb-4">🚧</span>
+                            <img src={IconConstruction} alt="En construcción" className="w-20 h-20 mb-4" />
                             <h3 className="text-xl font-bold text-gray-700 mb-2">Próximamente</h3>
                             <p className="text-gray-400 text-sm">
                                 La vista de todas las actividades estará disponible en una próxima versión.
@@ -458,14 +462,18 @@ const ActivitiesPanel = ({
                                 {hasInstances ? (
                                     <>
                                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">✅</div>
+                                            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+                                                <img src={IconSuccess} alt="Asignadas" className="w-6 h-6" />
+                                            </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Asignadas</p>
                                                 <span className="text-2xl font-bold text-gray-800">{assignedCount}</span>
                                             </div>
                                         </div>
                                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl">⏸️</div>
+                                            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
+                                                <img src={IconInactive} alt="Pausadas" className="w-6 h-6" />
+                                            </div>
                                             <div>
                                                 <p className="text-sm text-gray-500">Pausadas</p>
                                                 <span className="text-2xl font-bold text-gray-800">{pausedCount}</span>
@@ -505,13 +513,6 @@ const ActivitiesPanel = ({
                     )}
                 </div>
             </div>
-
-            {/* Toast */}
-            {toast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg z-50">
-                    {toast}
-                </div>
-            )}
         </div>
     );
 };

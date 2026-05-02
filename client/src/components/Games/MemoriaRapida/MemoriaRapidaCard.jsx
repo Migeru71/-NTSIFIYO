@@ -2,6 +2,8 @@
 // Tarjeta deslizable para Memoria Rápida
 import React, { useRef, useState } from 'react';
 import GameCard from '../GameCard/GameCard';
+import IconSuccess from '../../../assets/svgs/success_game.svg';
+import IconError from '../../../assets/svgs/error_cross.svg';
 
 const SWIPE_THRESHOLD = 80; // px para aceptar como swipe
 
@@ -89,7 +91,7 @@ function MemoriaRapidaCard({ cardProps, onSwipe, disabled }) {
             {direction && (
                 <div className={`mr-swipe-overlay ${direction === 'right' ? 'correct' : 'incorrect'}`} style={{ zIndex: 10 }}>
                     <span className="mr-overlay-icon">
-                        {direction === 'right' ? '✅' : '❌'}
+                        {direction === 'right' ? <img src={IconSuccess} alt="Correcto" className="w-16 h-16" /> : <img src={IconError} alt="Incorrecto" className="w-16 h-16" />}
                     </span>
                 </div>
             )}

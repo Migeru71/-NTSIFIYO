@@ -59,6 +59,14 @@
     animation: headerIconBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
+.gs-header-icon-svg {
+    height: 56px;
+    max-width: 100%;
+    margin: 0 auto 0.5rem;
+    display: block;
+    animation: headerIconBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
 .gs-header.perfecto { background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%); }
 .gs-header.perfecto h2 { color: #92400e; }
 .gs-header.perfecto p { color: #92400e; }
@@ -161,7 +169,7 @@
     fill: transparent;
     stroke-width: 12;
     stroke-linecap: round;
-    stroke-dasharray: 283;
+    stroke-dasharray: 251;
     transition: stroke-dashoffset 1.5s ease-in-out;
     animation: scoreRing 1.5s ease-in-out forwards;
 }
@@ -620,8 +628,8 @@
 }
 
 @keyframes scoreRing {
-    0% { stroke-dashoffset: 283; }
-    100% { stroke-dashoffset: var(--ring-offset, 283); }
+    0% { stroke-dashoffset: 251; }
+    100% { stroke-dashoffset: var(--ring-offset, 251); }
 }
 
 @keyframes countUp {
@@ -682,6 +690,7 @@
     .gs-card { max-width: 720px; }
     .gs-header { padding: 2rem 2.5rem 1.5rem; }
     .gs-header-icon { font-size: 68px; }
+    .gs-header-icon-svg { height: 68px; }
     .gs-header h2 { font-size: 30px; }
     .gs-content-row { padding: 0 2.5rem 2rem; }
     .gs-actions { padding: 1.5rem 2.5rem 2rem; }
@@ -709,6 +718,7 @@
 
     .gs-header { padding: 2.5rem 3rem 2rem; }
     .gs-header-icon { font-size: 72px; }
+    .gs-header-icon-svg { height: 72px; }
     .gs-header h2 { font-size: 32px; }
 
     .gs-content-row {
@@ -775,6 +785,7 @@
 
     .gs-header { padding: 1.5rem 1.5rem 1rem; }
     .gs-header-icon { font-size: 48px; }
+    .gs-header-icon-svg { height: 48px; }
     .gs-header h2 { font-size: 22px; }
 
     .gs-content-row { padding: 0 1.5rem 1.5rem; gap: 1rem; }

@@ -409,6 +409,26 @@ class ActivityApiService {
             };
         }
     }
+    /**
+     * Obtener los datos del panel principal del visitante
+     * GET /api/dashboard/visitor
+     * @returns {Promise<Object>} - Dashboard visitor data { level, totalExperience, inrow, recentActivities, topUsers, totalActivitiesCompleted }
+     */
+    async getVisitorDashboard() {
+        try {
+            const response = await apiConfig.get(`/api/dashboard/visitor`);
+            return {
+                success: true,
+                data: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: null
+            };
+        }
+    }
 }
 
 export default new ActivityApiService();

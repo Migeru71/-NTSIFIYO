@@ -10,6 +10,9 @@ import GameSummary from '../GamePanel/GameSummary';
 import '../../../styles/components/games/GameBase.css';
 import '../../../styles/components/games/loteria/Loteria.css';
 
+import IconError from '../../../assets/svgs/error_cross.svg';
+import IconHourglass from '../../../assets/svgs/loading_hourglass.svg';
+
 const CARD_INTERVAL_MS = 5000;
 const PENALTY_PTS = 5;
 const CORRECT_PTS = 10;
@@ -77,7 +80,6 @@ const LoteriaGameView = () => {
     const [wrongIds, setWrongIds] = useState(new Set());  // para animación de error temporal
     const [score, setScore] = useState(0);
     const [penaltyCount, setPenaltyCount] = useState(0);
-    const [feedback, setFeedback] = useState(null);       // 'correct' | 'incorrect' | null
 
     // Modal de validación del botón Lotería
     const [loteriaAlert, setLoteriaAlert] = useState(null); // null | 'not_all_selected' | 'not_all_revealed'
@@ -87,7 +89,6 @@ const LoteriaGameView = () => {
 
     const timerRef = useRef(null);
     const pileTimerRef = useRef(null);
-    const feedbackTimeout = useRef(null);
     const pileIndexRef = useRef(-1);
     const revealedIdsRef = useRef(new Set());
     const matchedIdsRef = useRef(new Set());
@@ -106,7 +107,6 @@ const LoteriaGameView = () => {
         return () => {
             clearInterval(timerRef.current);
             clearInterval(pileTimerRef.current);
-            clearTimeout(feedbackTimeout.current);
         };
     }, [activityId]); // eslint-disable-line
 
@@ -199,7 +199,6 @@ const LoteriaGameView = () => {
     const handleCardClick = useCallback((wordId) => {
         if (gameState !== 'playing') return;
         if (matchedIdsRef.current.has(wordId)) return; // ya seleccionada
-        clearTimeout(feedbackTimeout.current);
 
         if (revealedIdsRef.current.has(wordId)) {
             // Correcto: la carta ya fue mencionada en la baraja
@@ -208,18 +207,15 @@ const LoteriaGameView = () => {
                 matchedIdsRef.current = n; return n;
             });
             setScore(p => p + CORRECT_PTS);
-            setFeedback('correct');
         } else {
             // Penalización: la carta aún no ha sido mencionada
             setWrongIds(prev => new Set([...prev, wordId]));
             setPenaltyCount(p => p + 1);
             setScore(p => Math.max(0, p - PENALTY_PTS));
-            setFeedback('incorrect');
             setTimeout(() => {
                 setWrongIds(prev => { const n = new Set(prev); n.delete(wordId); return n; });
             }, 700);
         }
-        feedbackTimeout.current = setTimeout(() => setFeedback(null), 1000);
     }, [gameState]);
 
     // ─── Botón ¡Lotería! ──────────────────────────────────────────────────
@@ -319,7 +315,7 @@ const LoteriaGameView = () => {
             <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: 'var(--game-max-width)', marginBottom: '0.75rem', justifyContent: 'center' }}>
                 <div className="lot-badge lot-badge-points">⭐ {score} pts</div>
                 {penaltyCount > 0 && (
-                    <div className="lot-badge lot-badge-penalty">❌ -{penaltyCount * PENALTY_PTS}</div>
+                    <div className="lot-badge lot-badge-penalty"><img src={IconError} alt="Penalización" className="inline w-4 h-4" /> -{penaltyCount * PENALTY_PTS}</div>
                 )}
             </div>
 
@@ -425,7 +421,7 @@ const LoteriaGameView = () => {
                 <div className="lot-modal-overlay" onClick={() => setLoteriaAlert(null)}>
                     <div className="lot-modal" onClick={e => e.stopPropagation()}>
                         <div className="lot-modal-icon">
-                            {loteriaAlert === 'not_all_selected' ? '🃏' : '⏳'}
+                            {loteriaAlert === 'not_all_selected' ? '🃏' : <img src={IconHourglass} alt="Espera" className="w-12 h-12" />}
                         </div>
                         <h3 className="lot-modal-title">
                             {loteriaAlert === 'not_all_selected'
@@ -444,14 +440,6 @@ const LoteriaGameView = () => {
                 </div>
             )}
 
-            {/* Feedback flash rápido */}
-            {feedback && (
-                <div className={`lot-feedback-banner ${feedback}`}>
-                    {feedback === 'correct'
-                        ? `¡Correcto! +${CORRECT_PTS} pts 🎉`
-                        : `¡Aún no ha salido! -${PENALTY_PTS} pts 😅`}
-                </div>
-            )}
         </div>
     );
 };

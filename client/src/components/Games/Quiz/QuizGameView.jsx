@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../../../context/GameContext';
+import IconHourglass from '../../../assets/svgs/loading_hourglass.svg';
 import GameSummary from '../GamePanel/GameSummary';
 import GameAlert from '../GamePanel/GameAlert';
 import '../../../styles/components/games/quiz/Quiz.css';
@@ -156,7 +157,8 @@ function QuizGameView() {
     if (loading) {
         return (
             <div className="quiz-access-panel" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-                <p>⏳ Cargando quiz...</p>
+                <img src={IconHourglass} alt="Cargando" className="w-16 h-16 mx-auto mb-4" />
+                <p>Cargando quiz...</p>
             </div>
         );
     }

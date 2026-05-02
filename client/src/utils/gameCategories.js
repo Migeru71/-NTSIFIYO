@@ -24,5 +24,6 @@ export const GAME_TOPICS = [
     { id: 'FIVE_SENSES', label: 'Los cinco sentidos', categoryId: 'CLINIC' },
     { id: 'GREETINGS', label: 'Saludos', categoryId: 'PARK' },
     { id: 'COLORS', label: 'Colores', categoryId: 'PARK' },
-    { id: 'SONGS', label: 'Canciones', categoryId: 'PLAIN' }
+    { id: 'SONGS', label: 'Canciones', categoryId: 'PLAIN' },
+    { id: 'POEMS', label: 'Poemas', categoryId: 'PLAIN' }
 ];
