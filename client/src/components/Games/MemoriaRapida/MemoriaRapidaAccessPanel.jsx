@@ -1,16 +1,18 @@
 import React from 'react';
 import GameAccessPanel from '../GamePanel/GameAccessPanel';
 import { ActivityTypes } from '../../../config/activityConfig';
+import IconMemoriaRapida from '../../../assets/svgs/juegos/memoria_rapida_premium.svg';
+import IconMemorama from '../../../assets/svgs/juegos/memorama_premium.svg';
 
 function MemoriaRapidaAccessPanel() {
     return (
         <GameAccessPanel
             gameType={ActivityTypes.FAST_MEMORY}
-            icon="⚡"
+            icon={<img src={IconMemoriaRapida} alt="Memoria Rapida" className="w-12 h-12" />}
             title="Memoria Rápida"
             subtitle="Desliza a la derecha si coincide, a la izquierda si no"
             gameBasePath="/games/memoria_rapida"
-            cardIcon="🎴"
+            cardIcon={<img src={IconMemorama} alt="Cartas" className="w-6 h-6" />}
             tipStudent="Desliza rápido y acumula combos para ganar más XP"
             tipTeacher="Crea actividades personalizadas de Memoria Rápida para tus alumnos"
         />

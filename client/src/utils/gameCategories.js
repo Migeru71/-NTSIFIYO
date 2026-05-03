@@ -16,14 +16,10 @@ export const GAME_TOPICS = [
     // { id: 'SUBJECTS', label: 'Materias', categoryId: 'COMMUNITY' },
     { id: 'CLOTHES', label: 'Ropa', categoryId: 'COMMUNITY' },
     { id: 'FOOD', label: 'Comida', categoryId: 'KITCHEN' },
-    { id: 'LEGENDS', label: 'Leyendas', categoryId: 'FOREST' },
-    { id: 'ANECDOTES', label: 'Anécdotas', categoryId: 'FOREST' },
     { id: 'ANIMALS', label: 'Animales', categoryId: 'FARM' },
     { id: 'FRUITS', label: 'Frutas', categoryId: 'MARKET' },
     { id: 'BODY_PARTS', label: 'Partes del cuerpo', categoryId: 'CLINIC' },
     { id: 'FIVE_SENSES', label: 'Los cinco sentidos', categoryId: 'CLINIC' },
     { id: 'GREETINGS', label: 'Saludos', categoryId: 'PARK' },
-    { id: 'COLORS', label: 'Colores', categoryId: 'PARK' },
-    { id: 'SONGS', label: 'Canciones', categoryId: 'PLAIN' },
-    { id: 'POEMS', label: 'Poemas', categoryId: 'PLAIN' }
+    { id: 'COLORS', label: 'Colores', categoryId: 'PARK' }
 ];

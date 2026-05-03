@@ -4,7 +4,7 @@ import '../../styles/components/teacher/configurationGameStyles.css';
 import DictionaryService from '../../services/DictionaryService';
 import apiConfig from '../../services/apiConfig';
 import CustomAlert from '../common/CustomAlert';
-import { QUESTIONNAIRE_TYPES, PAIR_TYPES, MEDIA_TYPES, ACTIVITY_CONFIG } from '../../config/activityConfig';
+import { QUESTIONNAIRE_TYPES, PAIR_TYPES, ACTIVITY_CONFIG } from '../../config/activityConfig';
 import MediaService, { ContentType } from '../../services/MediaService';
 import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import { useAlert } from '../../context/AlertContext';
@@ -184,14 +184,6 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
 
     const [words, setWords] = useState([]);
     
-    // Media states
-    const [mediaId, setMediaId] = useState(null);
-    const [mediaList, setMediaList] = useState([]);
-    const [allowSpanishToggle, setAllowSpanishToggle] = useState(false);
-
-    const [config1, setConfig1] = useState({ showImage: true, showText: true, playAudio: true, isMazahua: true, order: 1 });
-    const [config2, setConfig2] = useState({ showImage: true, showText: true, playAudio: true, isMazahua: true, order: 2 });
-
     const [questions, setQuestions] = useState([]);
     const [pairs, setPairs] = useState([]);
 
@@ -200,31 +192,10 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
         setInteractionType(type);
         if (type === 'PAIRS') {
             setGameType(PAIR_TYPES[0].value);
-        } else if (type === 'MEDIA') {
-            setGameType(MEDIA_TYPES[0].value);
         } else {
             setGameType(QUESTIONNAIRE_TYPES[0].value);
         }
     };
-
-    // Load available media when interaction is MEDIA and type changes
-    useEffect(() => {
-        if (interactionType === 'MEDIA') {
-            let backendType = ContentType.CANCIONES;
-            if (gameType === 'MEDIA_SONG') backendType = ContentType.CANCIONES;
-            else if (gameType === 'MEDIA_ANECDOTE') backendType = ContentType.CUENTOS;
-            else if (gameType === 'MEDIA_LEGEND') backendType = ContentType.LEYENDAS;
-            else if (gameType === 'MEDIA_POEM') backendType = ContentType.POEMAS;
-
-            MediaService.getMediaByType(backendType)
-                .then(data => {
-                    if (Array.isArray(data)) setMediaList(data);
-                    else if (data && Array.isArray(data.data)) setMediaList(data.data);
-                    else setMediaList([]);
-                })
-                .catch(() => setMediaList([]));
-        }
-    }, [interactionType, gameType]);
 
     // Always load dictionary words for word search inputs
     useEffect(() => {
@@ -252,14 +223,14 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                 // Also update words state so search inputs work
                 if (wordList.length > 0) setWords(wordList);
 
-                const isPairs = PAIR_TYPES.some(t => t.value === game.gameType);
-                const isMedia = MEDIA_TYPES.some(t => t.value === game.gameType);
+                const isPairs = PAIR_TYPES.includes(game.gameType);
+                const isMedia = MEDIA_TYPES.includes(game.gameType);
                 const iType = isPairs ? 'PAIRS' : isMedia ? 'MEDIA' : 'QUESTIONNAIRE';
                 setInteractionType(iType);
                 
-                let defaultType = QUESTIONNAIRE_TYPES[0].value;
-                if (isPairs) defaultType = PAIR_TYPES[0].value;
-                if (isMedia) defaultType = MEDIA_TYPES[0].value;
+                let defaultType = QUESTIONNAIRE_TYPES[0];
+                if (isPairs) defaultType = PAIR_TYPES[0];
+                if (isMedia) defaultType = MEDIA_TYPES[0];
                 
                 setGameType(game.gameType || defaultType);
                 setTitle(game.title || '');
@@ -288,7 +259,6 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                 const cfgs = Array.isArray(game.gameConfigs) ? [...game.gameConfigs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) : [];
                 if (cfgs[0]) {
                     setConfig1({ showImage: cfgs[0].showImage, showText: cfgs[0].showText, playAudio: cfgs[0].playAudio, isMazahua: cfgs[0].isMazahua, order: 1 });
-                    if (isMedia) setAllowSpanishToggle(cfgs[0].showText);
                 }
                 if (cfgs[1]) setConfig2({ showImage: cfgs[1].showImage, showText: cfgs[1].showText, playAudio: cfgs[1].playAudio, isMazahua: cfgs[1].isMazahua, order: 2 });
 
@@ -303,7 +273,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                     setQuestions([makeQuestion()]);
 
                     // Quiz mode: rebuild questions
-                } else if (!isPairs && !isMedia && Array.isArray(game.questions) && game.questions.length > 0) {
+                } else if (!isPairs && Array.isArray(game.questions) && game.questions.length > 0) {
                     const builtQuestions = game.questions.map(q => ({
                         id: generateId(),
                         question: q.question || '',
@@ -347,7 +317,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
         ]
     });
 
-    const totalItems = interactionType === 'PAIRS' ? pairs.length : interactionType === 'MEDIA' ? 1 : questions.length;
+    const totalItems = interactionType === 'PAIRS' ? pairs.length : questions.length;
     const recXP = totalItems * (difficult === 'EASY' ? 10 : difficult === 'MEDIUM' ? 15 : 20);
 
     /* ── Pair helpers ── */
@@ -446,10 +416,8 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
             totalQuestions: totalItems,
             wordIds: [],
             questions: [],
-            mediaId: interactionType === 'MEDIA' ? mediaId : null,
-            gameConfigs: interactionType === 'MEDIA' 
-                ? [{ ...config1, showText: allowSpanishToggle, showImage: true, playAudio: true, isMazahua: true, order: 1 }]
-                : [config1, config2]
+            gameConfigs: [config1, config2],
+            mediaId: interactionType === 'MEDIA' ? mediaId : null
         };
 
         if (interactionType === 'PAIRS') {
@@ -580,9 +548,8 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                         <div className="cfg-sidebar-section">
                             <label>Interacción</label>
                             <div className="cfg-toggle-group">
-                                <button className={`cfg-toggle-btn ${interactionType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => handleInteractionChange('QUESTIONNAIRE')}>❓ Quiz</button>
-                                <button className={`cfg-toggle-btn ${interactionType === 'PAIRS' ? 'active' : ''}`} onClick={() => handleInteractionChange('PAIRS')}>🃏 Pares</button>
-                                <button className={`cfg-toggle-btn ${interactionType === 'MEDIA' ? 'active' : ''}`} onClick={() => handleInteractionChange('MEDIA')}>▶️ Contenido</button>
+                                <button className={`cfg-toggle-btn ${interactionType === 'QUESTIONNAIRE' ? 'active' : ''}`} onClick={() => handleInteractionChange('QUESTIONNAIRE')}>Quiz</button>
+                                <button className={`cfg-toggle-btn ${interactionType === 'PAIRS' ? 'active' : ''}`} onClick={() => handleInteractionChange('PAIRS')}>Pares</button>
                             </div>
                         </div>
                         <div className="cfg-sidebar-section">
@@ -592,7 +559,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                                 value={gameType}
                                 onChange={e => setGameType(e.target.value)}
                             >
-                                {(interactionType === 'PAIRS' ? PAIR_TYPES : interactionType === 'MEDIA' ? MEDIA_TYPES : QUESTIONNAIRE_TYPES).map(gt => {
+                                {(interactionType === 'PAIRS' ? PAIR_TYPES : QUESTIONNAIRE_TYPES).map(gt => {
                                     let game = ACTIVITY_CONFIG[gt]
                                     return (<option key={game.value} value={game.value}>{game.label} — {game.subtitle || game.title}</option>)
                                 } 
@@ -651,40 +618,7 @@ const ConfigurationGameView = ({ onActivityCreated, redirectPath }) => {
                     )}
 
                     {/* ─── ITEMS ─── */}
-                    {interactionType === 'MEDIA' ? (
-                        <div className="cfg-items-list">
-                            <div className="cfg-item-card" style={{ padding: '2rem' }}>
-                                <div className="cfg-field" style={{ marginBottom: '1.5rem' }}>
-                                    <span className="cfg-field-label">Selecciona el recurso multimedia:</span>
-                                    <select 
-                                        className="cfg-input cfg-select" 
-                                        value={mediaId || ''} 
-                                        onChange={e => setMediaId(e.target.value ? parseInt(e.target.value) : null)}
-                                    >
-                                        <option value="">-- Selecciona un elemento --</option>
-                                        {mediaList.map(m => (
-                                            <option key={m.id} value={m.id}>{m.title}</option>
-                                        ))}
-                                    </select>
-                                    {mediaList.length === 0 && <span style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>No hay recursos disponibles para este tipo.</span>}
-                                </div>
-                                <div className="cfg-field">
-                                    <span className="cfg-field-label">Opciones del reproductor:</span>
-                                    <div style={{ marginTop: '0.5rem', border: '1px solid #e5e7eb', padding: '1rem', borderRadius: '8px' }}>
-                                        <SwitchToggle 
-                                            label="Permitir habilitar/deshabilitar subtítulos en español" 
-                                            icon="🇪🇸" 
-                                            checked={allowSpanishToggle} 
-                                            onChange={setAllowSpanishToggle} 
-                                        />
-                                        <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                                            Si está activo, los estudiantes podrán elegir encender o apagar los subtítulos en español. Si está inactivo, solo verán los subtítulos en mazahua.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : interactionType === 'PAIRS' ? (
+                    {interactionType === 'PAIRS' ? (
                         <>
                             <div className="cfg-pairs-grid">
                                 {pairs.map((pair, idx) => (

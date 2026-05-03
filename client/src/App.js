@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
@@ -7,10 +7,7 @@ import AdminLogin from './pages/AdminLogin';
 import apiConfig from './services/apiConfig';
 
 import { useAuth } from './context/AuthContext';
-import { StudentsProvider } from './context/StudentsContext';
-import { StudentDataProvider } from './context/StudentDataContext';
-import { TeacherDataProvider } from './context/TeacherDataContext';
-import { AdminDataProvider } from './context/AdminDataContext';
+
 import MainLayout from './components/Layout/MainLayout';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
@@ -115,19 +112,13 @@ function App() {
                             path="/dashboard"
                             element={
                                 <ProtectedRoute isAllowed={isAuthenticated}>
-                                    <StudentDataProvider>
-                                        <TeacherDataProvider>
-                                            <AdminDataProvider>
-                                                <DashboardSwitcher role={user?.userType} />
-                                            </AdminDataProvider>
-                                        </TeacherDataProvider>
-                                    </StudentDataProvider>
+                                    <DashboardSwitcher role={user?.userType} />
                                 </ProtectedRoute>
                             }
                         />
 
                         {/* Admin Routes */}
-                        <Route element={<AdminDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.ADMIN} /></AdminDataProvider>}>
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.ADMIN} />}>
                             <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/admin/grupos" element={<AdminDashboard />} />
                             <Route path="/admin/estudiantes" element={<AdminDashboard />} />
@@ -140,17 +131,16 @@ function App() {
                             <Route path="/admin/actividades/editar/:editId" element={
                                 <ConfigurationGameView redirectPath="/admin/actividades" />
                             } />
-                            <Route path="/admin/contenido" element={<AdminDashboard />} />
+                            <Route path="/admin/contenido" element={<ContentSection />} />
                         </Route>
 
                         {/* Teacher Routes */}
-                        <Route element={<TeacherDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} /></TeacherDataProvider>}>
-                            <Route element={<StudentsProvider><Outlet /></StudentsProvider>}>
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.TEACHER} />}>
                                 <Route path="/maestro/dashboard" element={<Navigate to="/dashboard" replace />} />
                                 <Route path="/maestro/estudiantes" element={<TeacherStudents />} />
                                 <Route path="/maestro/asignaciones" element={<TeacherAssignments />} />
                                 <Route path="/maestro/recursos" element={<TeacherResources />} />
-                                <Route path="/maestro/contenido" element={<TeacherContent />} />
+                                <Route path="/maestro/contenido" element={<ContentSection />} />
                                 <Route path="/maestro/diccionario" element={<DictionaryPage />} />
 
                                 <Route path="/maestro/recursos/crear" element={
@@ -159,11 +149,10 @@ function App() {
                                 <Route path="/maestro/recursos/editar/:editId" element={
                                     <ConfigurationGameView redirectPath="/maestro/recursos" />
                                 } />
-                            </Route>
                         </Route>
 
                         {/* Student Routes */}
-                        <Route element={<StudentDataProvider><ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} /></StudentDataProvider>}>
+                        <Route element={<ProtectedRoute isAllowed={isAuthenticated && user?.userType === Roles.STUDENT} />}>
                             <Route path="/estudiante/dashboard" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/estudiante/actividades" element={<StudentActivities />} />
                             <Route path="/estudiante/mapa" element={<GameMap />} />

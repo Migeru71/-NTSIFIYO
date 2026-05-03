@@ -225,7 +225,7 @@ const IntrusoGameView = () => {
             {/* Question header — config1 */}
             <div className="intruso-question-header animate-pop" key={`header-${currentQuestionIndex}`}>
                 <div className="intruso-category-pill">
-                    🔍 Encuentra al Intruso
+                    Encuentra al Intruso
                 </div>
 
                 {config1.showImage && currentQuestion.word?.imageUrl && (

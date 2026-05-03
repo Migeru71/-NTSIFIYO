@@ -69,7 +69,9 @@ const ContentSection = () => {
                                 {item.overviewImage ? (
                                     <img src={item.overviewImage} alt={item.title} className="media-img" />
                                 ) : (
-                                    <div className="media-img-placeholder">{TABS.find(t => t.id === activeTab)?.icon}</div>
+                                    <div className="media-img-placeholder">
+                                        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#cbd5e1' }}>{TABS.find(t => t.id === activeTab)?.icon}</span>
+                                    </div>
                                 )}
                                 <div className="media-duration">{item.duration}s</div>
                             </div>
@@ -93,13 +95,13 @@ const ContentSection = () => {
                         )}
                         <h2 className="modal-title">{selectedItem.title}</h2>
                         <div className="modal-meta">
-                            <span>⏱️ {selectedItem.duration}s</span>
-                            <span>⭐ Dificultad: {selectedItem.difficult}</span>
+                            <span><span className="material-symbols-outlined" style={{ verticalAlign: 'middle', fontSize: '1rem', marginRight: '4px' }}>schedule</span> {selectedItem.duration}s</span>
+                            <span><span className="material-symbols-outlined" style={{ verticalAlign: 'middle', fontSize: '1rem', marginRight: '4px' }}>signal_cellular_alt</span> Dificultad: {selectedItem.difficult}</span>
                         </div>
                         <p className="modal-desc">{selectedItem.description || 'Sin descripción disponible.'}</p>
                         <div className="modal-actions">
-                            <button className="btn-play" onClick={() => handlePlay(selectedItem)}>
-                                ▶️ Comenzar
+                            <button className="btn-play flex items-center justify-center gap-2" onClick={() => handlePlay(selectedItem)}>
+                                <span className="material-symbols-outlined">play_circle</span> Comenzar
                             </button>
                         </div>
                     </div>

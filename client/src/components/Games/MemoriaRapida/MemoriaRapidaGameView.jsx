@@ -382,7 +382,7 @@ const MemoriaRapidaGameView = ({ studentId = 'student_001' }) => {
 
                 {/* Speed indicator */}
                 <div className="mr-speed-indicator">
-                    ⚡ {Math.round((1 - (speed - MIN_SPEED) / (BASE_SPEED - MIN_SPEED)) * 100)}%
+                    {Math.round((1 - (speed - MIN_SPEED) / (BASE_SPEED - MIN_SPEED)) * 100)}%
                 </div>
             </div>
 

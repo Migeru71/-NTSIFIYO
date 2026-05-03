@@ -74,39 +74,44 @@ const GameSummary = ({
         }
     }, [startDate]);
 
-    useEffect(() => {
-        const calculateResults = async () => {
-            try {
-                const trueActivityId = currentGameData?.activityId ? parseInt(currentGameData.activityId, 10) : parseInt(activityId, 10);
-                const trueGameId = currentGameData?.activityId ? parseInt(activityId, 10) : parseInt(gameId, 10);
+    const calculateResults = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const trueActivityId = currentGameData?.activityId ? parseInt(currentGameData.activityId, 10) : parseInt(activityId, 10);
+            const trueGameId = currentGameData?.activityId ? parseInt(activityId, 10) : parseInt(gameId, 10);
 
-                const payload = {
-                    activityId: trueActivityId,
-                    startDate: startDate,
-                    correctAnswers: correctAnswers,
-                    gameId: trueGameId,
-                    responseLogs: (responseLogs || []).map(log => ({
-                        questionId: log.questionId,
-                        responseAnswerId: log.answerId,
-                        isCorrect: log.isCorrect
-                    }))
-                };
+            const payload = {
+                activityId: trueActivityId,
+                startDate: startDate,
+                correctAnswers: correctAnswers,
+                gameId: trueGameId,
+                responseLogs: (responseLogs || []).map(log => ({
+                    questionId: log.questionId,
+                    responseAnswerId: log.answerId,
+                    isCorrect: log.isCorrect
+                }))
+            };
 
-                const apiResult = await ActivityApiService.completeActivity(payload);
+            const apiResult = await ActivityApiService.completeActivity(payload);
 
-                if (apiResult.success && apiResult.data) {
-                    setResult(apiResult.data);
-                } else {
-                    setResult({ xpGained: 150, actualXp: 450, currentLevel: 2, isLevelUp: false });
-                }
-            } catch (err) {
-                console.error("Error completing activity:", err);
-                setError("Hubo un problema al guardar tu progreso.");
-            } finally {
-                setLoading(false);
+            if (apiResult.success && apiResult.data) {
+                setResult(apiResult.data);
+            } else if (apiResult.success) {
+                // Si tuvo éxito pero no hay datos (fallback visual mínimo)
+                setResult({ xpGained: 0, actualXp: 0, currentLevel: 1, isLevelUp: false });
+            } else {
+                setError(apiResult.error || "No se pudo guardar el progreso.");
             }
-        };
+        } catch (err) {
+            console.error("Error completing activity:", err);
+            setError("Error de conexión al guardar tu progreso.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         calculateResults();
     }, [activityId, gameId, startDate, correctAnswers, responseLogs]);
 
@@ -205,8 +210,8 @@ const GameSummary = ({
                             </div>
                         </div>
 
-                        {/* XP Badge */}
-                        {result && (
+                        {/* XP Badge or Error Message */}
+                        {result && !error && (
                             <div className={`gs-xp-container ${result.isLevelUp ? 'level-up-anim' : ''}`}>
                                 <div className="gs-xp-badge">
                                     <span className="gs-xp-icon">⭐</span>
@@ -216,6 +221,16 @@ const GameSummary = ({
                                     {result.isLevelUp && <div className="gs-level-up-tag">¡SUBISTE DE NIVEL!</div>}
                                     <span className="gs-current-level">Nivel {result.currentLevel}</span>
                                 </div>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="gs-error-container-inline">
+                                <div className="gs-error-icon">⚠️</div>
+                                <p className="gs-error-msg">{error}</p>
+                                <button className="gs-btn-retry-api" onClick={calculateResults}>
+                                    🔄 Reintentar guardar
+                                </button>
                             </div>
                         )}
                     </div>

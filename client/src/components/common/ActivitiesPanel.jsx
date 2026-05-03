@@ -5,6 +5,16 @@ import { QUESTIONNAIRE_TYPES, PAIR_TYPES, ACTIVITY_CONFIG, getGameTypeInfo } fro
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 import SectionHeader from './SectionHeader';
 
+import IconQuiz from '../../assets/svgs/juegos/quiz_premium.svg';
+// import IconFastMemory from '../assets/svgs/juegos/memoria_rapida_premium.svg';
+// import IconIntruder from '../assets/svgs/juegos/intruso_premium.svg';
+// import IconPuzzle from '../assets/svgs/juegos/rompecabezas_premium.svg';
+import IconMemory from '../../assets/svgs/juegos/memorama_premium.svg';
+// import IconLottery from '../assets/svgs/juegos/loteria_premium.svg';
+// import IconMaze from '../assets/svgs/juegos/laberinto_premium.svg';
+// import IconFindWord from '../assets/svgs/juegos/buscar_premium.svg';
+// import IconPairs from '../assets/svgs/juegos/pares_premium.svg';
+
 import IconSuccess from '../../assets/svgs/success_game.svg';
 import IconInactive from '../../assets/svgs/inactive.svg';
 import IconWarning from '../../assets/svgs/warning.svg';
@@ -446,14 +456,18 @@ const ActivitiesPanel = ({
                             {/* Stats */}
                             <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                 <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl">❓</div>
+                                    <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl p-1">
+                                        <img src={IconQuiz} alt="Quiz" className="w-full h-full object-contain" />
+                                    </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Quiz</p>
                                         <span className="text-2xl font-bold text-gray-800">{quizCount}</span>
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">🃏</div>
+                                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl p-1">
+                                        <img src={IconMemory} alt="Pares" className="w-full h-full object-contain" />
+                                    </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Pares</p>
                                         <span className="text-2xl font-bold text-gray-800">{pairsCount}</span>

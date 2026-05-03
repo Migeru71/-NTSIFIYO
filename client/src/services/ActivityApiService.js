@@ -182,14 +182,17 @@ class ActivityApiService {
      */
     async completeActivity(data) {
         try {
-            await apiConfig.post('/api/activities/complete', {
+            const response = await apiConfig.post('/api/activities/complete', {
                 activityId: data.activityId,
                 startDate: data.startDate,
                 correctAnswers: data.correctAnswers,
                 responseLogs: data.responseLogs || [],
                 gameId: data.gameId
             });
-            return { success: true };
+            return {
+                success: true,
+                data: response
+            };
         } catch (error) {
             return {
                 success: false,

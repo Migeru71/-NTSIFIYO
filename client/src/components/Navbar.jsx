@@ -46,7 +46,6 @@ const Navbar = () => {
     };
 
     const getRouteAuthenticated = () => {
-        console.log(user)
         switch (user.userType) {
             case "ADMIN": return "/admin/dashboard";
             case "TEACHER": return "/maestro/dashboard";

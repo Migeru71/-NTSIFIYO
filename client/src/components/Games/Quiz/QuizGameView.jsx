@@ -166,7 +166,7 @@ function QuizGameView() {
     if (error) {
         return (
             <div className="quiz-access-panel" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-                <p style={{ fontSize: '64px' }}>❓</p>
+                <img src={IconQuiz} alt="Quiz Error" className="w-16 h-16 mx-auto mb-4 drop-shadow-sm opacity-50 grayscale" />
                 <h2>{error}</h2>
                 <button
                     className="btn-play-quiz"

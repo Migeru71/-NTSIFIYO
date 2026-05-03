@@ -811,3 +811,57 @@
     .gs-pairs-summary { flex-direction: column; gap: 12px; }
     .gs-pairs-completed, .gs-pairs-incomplete { padding: 12px; }
 }
+
+/* ===================== */
+/* INLINE ERROR STATE */
+/* ===================== */
+.gs-error-container-inline {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 20px;
+    padding: 1.5rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.gs-error-icon {
+    font-size: 32px;
+}
+
+.gs-error-msg {
+    color: #991b1b;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.gs-btn-retry-api {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    margin-top: 4px;
+}
+
+.gs-btn-retry-api:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

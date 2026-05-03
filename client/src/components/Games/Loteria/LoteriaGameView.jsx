@@ -41,7 +41,7 @@ function buildGameData(words, gameConfigs) {
         showImage: cfg1.showImage,
         playAudio: cfg1.playAudio,
         isMazahua: cfg1.isMazahua,
-        emoji: w.emoji || '🃏',
+        emoji: w.emoji || '',
     }));
 
     const pile = pileWords.map((w) => ({
@@ -54,7 +54,7 @@ function buildGameData(words, gameConfigs) {
         showImage: cfg0.showImage,
         playAudio: cfg0.playAudio,
         isMazahua: cfg0.isMazahua,
-        emoji: w.emoji || '🃏',
+        emoji: w.emoji || '',
     }));
 
     return { pile, board };
@@ -356,7 +356,7 @@ const LoteriaGameView = () => {
                         </div>
                     ) : (
                         <div className="lot-baraja-waiting">
-                            <span className="lot-baraja-waiting-icon">🎰</span>
+                            <img src={IconLottery} alt="Loteria" className="w-16 h-16 drop-shadow-sm opacity-50 grayscale mx-auto mt-4" />
                             <span className="lot-baraja-waiting-text">Iniciando...</span>
                         </div>
                     )}
@@ -421,7 +421,7 @@ const LoteriaGameView = () => {
                 <div className="lot-modal-overlay" onClick={() => setLoteriaAlert(null)}>
                     <div className="lot-modal" onClick={e => e.stopPropagation()}>
                         <div className="lot-modal-icon">
-                            {loteriaAlert === 'not_all_selected' ? '🃏' : <img src={IconHourglass} alt="Espera" className="w-12 h-12" />}
+                            {loteriaAlert === 'not_all_selected' ? <img src={IconPares} alt="Alerta" className="w-12 h-12" /> : <img src={IconHourglass} alt="Espera" className="w-12 h-12" />}
                         </div>
                         <h3 className="lot-modal-title">
                             {loteriaAlert === 'not_all_selected'
