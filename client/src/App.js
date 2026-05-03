@@ -1,55 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
-import ConfigurationGameView from './components/Teacher/ConfigurationGameView';
-import MemoriaRapidaGameView from './components/Games/MemoriaRapida/MemoriaRapidaGameView';
-import MemoriaRapidaAccessPanel from './components/Games/MemoriaRapida/MemoriaRapidaAccessPanel';
-// Quiz imports
-import QuizAccessPanel from './components/Games/Quiz/QuizAccessPanel';
-import QuizGameView from './components/Games/Quiz/QuizGameView';
-// Intruso imports
-import IntrusoAccessPanel from './components/Games/Intruso/IntrusoAccessPanel';
-import IntrusoGameView from './components/Games/Intruso/IntrusoGameView';
-// Rompecabezas imports
-import RompecabezasAccessPanel from './components/Games/Rompecabezas/RompecabezasAccessPanel';
-import RompecabezasGameView from './components/Games/Rompecabezas/RompecabezasGameView';
-
-import ParesAccessPanel from './components/Games/Pares/ParesAccessPanel';
-import ParesGameView from './components/Games/Pares/ParesGameView';
-
-// Memorama imports
-import MemoramaAccessPanel from './components/Games/Memorama/MemoramaAccessPanel';
-import MemoramaGameView from './components/Games/Memorama/MemoramaGameView';
-// Lotería imports
-import LoteriaAccessPanel from './components/Games/Loteria/LoteriaAccessPanel';
-import LoteriaGameView from './components/Games/Loteria/LoteriaGameView';
-// Laberinto imports
-import LaberintoGameView from './components/Games/Laberinto/LaberintoGameView';
-import LaberintoAccessPanel from './components/Games/Laberinto/LaberintoAccessPanel';
-
-// Content
-import ContentSection from './pages/common/ContentSection';
-import NosotrosPage from './pages/NosotrosPage';
-import MediaPlayerView from './components/common/MediaPlayerView';
-
-// Student Dashboard
-import StudentDashboard from './pages/student/StudentDashboard';
-import StudentActivities from './pages/student/StudentActivities';
-import StudentAssignments from './pages/student/StudentAssignments';
-import GameMap from './components/Map/GameMap';
-// Teacher Dashboard
-import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import TeacherResources from './pages/teacher/TeacherResources';
-import TeacherStudents from './pages/teacher/TeacherStudents';
-import TeacherAssignments from './pages/teacher/TeacherAssignments';
-// Admin
-
 import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import TeacherContent from './pages/teacher/TeacherContent';
-import DictionaryPage from './pages/common/DictionaryPage';
 import apiConfig from './services/apiConfig';
 
 import { useAuth } from './context/AuthContext';
@@ -62,16 +16,58 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardSwitcher from './components/Dashboard/DashboardSwitcher';
 import Roles from './utils/roles';
 
+// Lazy-loaded components (loaded on demand)
+const ConfigurationGameView = lazy(() => import('./components/Teacher/ConfigurationGameView'));
+const MemoriaRapidaGameView = lazy(() => import('./components/Games/MemoriaRapida/MemoriaRapidaGameView'));
+const MemoriaRapidaAccessPanel = lazy(() => import('./components/Games/MemoriaRapida/MemoriaRapidaAccessPanel'));
+const QuizAccessPanel = lazy(() => import('./components/Games/Quiz/QuizAccessPanel'));
+const QuizGameView = lazy(() => import('./components/Games/Quiz/QuizGameView'));
+const IntrusoAccessPanel = lazy(() => import('./components/Games/Intruso/IntrusoAccessPanel'));
+const IntrusoGameView = lazy(() => import('./components/Games/Intruso/IntrusoGameView'));
+const RompecabezasAccessPanel = lazy(() => import('./components/Games/Rompecabezas/RompecabezasAccessPanel'));
+const RompecabezasGameView = lazy(() => import('./components/Games/Rompecabezas/RompecabezasGameView'));
+const ParesAccessPanel = lazy(() => import('./components/Games/Pares/ParesAccessPanel'));
+const ParesGameView = lazy(() => import('./components/Games/Pares/ParesGameView'));
+const MemoramaAccessPanel = lazy(() => import('./components/Games/Memorama/MemoramaAccessPanel'));
+const MemoramaGameView = lazy(() => import('./components/Games/Memorama/MemoramaGameView'));
+const LoteriaAccessPanel = lazy(() => import('./components/Games/Loteria/LoteriaAccessPanel'));
+const LoteriaGameView = lazy(() => import('./components/Games/Loteria/LoteriaGameView'));
+const LaberintoGameView = lazy(() => import('./components/Games/Laberinto/LaberintoGameView'));
+const LaberintoAccessPanel = lazy(() => import('./components/Games/Laberinto/LaberintoAccessPanel'));
+const ContentSection = lazy(() => import('./pages/common/ContentSection'));
+const NosotrosPage = lazy(() => import('./pages/NosotrosPage'));
+const MediaPlayerView = lazy(() => import('./components/common/MediaPlayerView'));
+const StudentActivities = lazy(() => import('./pages/student/StudentActivities'));
+const StudentAssignments = lazy(() => import('./pages/student/StudentAssignments'));
+const GameMap = lazy(() => import('./components/Map/GameMap'));
+const TeacherResources = lazy(() => import('./pages/teacher/TeacherResources'));
+const TeacherStudents = lazy(() => import('./pages/teacher/TeacherStudents'));
+const TeacherAssignments = lazy(() => import('./pages/teacher/TeacherAssignments'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const TeacherContent = lazy(() => import('./pages/teacher/TeacherContent'));
+const DictionaryPage = lazy(() => import('./pages/common/DictionaryPage'));
+
 /**
  * Wrapper that adds top-padding equal to the fixed navbar height (64px = h-16)
  * on every page EXCEPT the home page, where the hero is intentionally fullscreen.
  */
+// Loading fallback for lazy-loaded components
+function LoadingFallback() {
+    return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        </div>
+    );
+}
+
 function PageContent({ children }) {
     const location = useLocation();
     const isHome = location.pathname === '/';
     return (
         <div className={isHome ? '' : 'pt-16'}>
-            {children}
+            <Suspense fallback={<LoadingFallback />}>
+                {children}
+            </Suspense>
         </div>
     );
 }
