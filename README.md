@@ -177,6 +177,5 @@ Proyecto desarrollado para el **Tecnológico Nacional de México (TECNM)** — 2
 
 **Mazahua Connect** · Preservando la lengua mazahua 🌿
 
-*Jñatjo — La lengua del pueblo mazahua*
 
 </div>
