@@ -5,3 +5,4 @@ server
 client/.env
 Cronograma_NtsiFiyo.md
 cliente_clase/ 
+client/build/
