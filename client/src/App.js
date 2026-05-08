@@ -41,6 +41,7 @@ const TeacherResources = lazy(() => import('./pages/teacher/TeacherResources'));
 const TeacherStudents = lazy(() => import('./pages/teacher/TeacherStudents'));
 const TeacherAssignments = lazy(() => import('./pages/teacher/TeacherAssignments'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminMediaCreate = lazy(() => import('./pages/admin/AdminMediaCreate'));
 const TeacherContent = lazy(() => import('./pages/teacher/TeacherContent'));
 const DictionaryPage = lazy(() => import('./pages/common/DictionaryPage'));
 
@@ -131,7 +132,8 @@ function App() {
                             <Route path="/admin/actividades/editar/:editId" element={
                                 <ConfigurationGameView redirectPath="/admin/actividades" />
                             } />
-                            <Route path="/admin/contenido" element={<ContentSection />} />
+                            <Route path="/admin/contenido" element={<ContentSection createRoute="/admin/contenido/crear" />} />
+                            <Route path="/admin/contenido/crear" element={<AdminMediaCreate />} />
                         </Route>
 
                         {/* Teacher Routes */}

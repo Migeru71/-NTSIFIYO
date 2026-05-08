@@ -10,7 +10,7 @@ const TABS = [
     { id: ContentType.CANCIONES, label: 'Canciones', icon: '🎵' }
 ];
 
-const ContentSection = () => {
+const ContentSection = ({ createRoute }) => {
     const [activeTab, setActiveTab] = useState(TABS[0].id);
     const [mediaItems, setMediaItems] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -22,6 +22,7 @@ const ContentSection = () => {
         MediaService.getMediaByType(activeTab)
             .then(data => {
                 if (Array.isArray(data)) setMediaItems(data);
+                else if (data && Array.isArray(data.mediaList)) setMediaItems(data.mediaList);
                 else if (data && Array.isArray(data.data)) setMediaItems(data.data);
                 else setMediaItems([]);
             })
@@ -33,17 +34,29 @@ const ContentSection = () => {
     }, [activeTab]);
 
     const handlePlay = (item) => {
-        // En una vista de navegación libre (no actividad), podríamos pasar un flag por default.
-        // Pero como se requiere que allowSpanishToggle esté en la actividad, aquí asumimos true
-        // o navegamos directamente al reproductor con la configuración por defecto.
-        navigate(`/reproductor/${item.id}`, { state: { allowSpanishToggle: true, title: item.title } });
+        navigate(`/reproductor/${item.id}`, {
+            state: {
+                allowSpanishToggle: true,
+                title: item.title,
+                overviewImage: item.overviewImage,
+                mediaType: item.mediaType
+            }
+        });
     };
 
     return (
         <div className="content-section-container">
             <div className="content-header">
-                <h1 className="content-title">Explorar Contenido</h1>
-                <p className="content-subtitle">Descubre y aprende con material multimedia en mazahua.</p>
+                <div>
+                    <h1 className="content-title">Explorar Contenido</h1>
+                    <p className="content-subtitle">Descubre y aprende con material multimedia en mazahua.</p>
+                </div>
+                {createRoute && (
+                    <button className="btn-create-media" onClick={() => navigate(createRoute)}>
+                        <span className="material-symbols-outlined">add_circle</span>
+                        Crear Contenido
+                    </button>
+                )}
             </div>
 
             <div className="content-tabs">

@@ -15,9 +15,9 @@ import subprocess
 # Exhaustive list extracted from all .jsx/.js files in src/
 ICONS = sorted(set([
     # --- Inline JSX usage (>icon_name</span>) ---
-    "add", "add_circle", "apple", "arrow_back", "arrow_forward",
+    "add", "add_circle", "admin_panel_settings", "apple", "arrow_back", "arrow_forward",
     "assignment", "auto_stories", "badge", "bolt",
-    "calendar_today", "cancel", "category", "check", "check_circle",
+    "calendar_today", "cancel", "category", "check", "check_circle","checklist",
     "chevron_right", "close", "delete", "edit", "error",
     "expand_less", "expand_more", "extension", "fast_forward", "favorite",
     "group", "group_add", "group_off", "groups",
@@ -88,7 +88,15 @@ ICONS = sorted(set([
 
     # --- Safety: common UI icons ---
     "help", "more_vert", "notifications", "refresh", "star",
-    "visibility", "visibility_off"
+    "visibility", "visibility_off",
+
+    # --- pages/admin/AdminMediaCreate.jsx ---
+    "cloud_upload", "content_cut", "forward_5", "headphones",
+    "movie", "pause", "pause_circle", "play_arrow", "play_circle",
+    "replay_5", "tune", "upload_file",
+
+    # --- pages/common/ContentSection.jsx ---
+    "schedule", "signal_cellular_alt",
 ]))
 
 # ── Paths ───────────────────────────────────────────────────────────────

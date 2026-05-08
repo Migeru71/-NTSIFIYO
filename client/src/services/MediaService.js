@@ -16,8 +16,7 @@ const MediaService = {
      * @param {string} type - Tipo de contenido (ej. 'LEGEND', 'SONG')
      */
     getMediaByType: async (type) => {
-        // Asumiendo que el endpoint documentado /api/media acepta el query param 'type'
-        return await apiConfig.get(`/api/media?type=${type}`);
+        return await apiConfig.get(`/api/media?type=${type}&page=0&size=50`);
     },
 
     /**
@@ -27,6 +26,23 @@ const MediaService = {
      */
     getMediaStream: async (mediaId) => {
         return await apiConfig.get(`/api/media/${mediaId}/stream`);
+    },
+
+    /**
+     * Sube un nuevo recurso multimedia (video/audio) con subtítulos.
+     * @param {FormData} formData - Datos del formulario multipart
+     * @returns {Promise<any>}
+     */
+    uploadMedia: async (formData) => {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${apiConfig.baseUrl}/api/media`, {
+            method: 'POST',
+            headers: {
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            body: formData
+        });
+        return apiConfig.handleResponse(response);
     }
 };
 
