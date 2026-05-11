@@ -133,31 +133,10 @@ function GameAccessPanel({
 
     return (
         <div className="game-access-panel" style={{ position: 'relative' }}>
-            {/* Botón Volver */}
-            <button
-                onClick={() => navigate('/dashboard')}
-                className="gap-btn"
-                style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    background: 'white',
-                    color: '#4B5563',
-                    padding: '8px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    fontSize: '14px'
-                }}
-            >
-                ⬅️ Volver
-            </button>
-
             {/* Encabezado */}
             <div className="gap-header">
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '48px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{icon}</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                    <span style={{ fontSize: '20px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{icon}</span>
                 </div>
                 <h1>{title}</h1>
                 <p>{subtitle}</p>

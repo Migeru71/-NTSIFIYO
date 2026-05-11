@@ -1,23 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ProgressRing from '../common/ProgressRing';
 
 /**
- * Componente de progreso actual con anillo circular
+ * Componente de progreso actual con anillo circular.
+ * Usa el componente ProgressRing unificado.
  */
 const CurrentProgress = ({ experience = 0, level = 1 }) => {
-    
-    // Una lógica rápida para calcular progreso: suponiendo que cada nivel requiere ~1000 XP
-    // Idealmente el backend nos daría % o nextLevelExp
-    const percentage = Math.round((experience % 1000) / 10) || 0;
+    // Cada nivel requiere 1000 XP (lógica temporal hasta que el backend provea nextLevelExp)
+    const xpPerLevel = 1000;
+    const currentLevelXP = experience % xpPerLevel;
+    const percentage = Math.round((currentLevelXP / xpPerLevel) * 100) || 0;
     const lessonsRemaining = Math.max(1, Math.round((100 - percentage) / 10));
 
     const levelName = `Nivel ${level}`;
     const message = `¡Estás progresando muy bien! Obtén más XP o completa ~${lessonsRemaining} lecciones para superar el nivel actual.`;
 
-    // Calculate circle progress
-    const radius = 60;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = Math.max(0, circumference - (percentage / 100) * circumference);
+    const centerLabel = (
+        <>
+            <span className="text-3xl font-bold text-gray-800">{percentage}%</span>
+            <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider mt-0.5">
+                Completado
+            </span>
+        </>
+    );
 
     return (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -25,39 +31,14 @@ const CurrentProgress = ({ experience = 0, level = 1 }) => {
 
             {/* Progress Ring */}
             <div className="flex justify-center mb-6">
-                <div className="relative">
-                    <svg className="transform -rotate-90" width="150" height="150">
-                        {/* Background circle */}
-                        <circle
-                            cx="75"
-                            cy="75"
-                            r={radius}
-                            stroke="#f3f4f6"
-                            strokeWidth="12"
-                            fill="none"
-                        />
-                        {/* Progress circle */}
-                        <circle
-                            cx="75"
-                            cy="75"
-                            r={radius}
-                            stroke="#f59e0b"
-                            strokeWidth="12"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            className="transition-all duration-1000 ease-out"
-                        />
-                    </svg>
-                    {/* Center text */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-bold text-gray-800">{percentage}%</span>
-                        <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">
-                            Completado
-                        </span>
-                    </div>
-                </div>
+                <ProgressRing
+                    value={currentLevelXP}
+                    max={xpPerLevel}
+                    size={150}
+                    strokeWidth={12}
+                    color="#f59e0b"
+                    centerLabel={centerLabel}
+                />
             </div>
 
             {/* Level Info */}

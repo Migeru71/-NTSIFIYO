@@ -5,9 +5,11 @@ import ActivityCard from '../../components/Games/GamePanel/ActivityCard';
 import { useGame } from '../../context/GameContext';
 import { useAlert } from '../../context/AlertContext';
 import SectionHeader from '../../components/common/SectionHeader';
+import LoadingState from '../../components/common/LoadingState';
+import ErrorState from '../../components/common/ErrorState';
+import PageShell from '../../components/common/PageShell';
 import { useStudentAssignmentsQuery, useStudentInvalidate } from '../../hooks/useStudentQueries';
 import { getGameBasePath, getGameIcon } from '../../config/activityConfig';
-import IconWarning from '../../assets/svgs/warning.svg';
 
 const StudentAssignments = () => {
     const navigate = useNavigate();
@@ -91,75 +93,68 @@ const StudentAssignments = () => {
     }
 
     return (
-        <div className="w-full flex-1 relative min-h-screen">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
-                        title="Tus Asignaciones"
-                        subtitle="Completa las actividades asignadas por tu maestro para ganar experiencia"
-                        onReload={() => reloadAssignments(page)}
+        <PageShell>
+            <SectionHeader
+                title="Tus Asignaciones"
+                subtitle="Completa las actividades asignadas por tu maestro para ganar experiencia"
+                onReload={() => reloadAssignments(page)}
+            />
+
+            <div>
+                {isLoading ? (
+                    <LoadingState message="Cargando tus asignaciones..." />
+                ) : error ? (
+                    <ErrorState
+                        message={error.message}
+                        onRetry={() => reloadAssignments(page)}
+                        dashboardPath="/dashboard"
                     />
-
-                    <div>
-                        {isLoading ? (
-                            <div className="flex flex-col items-center justify-center p-12">
-                                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                                <p className="text-indigo-600 font-medium">Cargando tus asignaciones...</p>
-                            </div>
-                        ) : error ? (
-                            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-red-100 max-w-2xl mx-auto">
-                                <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
-                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Error al cargar</h3>
-                                <p className="text-gray-500">{error.message}</p>
-                            </div>
-                        ) : activities.length === 0 ? (
-                            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-indigo-100 max-w-2xl mx-auto">
-                                <span className="text-6xl block mb-4">📚</span>
-                                <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Todo al día!</h3>
-                                <p className="text-gray-500 text-lg">No tienes nuevas asignaciones pendientes.</p>
-                                <p className="text-gray-400 mt-4">Explora otras actividades para seguir aprendiendo.</p>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {activities.map((activity) => (
-                                        <ActivityCard
-                                            key={activity.id}
-                                            activity={activity}
-                                            userRole="student"
-                                            cardIcon={getGameIcon(activity.gameType)}
-                                            onPlay={(id) => handlePlayGame(id, activity.gameType)}
-                                        />
-                                    ))}
-                                </div>
-
-                                {pageData.totalPages > 1 && (
-                                    <div className="flex justify-center items-center gap-4 mt-10 p-4">
-                                        <button
-                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.first ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}
-                                            onClick={() => setPage(p => Math.max(0, p - 1))}
-                                            disabled={pageData.first}
-                                        >
-                                            Anterior
-                                        </button>
-                                        <span className="text-gray-600 font-medium bg-white px-4 py-2 rounded-lg shadow-sm">
-                                            Página {pageData.number + 1} de {pageData.totalPages}
-                                        </span>
-                                        <button
-                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.last ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 shadow-sm'}`}
-                                            onClick={() => setPage(p => p + 1)}
-                                            disabled={pageData.last}
-                                        >
-                                            Siguiente
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        )}
+                ) : activities.length === 0 ? (
+                    <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 max-w-2xl mx-auto">
+                        <span className="text-6xl block mb-4">📚</span>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Todo al día!</h3>
+                        <p className="text-gray-500 text-lg">No tienes nuevas asignaciones pendientes.</p>
+                        <p className="text-gray-400 mt-4">Explora otras actividades para seguir aprendiendo.</p>
                     </div>
-                </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {activities.map((activity) => (
+                                <ActivityCard
+                                    key={activity.id}
+                                    activity={activity}
+                                    userRole="student"
+                                    cardIcon={getGameIcon(activity.gameType)}
+                                    onPlay={(id) => handlePlayGame(id, activity.gameType)}
+                                />
+                            ))}
+                        </div>
+
+                        {pageData.totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-4 mt-10 p-4">
+                                <button
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.first ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-primary border border-primary/30 hover:bg-primary/5 shadow-sm'}`}
+                                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                                    disabled={pageData.first}
+                                >
+                                    Anterior
+                                </button>
+                                <span className="text-gray-600 font-medium bg-white px-4 py-2 rounded-lg shadow-sm">
+                                    Página {pageData.number + 1} de {pageData.totalPages}
+                                </span>
+                                <button
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${pageData.last ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-primary border border-primary/30 hover:bg-primary/5 shadow-sm'}`}
+                                    onClick={() => setPage(p => p + 1)}
+                                    disabled={pageData.last}
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
-        </div>
+        </PageShell>
     );
 };
 

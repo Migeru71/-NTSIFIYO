@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
+import PageShell from '../../components/common/PageShell';
 import { getActivitiesList } from '../../config/activityConfig';
 
 /**
@@ -19,10 +20,8 @@ const StudentActivities = () => {
     const games = getActivitiesList();
 
     return (
-        <div className="w-full flex-1 relative min-h-screen">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
+        <PageShell>
+            <SectionHeader
                         title="Actividades de Aprendizaje"
                         subtitle="Selecciona una actividad para practicar y ganar XP."
                     />
@@ -90,9 +89,7 @@ const StudentActivities = () => {
                             Ver Tabla de Líderes
                         </Link>
                     </div>
-                </div>
-            </div>
-        </div>
+        </PageShell>
     );
 };
 

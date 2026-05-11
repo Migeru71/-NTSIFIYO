@@ -1,21 +1,10 @@
 import React from 'react';
+import LoadingState from '../common/LoadingState';
 import WordCard from './WordCard';
 
 const WordsGrid = ({ words, isLoading, error, onRetry, renderActions }) => {
     if (isLoading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((skel) => (
-                    <div key={skel} className="bg-white rounded-3xl border border-gray-100 p-6 flex items-center gap-4 animate-pulse">
-                        <div className="w-16 h-16 bg-gray-100 rounded-2xl"></div>
-                        <div className="flex-1 space-y-3 p-2">
-                            <div className="h-4 bg-gray-100 rounded-full w-3/4"></div>
-                            <div className="h-3 bg-gray-50 rounded-full w-1/2"></div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
+        return <LoadingState message="Cargando palabras..." />;
     }
 
     if (error) {

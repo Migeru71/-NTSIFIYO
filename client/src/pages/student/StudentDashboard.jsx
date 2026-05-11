@@ -1,4 +1,7 @@
 import React from 'react';
+import LoadingState from '../../components/common/LoadingState';
+import ErrorState from '../../components/common/ErrorState';
+import PageShell from '../../components/common/PageShell';
 import StatsCards from '../../components/Dashboard/StatsCards';
 import NextLessonCard from '../../components/Dashboard/NextLessonCard';
 import CurrentProgress from '../../components/Dashboard/CurrentProgress';
@@ -29,62 +32,53 @@ const StudentDashboard = () => {
     } = data || {};
 
     return (
-        <div className="w-full flex-1 relative">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
-                        title={`¡Bienvenido de nuevo, ${user?.firstname || user?.username}!`}
-                        subtitle="Continuemos tu camino para dominar el idioma Mazahua. ¡Lo estás haciendo muy bien!"
-                        onReload={reloadDashboard}
-                    />
+        <PageShell>
+            <SectionHeader
+                title={`¡Bienvenido de nuevo, ${user?.firstname || user?.username}!`}
+                subtitle="Continuemos tu camino para dominar el idioma Mazahua. ¡Lo estás haciendo muy bien!"
+                onReload={reloadDashboard}
+            />
 
-                    {isLoading && (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <div className="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-500 font-medium tracking-wide">Cargando tu progreso...</p>
+            {isLoading && <LoadingState message="Cargando tu progreso..." />}
+
+            {error && !isLoading && (
+                <ErrorState
+                    message={error.message}
+                    onRetry={reloadDashboard}
+                    dashboardPath={null}
+                />
+            )}
+
+            {!isLoading && !error && data && (
+                <>
+                    {/* Stats Cards */}
+                    <section className="mb-8">
+                        <StatsCards
+                            level={level}
+                            experience={experience}
+                            inrow={inrow}
+                            finished={finished}
+                        />
+                    </section>
+
+                    {/* Main Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Column - 2/3 width */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <NextLessonCard pendingActivities={pending} />
+                            <LearningActivities />
                         </div>
-                    )}
 
-                    {error && !isLoading && (
-                        <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 text-center max-w-sm mx-auto">
-                            <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
-                            <h3 className="text-lg font-bold">¡Uy! Algo salió mal</h3>
-                            <p className="text-sm mt-1">{error.message}</p>
+                        {/* Right Column - 1/3 width */}
+                        <div className="space-y-6">
+                            <CurrentProgress experience={experience} level={level} />
+                            <DailyWisdom />
+                            <TopLearners learners={classmates} currentUserName={user?.username} />
                         </div>
-                    )}
-
-                    {!isLoading && !error && data && (
-                        <>
-                            {/* Stats Cards */}
-                            <section className="mb-8">
-                                <StatsCards
-                                    level={level}
-                                    experience={experience}
-                                    inrow={inrow}
-                                    finished={finished}
-                                />
-                            </section>
-
-                            {/* Main Grid */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Left Column - 2/3 width */}
-                                <div className="lg:col-span-2 space-y-6">
-                                    <NextLessonCard pendingActivities={pending} />
-                                    <LearningActivities />
-                                </div>
-
-                                {/* Right Column - 1/3 width */}
-                                <div className="space-y-6">
-                                    <CurrentProgress experience={experience} level={level} />
-                                    <DailyWisdom />
-                                    <TopLearners learners={classmates} currentUserName={user?.username} />
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+                    </div>
+                </>
+            )}
+        </PageShell>
     );
 };
 

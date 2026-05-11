@@ -21,9 +21,12 @@ module.exports = {
         "sans": ["Public Sans", "sans-serif"]
       },
       borderRadius: {
-        "card-lg": "20px",
-        "card-md": "15px",
-        "img": "12px"
+        // Cards, paneles, modales
+        'card': '1rem',          // 16px — same as rounded-2xl
+        // Inputs, botones, badges internos
+        'input': '0.75rem',      // 12px — same as rounded-xl
+        // Imágenes en tarjetas
+        'img': '0.75rem',        // 12px — same as rounded-xl
       }
     },
   },

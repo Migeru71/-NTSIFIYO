@@ -4,6 +4,7 @@ import ActivityApiService from '../../../services/ActivityApiService';
 import '../../../styles/components/games/gamePanel/GameSummary.css';
 import { useGame } from '../../../context/GameContext';
 import { PAIR_TYPES } from '../../../config/activityConfig';
+import ProgressRing from '../../common/ProgressRing';
 
 import IconCelebration from '../../../assets/svgs/celebration.svg';
 import IconMotivation from '../../../assets/svgs/motivation.svg';
@@ -147,7 +148,6 @@ const GameSummary = ({
         return { completed, incomplete };
     }, [responseLogs, isPairsGame]);
 
-    const ringOffset = `calc(251 - (251 * ${percentage}) / 100)`;
     const ringClass = percentage < 40 ? 'low' : percentage < 70 ? 'medium' : percentage < 100 ? 'high' : 'perfect';
 
     if (loading) {
@@ -176,21 +176,22 @@ const GameSummary = ({
                 <div className="gs-content-row">
                     {/* Left Panel */}
                     <div className="gs-left-panel">
-                        {/* Score Circle */}
+                        {/* Score Ring — uses unified ProgressRing with tier colors */}
                         <div className="gs-score-section">
                             <div className="gs-score-circle">
-                                <svg viewBox="0 0 100 100" className="gs-progress-ring">
-                                    <circle className="gs-ring-bg" cx="50" cy="50" r="40"></circle>
-                                    <circle
-                                        className={`gs-ring-fill ${ringClass}`}
-                                        cx="50" cy="50" r="40"
-                                        style={{ strokeDashoffset: ringOffset, '--ring-offset': ringOffset }}
-                                    ></circle>
-                                </svg>
-                                <div className="gs-score-text">
-                                    <span className="gs-score-number">{correctAnswers}</span>
-                                    <span className="gs-score-total">/ {totalQuestions}</span>
-                                </div>
+                                <ProgressRing
+                                    value={correctAnswers}
+                                    max={totalQuestions}
+                                    size={160}
+                                    strokeWidth={12}
+                                    showTier
+                                    centerLabel={
+                                        <div className="gs-score-text">
+                                            <span className="gs-score-number">{correctAnswers}</span>
+                                            <span className="gs-score-total">/ {totalQuestions}</span>
+                                        </div>
+                                    }
+                                />
                             </div>
                         </div>
 

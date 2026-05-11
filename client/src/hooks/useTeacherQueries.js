@@ -13,6 +13,7 @@ export const teacherKeys = {
     instances:   () => ['teacher', 'instances'],
     assignments: () => ['teacher', 'assignments'],
     students:    () => ['teacher', 'students'],
+    allGames:    () => ['teacher', 'allGames'],
 };
 
 // ── Shared: resolve groupId ───────────────────────────────────────────────────
@@ -73,6 +74,12 @@ async function fetchTeacherStudents() {
     return data.students || [];
 }
 
+async function fetchAllGames() {
+    const result = await ActivityApiService.getAllGames();
+    if (!result.success) throw new Error(result.error || 'Error al cargar los juegos.');
+    return result.data;
+}
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 export function useTeacherDashboardQuery() {
@@ -116,6 +123,15 @@ export function useTeacherStudentsQuery() {
     });
 }
 
+export function useAllGamesQuery() {
+    return useQuery({
+        queryKey: teacherKeys.allGames(),
+        queryFn: fetchAllGames,
+        staleTime: 5 * 60 * 1000,
+        gcTime:    15 * 60 * 1000,
+    });
+}
+
 /**
  * Hook para invalidar consultas del maestro (botones "Actualizar").
  */
@@ -128,8 +144,10 @@ export function useTeacherInvalidate() {
         reloadResources:   () => {
             queryClient.invalidateQueries({ queryKey: teacherKeys.activities() });
             queryClient.invalidateQueries({ queryKey: teacherKeys.instances() });
+            queryClient.invalidateQueries({ queryKey: teacherKeys.allGames() });
         },
         reloadAssignments: () => queryClient.invalidateQueries({ queryKey: teacherKeys.assignments() }),
         reloadStudents:    () => queryClient.invalidateQueries({ queryKey: teacherKeys.students() }),
+        reloadAllGames:    () => queryClient.invalidateQueries({ queryKey: teacherKeys.allGames() }),
     };
 }

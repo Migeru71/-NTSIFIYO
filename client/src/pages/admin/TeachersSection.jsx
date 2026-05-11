@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
+import LoadingState from '../../components/common/LoadingState';
 import AdminService from '../../services/AdminService';
 import { useAlert } from '../../context/AlertContext';
 import { useAdminTeachersQuery, useAdminInvalidate } from '../../hooks/useAdminQueries';
 
 const TeachersSection = () => {
-    // Teacher creation modal state
     const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
     const [teacherForm, setTeacherForm] = useState({ firstname: '', lastname: '' });
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState('');
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ username: '', firstName: '', lastName: '', password: '' });
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateError, setUpdateError] = useState('');
 
     const { data: teachersList = [], isLoading: isLoadingTeachers, error: teacherFetchErrorObj } = useAdminTeachersQuery();
     const { reloadTeachers: invalidateTeachers } = useAdminInvalidate();
@@ -28,6 +33,14 @@ const TeachersSection = () => {
 
     const handleCreateTeacher = async (e) => {
         e.preventDefault();
+        if (!teacherForm.firstname || teacherForm.firstname.length < 2 || teacherForm.firstname.length > 100 || /\d/.test(teacherForm.firstname)) {
+            setCreateError('El nombre debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        if (!teacherForm.lastname || teacherForm.lastname.length < 2 || teacherForm.lastname.length > 100 || /\d/.test(teacherForm.lastname)) {
+            setCreateError('El apellido debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
         setIsCreating(true);
         setCreateError('');
         try {
@@ -57,6 +70,68 @@ const TeachersSection = () => {
         setIsTeacherModalOpen(false);
         setTeacherForm({ firstname: '', lastname: '' });
         setCreateError('');
+    };
+
+    const openEditModal = (teacher) => {
+        setEditForm({
+            username: teacher.username,
+            firstName: teacher.firstname,
+            lastName: teacher.lastname,
+            password: ''
+        });
+        setUpdateError('');
+        setIsEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditForm({ username: '', firstName: '', lastName: '', password: '' });
+        setUpdateError('');
+    };
+
+    const handleEditFormChange = (e) => {
+        setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    };
+
+    const handleUpdateTeacher = async (e) => {
+        e.preventDefault();
+        if (!editForm.firstName || editForm.firstName.length < 2 || editForm.firstName.length > 100 || /\d/.test(editForm.firstName)) {
+            setUpdateError('El nombre debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        if (!editForm.lastName || editForm.lastName.length < 2 || editForm.lastName.length > 100 || /\d/.test(editForm.lastName)) {
+            setUpdateError('El apellido debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        if (editForm.password && editForm.password.length < 6) {
+            setUpdateError('La contraseña debe tener al menos 6 caracteres.');
+            return;
+        }
+        setIsUpdating(true);
+        setUpdateError('');
+        try {
+            const body = {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName
+            };
+            if (editForm.password) {
+                body.password = editForm.password;
+            }
+            await AdminService.updateTeacher(editForm.username, body);
+            closeEditModal();
+            fetchTeachers();
+            showAlert({
+                mode: 'success',
+                title: '¡Maestro Actualizado!',
+                message: `El maestro ${editForm.firstName} ${editForm.lastName} ha sido actualizado exitosamente.`,
+                buttons: [{ text: 'Entendido', type: 'accept' }]
+            });
+        } catch (error) {
+            console.error('Error updating teacher:', error);
+            setUpdateError(error.message || 'Ocurrió un error al actualizar el maestro.');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     const toggleMultiSelect = () => {
@@ -190,7 +265,7 @@ const TeachersSection = () => {
                     </div>
 
                     {isLoadingTeachers ? (
-                        <div className="text-center py-8 text-gray-500">Cargando maestros...</div>
+                        <LoadingState message="Cargando maestros..." />
                     ) : teacherFetchError ? (
                         <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center">
                             <span className="material-symbols-outlined block text-4xl mb-2">error</span>
@@ -242,6 +317,13 @@ const TeachersSection = () => {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-right">
+                                                <button
+                                                    onClick={() => openEditModal(t)}
+                                                    className="text-blue-500 hover:text-blue-700 font-medium p-2 rounded-full hover:bg-blue-50 transition-colors mr-1"
+                                                    title="Editar maestro"
+                                                >
+                                                    <span className="material-symbols-outlined align-middle" style={{ fontSize: '20px' }}>edit</span>
+                                                </button>
                                                 <button
                                                     onClick={() => deleteUser(t.username)}
                                                     disabled={isDeleting}
@@ -318,6 +400,83 @@ const TeachersSection = () => {
                                                 Creando...
                                             </>
                                         ) : 'Crear Maestro'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Teacher Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-gray-800">Editar Maestro</h3>
+                            <button onClick={closeEditModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto w-full max-w-md">
+                            <form onSubmit={handleUpdateTeacher} className="space-y-4">
+                                {updateError && (
+                                    <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm">{updateError}</div>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre(s)</label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        required
+                                        value={editForm.firstName}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Ej: Juan"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        required
+                                        value={editForm.lastName}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Ej: Pérez"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña (opcional)</label>
+                                    <input
+                                        type="text"
+                                        name="password"
+                                        value={editForm.password}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Dejar vacío para no cambiar"
+                                    />
+                                </div>
+                                <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={closeEditModal}
+                                        className="px-5 py-2.5 text-gray-600 bg-gray-100 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isUpdating}
+                                        className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors disabled:opacity-70 flex items-center gap-2"
+                                    >
+                                        {isUpdating ? (
+                                            <>
+                                                <span className="material-symbols-outlined animate-spin align-middle" style={{ fontSize: '20px' }}>progress_activity</span>
+                                                Actualizando...
+                                            </>
+                                        ) : 'Actualizar Maestro'}
                                     </button>
                                 </div>
                             </form>

@@ -15,22 +15,15 @@ import Roles from './utils/roles';
 
 // Lazy-loaded components (loaded on demand)
 const ConfigurationGameView = lazy(() => import('./components/Teacher/ConfigurationGameView'));
+const GameAccessView = lazy(() => import('./components/Games/GameAccessView'));
 const MemoriaRapidaGameView = lazy(() => import('./components/Games/MemoriaRapida/MemoriaRapidaGameView'));
-const MemoriaRapidaAccessPanel = lazy(() => import('./components/Games/MemoriaRapida/MemoriaRapidaAccessPanel'));
-const QuizAccessPanel = lazy(() => import('./components/Games/Quiz/QuizAccessPanel'));
 const QuizGameView = lazy(() => import('./components/Games/Quiz/QuizGameView'));
-const IntrusoAccessPanel = lazy(() => import('./components/Games/Intruso/IntrusoAccessPanel'));
 const IntrusoGameView = lazy(() => import('./components/Games/Intruso/IntrusoGameView'));
-const RompecabezasAccessPanel = lazy(() => import('./components/Games/Rompecabezas/RompecabezasAccessPanel'));
 const RompecabezasGameView = lazy(() => import('./components/Games/Rompecabezas/RompecabezasGameView'));
-const ParesAccessPanel = lazy(() => import('./components/Games/Pares/ParesAccessPanel'));
 const ParesGameView = lazy(() => import('./components/Games/Pares/ParesGameView'));
-const MemoramaAccessPanel = lazy(() => import('./components/Games/Memorama/MemoramaAccessPanel'));
 const MemoramaGameView = lazy(() => import('./components/Games/Memorama/MemoramaGameView'));
-const LoteriaAccessPanel = lazy(() => import('./components/Games/Loteria/LoteriaAccessPanel'));
 const LoteriaGameView = lazy(() => import('./components/Games/Loteria/LoteriaGameView'));
 const LaberintoGameView = lazy(() => import('./components/Games/Laberinto/LaberintoGameView'));
-const LaberintoAccessPanel = lazy(() => import('./components/Games/Laberinto/LaberintoAccessPanel'));
 const ContentSection = lazy(() => import('./pages/common/ContentSection'));
 const NosotrosPage = lazy(() => import('./pages/NosotrosPage'));
 const MediaPlayerView = lazy(() => import('./components/common/MediaPlayerView'));
@@ -44,6 +37,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminMediaCreate = lazy(() => import('./pages/admin/AdminMediaCreate'));
 const TeacherContent = lazy(() => import('./pages/teacher/TeacherContent'));
 const DictionaryPage = lazy(() => import('./pages/common/DictionaryPage'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 
 /**
  * Wrapper that adds top-padding equal to the fixed navbar height (64px = h-16)
@@ -63,9 +57,7 @@ function PageContent({ children }) {
     const isHome = location.pathname === '/';
     return (
         <div className={isHome ? '' : 'pt-16'}>
-            <Suspense fallback={<LoadingFallback />}>
-                {children}
-            </Suspense>
+            {children}
         </div>
     );
 }
@@ -100,9 +92,14 @@ function App() {
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />
-                    <Route path="/nosotros" element={<NosotrosPage />} />
+                    <Route path="/nosotros" element={
+                        <Suspense fallback={<LoadingFallback />}>
+                            <NosotrosPage />
+                        </Suspense>
+                    } />
                     <Route path="/auth" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
                     <Route path="/registro" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" replace />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
                     <Route path="/admin" element={!isAuthenticated ? <AdminLogin /> : <Navigate to="/dashboard" replace />} />
 
                     {/* Authenticated Layout */}
@@ -177,8 +174,10 @@ function App() {
                             {/* MediaPlayer */}
                             <Route path="/reproductor/:id" element={<MediaPlayerView />} />
 
+                            {/* Generic Game Access View */}
+                            <Route path="/games/:gameId" element={<GameAccessView />} />
+
                             {/* Memoria Rápida */}
-                            <Route path="/games/memoria_rapida" element={<MemoriaRapidaAccessPanel />} />
                             <Route path="/games/memoria_rapida/crear" element={
                                 <ConfigurationGameView redirectPath="/games/memoria_rapida/jugar/{id}" />
                             } />
@@ -190,7 +189,6 @@ function App() {
                             } />
 
                             {/* Memorama */}
-                            <Route path="/games/memorama" element={<MemoramaAccessPanel />} />
                             <Route path="/games/memorama/crear" element={
                                 <ConfigurationGameView redirectPath="/games/memorama/jugar/{id}" />
                             } />
@@ -202,22 +200,18 @@ function App() {
                             } />
 
                             {/* Quiz */}
-                            <Route path="/games/quiz" element={<QuizAccessPanel />} />
                             <Route path="/games/quiz/editar/:editId" element={
                                 <ConfigurationGameView redirectPath="/games/quiz" />
                             } />
                             <Route path="/games/quiz/jugar/:activityId" element={<QuizGameView />} />
 
                             {/* Intruso */}
-                            <Route path="/games/intruso" element={<IntrusoAccessPanel />} />
                             <Route path="/games/intruso/jugar/:activityId" element={<IntrusoGameView />} />
 
                             {/* Rompecabezas */}
-                            <Route path="/games/rompecabezas" element={<RompecabezasAccessPanel />} />
                             <Route path="/games/rompecabezas/jugar/:activityId" element={<RompecabezasGameView />} />
 
                             {/* Pares */}
-                            <Route path="/games/pares" element={<ParesAccessPanel />} />
                             <Route path="/games/pares/crear" element={
                                 <ConfigurationGameView redirectPath="/games/pares/jugar/{id}" />
                             } />
@@ -227,11 +221,9 @@ function App() {
                             <Route path="/games/pares/jugar/:activityId" element={<ParesGameView />} />
 
                             {/* Lotería */}
-                            <Route path="/games/loteria" element={<LoteriaAccessPanel />} />
                             <Route path="/games/loteria/jugar/:activityId" element={<LoteriaGameView />} />
 
                             {/* Laberinto */}
-                            <Route path="/games/laberinto" element={<LaberintoAccessPanel />} />
                             <Route path="/games/laberinto/jugar/:activityId" element={<LaberintoGameView />} />
                         </Route>
                     </Route>

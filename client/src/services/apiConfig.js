@@ -60,12 +60,20 @@ const apiConfig = {
 
             const error = new Error(errorMessage);
             error.responseData = errorData; // Preservar datos completos para uso avanzado
+            error.status = response.status;
             throw error;
         }
 
         // Manejar respuestas vacías (204 No Content)
         const text = await response.text();
-        return text ? JSON.parse(text) : {};
+        if (!text) return {};
+
+        // Detectar si es JSON o texto plano
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return JSON.parse(text);
+        }
+        return text;
     },
 
     /**

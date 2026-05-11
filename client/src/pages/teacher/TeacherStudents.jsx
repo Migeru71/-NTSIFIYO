@@ -1,5 +1,6 @@
 import React from 'react';
 import List from '../../components/common/List';
+import PageShell from '../../components/common/PageShell';
 import { useTeacherStudentsQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
 import SectionHeader from '../../components/common/SectionHeader';
 
@@ -53,10 +54,8 @@ const TeacherStudents = () => {
     );
 
     return (
-        <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-50">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
+        <PageShell>
+            <SectionHeader
                         title="Mis Estudiantes"
                         onReload={reloadStudents}
                     />
@@ -86,9 +85,7 @@ const TeacherStudents = () => {
                             emptyIcon="group_off"
                         />
                     </div>
-                </div>
-            </div>
-        </div>
+        </PageShell>
     );
 };
 

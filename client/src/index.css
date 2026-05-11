@@ -64,4 +64,40 @@
     .user-type-card-active {
         @apply border-primary bg-orange-50/50 shadow-none;
     }
+
+    /* ── Normalización de border-radius ─────────────────────────────────────
+       Convención unificada:
+         .card       → rounded-2xl (16px)  para tarjetas, paneles y modales
+         .input-base → rounded-xl  (12px)  para inputs y botones
+         .badge      → rounded-full        para badges, chips y avatares
+       Úsalas junto a `@apply` o directamente como clases HTML.
+    ── */
+    .card {
+        @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+    }
+
+    .card-hover {
+        @apply card hover:shadow-md transition-shadow;
+    }
+
+    /* Botón de acción secundaria (Volver / Cancelar) */
+    .btn-back {
+        @apply inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all;
+    }
+
+    /* Animación de entrada suave para cambios de ruta */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.35s ease-out both;
+    }
 }

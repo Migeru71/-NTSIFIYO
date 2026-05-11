@@ -5,6 +5,7 @@ import UserService from '../services/UserService';
 import Roles from '../utils/roles';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
+import GoogleLoginButton from '../components/Auth/GoogleLoginButton';
 
 const AuthPage = () => {
     const location = useLocation();
@@ -29,8 +30,16 @@ const AuthPage = () => {
     const [standardLoginError, setStandardLoginError] = useState('');
 
     // Estados para registro de visitante
-    const [registerName, setRegisterName] = useState('');
+    const [registerFirstname, setRegisterFirstname] = useState('');
+    const [registerLastname, setRegisterLastname] = useState('');
     const [registerUsername, setRegisterUsername] = useState('');
+    const [registerSuccess, setRegisterSuccess] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
+
+    // Validar formato de email
+    const isValidEmail = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
 
     // Grados disponibles
     const grades = [
@@ -125,35 +134,70 @@ const AuthPage = () => {
                         <button onClick={() => { setAuthMode('register'); setUserType('guest'); }} className={`flex-1 py-2.5 text-center text-sm font-semibold rounded-lg transition-all ${authMode === 'register' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Registrarse</button>
                     </div>
 
-                    <div className="flex flex-col gap-2 text-center lg:text-left">
-                        <h2 className="text-3xl font-bold text-primary-dark tracking-tight">{authMode === 'login' ? '¡Hola de nuevo!' : 'Crea una cuenta'}</h2>
-                        <p className="text-gray-500">{userType === 'student' ? 'Ingresa tu número de lista y contraseña para entrar.' : 'Nos alegra verte otra vez.'}</p>
-                    </div>
-
-                    {authMode === 'login' && (
-                        <div className="flex flex-col gap-3">
-                            <label className="text-sm font-semibold text-primary-dark pl-1">Soy un...</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {['student', 'teacher', 'guest'].map((type) => (
-                                    <button key={type} onClick={() => setUserType(type)} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all h-28 ${userType === type ? 'border-primary bg-orange-50' : 'border-transparent bg-white shadow-sm hover:border-primary/30'}`}>
-                                        <span className={`material-symbols-outlined text-3xl ${userType === type ? 'text-primary' : 'text-gray-400'}`}>{type === 'student' ? 'face' : type === 'teacher' ? 'school' : 'person'}</span>
-                                        <span className="text-xs font-medium text-primary-dark">{type === 'student' ? 'Niño' : type === 'teacher' ? 'Maestro' : 'Visitante'}</span>
-                                    </button>
-                                ))}
+                    {registerSuccess ? (
+                        <div className="flex flex-col gap-2 text-center">
+                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <span className="material-symbols-outlined text-4xl">mark_email_read</span>
                             </div>
+                            <h2 className="text-3xl font-bold text-primary-dark tracking-tight">¡Registro exitoso!</h2>
+                            <p className="text-gray-500">
+                                Hemos enviado un enlace de verificación a tu correo electrónico.
+                                Por favor revisa tu bandeja de entrada (y spam) para activar tu cuenta.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2 text-center lg:text-left">
+                            <h2 className="text-3xl font-bold text-primary-dark tracking-tight">{authMode === 'login' ? '¡Hola de nuevo!' : 'Crea una cuenta'}</h2>
+                            <p className="text-gray-500">{userType === 'student' ? 'Ingresa tu número de lista y contraseña para entrar.' : 'Nos alegra verte otra vez.'}</p>
                         </div>
                     )}
 
-                    {/* FORMULARIO DINÁMICO */}
-                    <div className="flex flex-col gap-6">
-                        {userType === 'student' && authMode === 'login' ? (
+                    {registerSuccess && (
+                        <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-blue-700 text-sm text-center">
+                                <span className="material-symbols-outlined align-middle mr-1">info</span>
+                                No cierres esta página hasta verificar tu correo. Si no encuentras el email, espera unos minutos o revisa la carpeta de spam.
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setRegisterSuccess(false);
+                                    setAuthMode('login');
+                                    setStandardLoginError('');
+                                }}
+                                className="w-full py-3 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
+                            >
+                                <span>Ir al Inicio de Sesión</span>
+                                <span className="material-symbols-outlined">login</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {!registerSuccess && (
+                        <>
+                            {authMode === 'login' && (
+                                <div className="flex flex-col gap-3">
+                                    <label className="text-sm font-semibold text-primary-dark pl-1">Soy un...</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {['student', 'teacher', 'guest'].map((type) => (
+                                            <button key={type} onClick={() => setUserType(type)} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all h-28 ${userType === type ? 'border-primary bg-orange-50' : 'border-transparent bg-white shadow-sm hover:border-primary/30'}`}>
+                                                <span className={`material-symbols-outlined text-3xl ${userType === type ? 'text-primary' : 'text-gray-400'}`}>{type === 'student' ? 'face' : type === 'teacher' ? 'school' : 'person'}</span>
+                                                <span className="text-xs font-medium text-primary-dark">{type === 'student' ? 'Niño' : type === 'teacher' ? 'Maestro' : 'Visitante'}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* FORMULARIO DINÁMICO */}
+                            <div className="flex flex-col gap-6">
+                                {userType === 'student' && authMode === 'login' ? (
                             /* --- LOGIN DEL ESTUDIANTE --- */
                             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Campo de Número de Lista */}
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Número de Lista</label>
                                     <div className="relative">
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 flex items-center text-gray-400 material-symbols-outlined">tag</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 text-gray-400 material-symbols-outlined">tag</span>
                                         <input
                                             type="number"
                                     className={`w-full pl-12 pr-4 py-4 bg-white border-2 rounded-2xl text-lg font-medium text-center text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300 ${studentLoginError ? 'border-red-300' : 'border-orange-100'}`}
@@ -171,7 +215,7 @@ const AuthPage = () => {
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Contraseña</label>
                                     <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">lock</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 text-gray-400 material-symbols-outlined">lock</span>
                                         <input
                                             type="password"
                                             className="w-full pl-12 pr-4 py-4 bg-white border-2 border-orange-100 rounded-2xl text-lg font-medium text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-gray-300"
@@ -186,7 +230,7 @@ const AuthPage = () => {
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-primary-dark uppercase tracking-wider">Tu Grado Escolar</label>
                                     <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 material-symbols-outlined">school</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-4 text-gray-400 material-symbols-outlined">school</span>
                                         <select
                                             className="w-full pl-12 pr-4 py-4 bg-white border-2 border-orange-100 rounded-2xl text-lg font-medium text-primary-dark focus:border-primary focus:ring-0 outline-none transition-all appearance-none cursor-pointer"
                                             value={grade}
@@ -214,23 +258,38 @@ const AuthPage = () => {
                             <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
                                 {authMode === 'register' && (
                                     <>
-                                        <div className="space-y-1">
-                                            <label className="text-sm font-medium text-primary-dark">Nombre Completo</label>
-                                            <div className="relative">
-                                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">badge</span>
-                                                <input
-                                                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                                                    placeholder="Ej. Maria Gonzalez"
-                                                    type="text"
-                                                    value={registerName}
-                                                    onChange={(e) => setRegisterName(e.target.value)}
-                                                />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-primary-dark">Nombre(s)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">badge</span>
+                                                    <input
+                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                        placeholder="Ej. Maria"
+                                                        type="text"
+                                                        value={registerFirstname}
+                                                        onChange={(e) => setRegisterFirstname(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-primary-dark">Apellidos</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">badge</span>
+                                                    <input
+                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                                        placeholder="Ej. Gonzalez"
+                                                        type="text"
+                                                        value={registerLastname}
+                                                        onChange={(e) => setRegisterLastname(e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-primary-dark">Nombre de Usuario</label>
                                             <div className="relative">
-                                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
+                                                <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">person</span>
                                                 <input
                                                     className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                                     placeholder="Ej. maria_gonzalez"
@@ -248,7 +307,7 @@ const AuthPage = () => {
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-primary-dark">Usuario</label>
                                         <div className="relative">
-                                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">person</span>
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">person</span>
                                             <input
                                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                                 placeholder={userType === 'teacher' ? "Ej. maestro.gonzalez" : "Ej. visitante123"}
@@ -262,7 +321,7 @@ const AuthPage = () => {
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-primary-dark">Correo Electrónico</label>
                                         <div className="relative">
-                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 flex items-center text-gray-400 material-symbols-outlined">mail</span>
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">mail</span>
                                             <input
                                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                                 placeholder="nombre@ejemplo.com"
@@ -277,7 +336,7 @@ const AuthPage = () => {
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-primary-dark">Contraseña</label>
                                     <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 material-symbols-outlined">lock</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 text-gray-400 material-symbols-outlined">lock</span>
                                         <input
                                             className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                                             placeholder="••••••••"
@@ -363,33 +422,38 @@ const AuthPage = () => {
                                             onSuccess(response, Roles.VISITOR)
                                             navigate('/estudiante/dashboard');
                                         } else {
-                                            setStandardLoginError(response.error || 'Credenciales incorrectas');
+                                            const errMsg = (response.error || '').toLowerCase();
+                                            if (errMsg.includes('verifica') || errMsg.includes('verificar') || errMsg.includes('email no verificado') || response.status === 403) {
+                                                setStandardLoginError('Tu correo electrónico aún no ha sido verificado. Revisa tu bandeja de entrada o solicita un nuevo enlace de verificación.');
+                                            } else {
+                                                setStandardLoginError(response.error || 'Credenciales incorrectas');
+                                            }
                                         }
                                     } else if (authMode === 'register') {
                                         // Registro de visitante
-                                        if (!registerName || !guestEmail || !password || !registerUsername) {
+                                        if (!registerFirstname || !registerLastname || !guestEmail || !password || !registerUsername) {
                                             setStandardLoginError('Por favor completa todos los campos');
                                             setIsLoading(false);
                                             return;
                                         }
 
-                                        const nameParts = registerName.trim().split(' ');
+                                        if (!isValidEmail(guestEmail)) {
+                                            setStandardLoginError('Por favor ingresa un correo electrónico válido');
+                                            setIsLoading(false);
+                                            return;
+                                        }
+
                                         const response = await AuthService.registerVisitor({
-                                            firstname: nameParts[0] || '',
-                                            lastname: nameParts.slice(1).join(' ') || '',
+                                            firstname: registerFirstname.trim(),
+                                            lastname: registerLastname.trim(),
                                             email: guestEmail,
                                             password: password,
                                             username: registerUsername
                                         });
 
                                         if (response.success) {
-                                            setAuthMode('login');
+                                            setRegisterSuccess(true);
                                             setStandardLoginError('');
-                                            showAlert({
-                                                mode: 'success',
-                                                title: '¡Éxito!',
-                                                message: '¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.'
-                                            });
                                         } else {
                                             setStandardLoginError(response.error || 'Error al crear cuenta');
                                         }
@@ -422,22 +486,18 @@ const AuthPage = () => {
                         </button>
                     </div>
 
-                    <div className="relative flex py-2 items-center">
-                        <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink-0 mx-4 text-sm text-gray-400">O continúa con</span>
-                        <div className="flex-grow border-t border-gray-200"></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <button className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 bg-white">
-                            <img alt="Google" className="w-5 h-5" src="https://www.svgrepo.com/show/475656/google-color.svg" />
-                            <span className="text-sm font-medium">Google</span>
-                        </button>
-                        <button className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 bg-white">
-                            <span className="material-symbols-outlined text-[22px]">apple</span>
-                            <span className="text-sm font-medium">Apple</span>
-                        </button>
-                    </div>
+                    {authMode === 'login' && userType === 'guest' && (
+                        <>
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-gray-200"></div>
+                                <span className="flex-shrink-0 mx-4 text-sm text-gray-400">O continúa con</span>
+                                <div className="flex-grow border-t border-gray-200"></div>
+                            </div>
+                            <GoogleLoginButton />
+                        </>
+                    )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

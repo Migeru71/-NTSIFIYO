@@ -1,4 +1,6 @@
 import React from 'react';
+import LoadingState from '../../components/common/LoadingState';
+import ErrorState from '../../components/common/ErrorState';
 import { useAdminOverviewQuery, useAdminInvalidate } from '../../hooks/useAdminQueries';
 
 const AdminOverviewSection = () => {
@@ -6,21 +8,16 @@ const AdminOverviewSection = () => {
     const loading_err = errorObj?.message || null;
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-12 h-12 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-medium">Cargando estadísticas de la plataforma...</p>
-            </div>
-        );
+        return <LoadingState message="Cargando estadísticas de la plataforma..." />;
     }
 
     if (loading_err) {
         return (
-            <div className="text-center py-20 bg-red-50 rounded-xl border border-red-100">
-                <span className="material-symbols-outlined text-5xl text-red-500 mb-3 block">error</span>
-                <h3 className="text-xl font-bold text-red-800 mb-2">Error de Carga</h3>
-                <p className="text-red-600">{loading_err}</p>
-            </div>
+            <ErrorState
+                message={loading_err}
+                onRetry={() => window.location.reload()}
+                dashboardPath={null}
+            />
         );
     }
 

@@ -57,9 +57,9 @@ const CategoryGrid = ({ topics, onSelectTopic }) => {
                         onClick={() => onSelectTopic(topic.id)}
                         className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 transition-all duration-300 group flex items-center gap-4 text-left"
                     >
-                        <div className="w-14 h-14 bg-blue-50 text-primary rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-inner overflow-hidden p-2">
+                        <div className="w-14 h-14 bg-blue-50 text-primary rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 overflow-hidden p-2">
                             {SvgIcon ? (
-                                <img src={SvgIcon} alt={topic.label} className="w-full h-full object-contain filter group-hover:brightness-0 group-hover:invert" />
+                                <img src={SvgIcon} alt={topic.label} className="w-full h-full object-contain" />
                             ) : (
                                 <span className="material-symbols-outlined text-2xl">label</span>
                             )}

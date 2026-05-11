@@ -1,5 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import LoadingState from '../../components/common/LoadingState';
+import ErrorState from '../../components/common/ErrorState';
+import PageShell from '../../components/common/PageShell';
+import StatCard from '../../components/common/StatCard';
+import ProgressRing from '../../components/common/ProgressRing';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useVisitorDashboardQuery, useVisitorInvalidate } from '../../hooks/useVisitorQueries';
@@ -32,9 +37,9 @@ const resolveTopicLabel = (topicId) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────────
-   Sub-component: Stats Cards (visitor-specific)
+   Sub-component: Stats Cards (visitor) — usa el StatCard unificado
    ──────────────────────────────────────────────────────────────────────────── */
-const VisitorStatsCards = ({ level, totalExperience, inrow, totalActivitiesCompleted }) => {
+const VisitorStatsCards = ({ level, experience, inrow, totalActivitiesCompleted }) => {
     const cards = [
         {
             id: 'level',
@@ -45,6 +50,7 @@ const VisitorStatsCards = ({ level, totalExperience, inrow, totalActivitiesCompl
             gradient: 'from-emerald-500 to-teal-600',
             iconBg: 'bg-emerald-50',
             iconColor: 'text-emerald-600',
+            accentColor: 'text-emerald-600',
         },
         {
             id: 'streak',
@@ -55,16 +61,18 @@ const VisitorStatsCards = ({ level, totalExperience, inrow, totalActivitiesCompl
             gradient: 'from-orange-500 to-red-500',
             iconBg: 'bg-orange-50',
             iconColor: 'text-orange-600',
+            accentColor: 'text-orange-600',
         },
         {
             id: 'xp',
             label: 'Total XP',
-            value: (totalExperience || 0).toLocaleString(),
+            value: (experience || 0).toLocaleString(),
             subText: 'Puntos globales',
             icon: 'emoji_events',
             gradient: 'from-amber-500 to-yellow-500',
             iconBg: 'bg-amber-50',
             iconColor: 'text-amber-600',
+            accentColor: 'text-amber-600',
         },
         {
             id: 'finished',
@@ -75,35 +83,14 @@ const VisitorStatsCards = ({ level, totalExperience, inrow, totalActivitiesCompl
             gradient: 'from-violet-500 to-purple-600',
             iconBg: 'bg-violet-50',
             iconColor: 'text-violet-600',
+            accentColor: 'text-violet-600',
         },
     ];
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {cards.map((card, i) => (
-                <div
-                    key={card.id}
-                    className="relative bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 group overflow-hidden"
-                    style={{ animationDelay: `${i * 80}ms` }}
-                >
-                    {/* Decorative gradient accent bar */}
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${card.gradient} rounded-t-2xl opacity-80 group-hover:opacity-100 transition-opacity`} />
-
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">{card.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-800 mt-1">{card.value}</h3>
-                            <p className="text-xs mt-2">
-                                <span className={`font-semibold ${card.iconColor}`}>{card.subText}</span>
-                            </p>
-                        </div>
-                        <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                            <span className={`material-symbols-outlined ${card.iconColor}`}>
-                                {card.icon}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <StatCard key={card.id} {...card} animDelay={i * 80} />
             ))}
         </div>
     );
@@ -115,12 +102,16 @@ const VisitorStatsCards = ({ level, totalExperience, inrow, totalActivitiesCompl
 const VisitorProgress = ({ totalExperience = 0, level = 1 }) => {
     const xpPerLevel = 100;
     const currentLevelXP = totalExperience % xpPerLevel;
-    const percentage = Math.round((currentLevelXP / xpPerLevel) * 100) || 0;
     const xpToNext = xpPerLevel - currentLevelXP;
 
-    const radius = 60;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = Math.max(0, circumference - (percentage / 100) * circumference);
+    const centerLabel = (
+        <>
+            <span className="text-3xl font-bold text-gray-800">{Math.round((currentLevelXP / xpPerLevel) * 100)}%</span>
+            <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider mt-0.5">
+                Nivel {level}
+            </span>
+        </>
+    );
 
     return (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -129,37 +120,15 @@ const VisitorProgress = ({ totalExperience = 0, level = 1 }) => {
                 Progreso Actual
             </h3>
 
-            {/* Progress Ring */}
             <div className="flex justify-center mb-6">
-                <div className="relative">
-                    <svg className="transform -rotate-90" width="150" height="150">
-                        <defs>
-                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#f59e0b" />
-                                <stop offset="100%" stopColor="#ef4444" />
-                            </linearGradient>
-                        </defs>
-                        <circle cx="75" cy="75" r={radius} stroke="#f3f4f6" strokeWidth="12" fill="none" />
-                        <circle
-                            cx="75"
-                            cy="75"
-                            r={radius}
-                            stroke="url(#progressGradient)"
-                            strokeWidth="12"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            className="transition-all duration-1000 ease-out"
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-bold text-gray-800">{percentage}%</span>
-                        <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">
-                            Nivel {level}
-                        </span>
-                    </div>
-                </div>
+                <ProgressRing
+                    value={currentLevelXP}
+                    max={xpPerLevel}
+                    size={150}
+                    strokeWidth={12}
+                    color="#f59e0b"
+                    centerLabel={centerLabel}
+                />
             </div>
 
             {/* Level Info */}
@@ -481,7 +450,7 @@ const VisitorDashboard = () => {
 
     const {
         level = 1,
-        totalExperience = 0,
+        experience = 0,
         inrow = 0,
         recentActivities = [],
         topUsers = [],
@@ -489,64 +458,55 @@ const VisitorDashboard = () => {
     } = data || {};
 
     return (
-        <div className="w-full flex-1 relative">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
-                        title={`¡Hola, ${user?.firstname || user?.username}!`}
-                        subtitle="Explora y aprende Mazahua a tu propio ritmo. ¡Cada juego te acerca más a la cultura!"
-                        onReload={reloadDashboard}
-                    />
+        <PageShell>
+            <SectionHeader
+                title={`¡Hola, ${user?.firstname || user?.username}!`}
+                subtitle="Explora y aprende Mazahua a tu propio ritmo. ¡Cada juego te acerca más a la cultura!"
+                onReload={reloadDashboard}
+            />
 
-                    {/* Loading State */}
-                    {isLoading && (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <div className="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-500 font-medium tracking-wide">Cargando tu progreso...</p>
+            {/* Loading State */}
+            {isLoading && <LoadingState message="Cargando tu progreso..." />}
+
+            {/* Error State */}
+            {error && !isLoading && (
+                <ErrorState
+                    message={error.message}
+                    onRetry={reloadDashboard}
+                    dashboardPath={null}
+                />
+            )}
+
+            {/* Main Content */}
+            {!isLoading && !error && data && (
+                <>
+                    {/* Stats Cards */}
+                    <section className="mb-8">
+                        <VisitorStatsCards
+                            level={level}
+                            experience={experience}
+                            inrow={inrow}
+                            totalActivitiesCompleted={totalActivitiesCompleted}
+                        />
+                    </section>
+
+                    {/* Main Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Column - 2/3 width */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <RecentActivities activities={recentActivities} />
                         </div>
-                    )}
 
-                    {/* Error State */}
-                    {error && !isLoading && (
-                        <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 text-center max-w-sm mx-auto">
-                            <span className="material-symbols-outlined text-4xl mb-2 block">error</span>
-                            <h3 className="text-lg font-bold">¡Uy! Algo salió mal</h3>
-                            <p className="text-sm mt-1">{error.message}</p>
+                        {/* Right Column - 1/3 width */}
+                        <div className="space-y-6">
+                            <VisitorProgress experience={experience} level={level} />
+                            <QuickActions />
+                            <TopUsersLeaderboard topUsers={topUsers} currentUserName={user?.username} />
                         </div>
-                    )}
-
-                    {/* Main Content */}
-                    {!isLoading && !error && data && (
-                        <>
-                            {/* Stats Cards */}
-                            <section className="mb-8">
-                                <VisitorStatsCards
-                                    level={level}
-                                    totalExperience={totalExperience}
-                                    inrow={inrow}
-                                    totalActivitiesCompleted={totalActivitiesCompleted}
-                                />
-                            </section>
-
-                            {/* Main Grid */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Left Column - 2/3 width */}
-                                <div className="lg:col-span-2 space-y-6">
-                                    <RecentActivities activities={recentActivities} />
-                                </div>
-
-                                {/* Right Column - 1/3 width */}
-                                <div className="space-y-6">
-                                    <VisitorProgress totalExperience={totalExperience} level={level} />
-                                    <QuickActions />
-                                    <TopUsersLeaderboard topUsers={topUsers} currentUserName={user?.username} />
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+                    </div>
+                </>
+            )}
+        </PageShell>
     );
 };
 

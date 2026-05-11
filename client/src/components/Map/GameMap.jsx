@@ -4,7 +4,13 @@ import { GAME_CATEGORIES, GAME_TOPICS } from '../../utils/gameCategories';
 import ActivityApiService from '../../services/ActivityApiService';
 import { useGame } from '../../context/GameContext';
 import { getGameBasePath } from '../../config/activityConfig';
-import mapImg from '../../assets/map/map.webp';
+import mapDesktopXl from '../../assets/map/map-desktop-xl.webp';
+import mapDesktop from '../../assets/map/map-desktop.webp';
+import mapDesktopSm from '../../assets/map/map-desktop-sm.webp';
+import mapTablet from '../../assets/map/map-tablet.webp';
+import mapMobileLandscape from '../../assets/map/map-mobile-landscape.webp';
+import mapMobile from '../../assets/map/map-mobile.webp';
+import mapMobileSm from '../../assets/map/map-mobile-sm.webp';
 import kitchenHL from '../../assets/map/kitchen.webp';
 import farmHL from '../../assets/map/farm.webp';
 import parkHL from '../../assets/map/park.webp';
@@ -168,13 +174,22 @@ function GameMap() {
         <div className="game-map-wrapper">
             {/* ── Map canvas ─────────────────────────────────────────── */}
             <div className="game-map-canvas" onClick={handleMapClick}>
-                {/* Base map */}
-                <img
-                    src={mapImg}
-                    alt="Mapa del juego"
-                    className="game-map-base"
-                    draggable={false}
-                />
+                {/* Base map - responsive with priority loading */}
+                <picture>
+                    {/* <source srcSet={mapMobileSm} media="(max-width: 480px)" /> */}
+                    {/* <source srcSet={mapMobile} media="(max-width: 640px)" /> */}
+                    <source srcSet={mapMobileLandscape} media="(max-width: 768px)" />
+                    <source srcSet={mapTablet} media="(max-width: 1024px)" />
+                    <source srcSet={mapDesktopSm} media="(max-width: 1440px)" />
+                    <source srcSet={mapDesktop} media="(max-width: 1920px)" />
+                    <img
+                        src={mapDesktopXl}
+                        alt="Mapa del juego"
+                        className="game-map-base"
+                        draggable={false}
+                        fetchpriority="high"
+                    />
+                </picture>
 
                 {/* Highlight overlays – one per zone */}
                 {ZONES.map(zone => {
@@ -185,6 +200,7 @@ function GameMap() {
                             src={zone.img}
                             alt={zone.id}
                             draggable={false}
+                            loading="lazy"
                             className={`game-map-zone${isActive ? ' active' : ''}`}
                             style={{
                                 left: `${(zone.x / MAP_NATURAL_W) * 100}%`,

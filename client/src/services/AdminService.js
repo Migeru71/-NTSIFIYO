@@ -55,6 +55,26 @@ class AdminService {
     }
 
     /**
+     * Editar un estudiante existente
+     * PUT /api/admin/students/{username}
+     * @param {string} username
+     * @param {{ firstName, lastName, grade, listNumber, password? }} body
+     */
+    async updateStudent(username, body) {
+        return apiConfig.put(`/api/admin/students/${username}`, body);
+    }
+
+    /**
+     * Editar un maestro existente
+     * PUT /api/admin/teachers/{username}
+     * @param {string} username
+     * @param {{ firstName, lastName, password? }} body
+     */
+    async updateTeacher(username, body) {
+        return apiConfig.put(`/api/admin/teachers/${username}`, body);
+    }
+
+    /**
      * Eliminar múltiples usuarios en paralelo
      * @param {string[]} usernames
      */

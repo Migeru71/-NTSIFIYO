@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
+import GoogleAuthService from '../services/GoogleAuthService';
 
 const AuthContext = createContext();
 
@@ -28,6 +29,8 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
         localStorage.removeItem('appUser');
         localStorage.removeItem('authToken');
+        // Evitar que Google reseleccione automáticamente la cuenta en el próximo login
+        GoogleAuthService.disableAutoSelect();
     };
 
     return (

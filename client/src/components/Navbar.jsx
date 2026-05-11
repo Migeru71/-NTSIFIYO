@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Roles from '../utils/roles';
 import { useAuth } from '../context/AuthContext';
+import GoogleAuthService from '../services/GoogleAuthService';
 
 /**
  * Componente de Navegación Principal.
@@ -26,15 +27,21 @@ const Navbar = () => {
             setScrolled(y > 50);
             // Only hide/show after passing a small threshold
             if (Math.abs(y - lastScrollY.current) < 8) return;
-            setHidden(y > lastScrollY.current && y > 100);
+            // Keep navbar fixed when user is inside the dashboard
+            if (!user) {
+                setHidden(y > lastScrollY.current && y > 100);
+            } else {
+                setHidden(false);
+            }
             lastScrollY.current = y;
         };
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
-    }, []);
+    }, [user]);
 
     const handleLogout = () => {
         logout();
+        GoogleAuthService.disableAutoSelect();
         navigate('/');
     };
 

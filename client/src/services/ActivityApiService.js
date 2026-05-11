@@ -6,6 +6,26 @@ import apiConfig from './apiConfig';
 
 class ActivityApiService {
     /**
+     * Obtener la lista de todos los juegos (vista previa para panel de asignar actividades)
+     * GET /api/games
+     */
+    async getAllGames() {
+        try {
+            const response = await apiConfig.get('/api/games');
+            return {
+                success: true,
+                data: Array.isArray(response) ? response : []
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                data: []
+            };
+        }
+    }
+
+    /**
      * Obtener actividades por tipo (vía /api/activities/{type})
      * GET /api/activities/{type}?page=#
      * @param {string} type - Tipo de actividad (FAST_MEMORY, QUIZ, INTRUDER, PUZZLE)

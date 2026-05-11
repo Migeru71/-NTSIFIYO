@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ActivityApiService from '../../services/ActivityApiService';
 import SectionHeader from '../../components/common/SectionHeader';
+import LoadingState from '../../components/common/LoadingState';
+import ErrorState from '../../components/common/ErrorState';
+import PageShell from '../../components/common/PageShell';
 import { useTeacherAssignmentsQuery, useTeacherStudentsQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
 import { getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
 
-import IconWarning from '../../assets/svgs/warning.svg';
 import IconEmptyBox from '../../assets/svgs/empty_box.svg';
 
 // ── Helpers ──
@@ -141,34 +143,21 @@ const TeacherAssignments = () => {
     };
 
     return (
-        <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-50">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-
-                    <SectionHeader
+        <PageShell>
+            <SectionHeader
                         title="Asignaciones Activas"
                         subtitle="Actividades asignadas y su progreso en el grupo."
                         onReload={reloadAssignments}
                     />
 
-                    {/* Content */}
                     {isLoading ? (
-                        <div className="text-center py-20">
-                            <div className="w-10 h-10 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin mx-auto mb-4" />
-                            <p className="text-gray-500">Cargando asignaciones...</p>
-                        </div>
+                        <LoadingState message="Cargando asignaciones..." />
                     ) : error ? (
-                        <div className="text-center py-16 bg-white rounded-2xl border border-red-100 shadow-sm">
-                            <img src={IconWarning} alt="Error" className="w-16 h-16 mx-auto mb-4" />
-                            <h3 className="text-lg font-bold text-red-600 mb-2">Error al cargar</h3>
-                            <p className="text-gray-500 text-sm mb-6">{error.message}</p>
-                            <button
-                                onClick={reloadAssignments}
-                                className="px-5 py-2.5 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-colors"
-                            >
-                                Reintentar
-                            </button>
-                        </div>
+                        <ErrorState
+                            message={error.message}
+                            onRetry={reloadAssignments}
+                            dashboardPath="/dashboard"
+                        />
                     ) : activities.length === 0 ? (
                         <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
                             <img src={IconEmptyBox} alt="Vacío" className="w-20 h-20 mx-auto mb-4" />
@@ -328,9 +317,7 @@ const TeacherAssignments = () => {
                             })}
                         </div>
                     )}
-                </div>
-            </div>
-        </div>
+        </PageShell>
     );
 };
 

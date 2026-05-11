@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
+import LoadingState from '../../components/common/LoadingState';
 import AdminService from '../../services/AdminService';
 import { useAlert } from '../../context/AlertContext';
 import { useAdminStudentsQuery, useAdminInvalidate } from '../../hooks/useAdminQueries';
 
 const StudentsSection = () => {
-    // Student modal & list state
     const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
     const [studentForm, setStudentForm] = useState({ firstname: '', lastname: '', grade: '' });
     const [isCreatingStudent, setIsCreatingStudent] = useState(false);
     const [createStudentError, setCreateStudentError] = useState('');
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ username: '', firstName: '', lastName: '', grade: '', listNumber: '', password: '' });
+    const [isUpdatingStudent, setIsUpdatingStudent] = useState(false);
+    const [updateStudentError, setUpdateStudentError] = useState('');
 
     const { data: studentsList = [], isLoading: isLoadingStudents, error: studentFetchErrorObj } = useAdminStudentsQuery();
     const { reloadStudents: invalidateStudents } = useAdminInvalidate();
@@ -31,6 +36,14 @@ const StudentsSection = () => {
         const gradeNum = parseInt(studentForm.grade);
         if (isNaN(gradeNum) || gradeNum < 1 || gradeNum > 6) {
             setCreateStudentError('El grado debe ser un número entre 1 y 6.');
+            return;
+        }
+        if (!studentForm.firstname || studentForm.firstname.length < 2 || studentForm.firstname.length > 100 || /\d/.test(studentForm.firstname)) {
+            setCreateStudentError('El nombre debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        if (!studentForm.lastname || studentForm.lastname.length < 2 || studentForm.lastname.length > 100 || /\d/.test(studentForm.lastname)) {
+            setCreateStudentError('El apellido debe tener entre 2 y 100 caracteres y no contener números.');
             return;
         }
         setIsCreatingStudent(true);
@@ -67,6 +80,73 @@ const StudentsSection = () => {
         setIsStudentModalOpen(false);
         setStudentForm({ firstname: '', lastname: '', grade: '' });
         setCreateStudentError('');
+    };
+
+    const openEditModal = (student) => {
+        setEditForm({
+            username: student.username,
+            firstName: student.firstname,
+            lastName: student.lastname,
+            grade: student.grade,
+            listNumber: student.listNumber || '',
+            password: ''
+        });
+        setUpdateStudentError('');
+        setIsEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditForm({ username: '', firstName: '', lastName: '', grade: '', listNumber: '', password: '' });
+        setUpdateStudentError('');
+    };
+
+    const handleEditFormChange = (e) => {
+        setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    };
+
+    const handleUpdateStudent = async (e) => {
+        e.preventDefault();
+        const gradeNum = parseInt(editForm.grade);
+        if (isNaN(gradeNum) || gradeNum < 1 || gradeNum > 6) {
+            setUpdateStudentError('El grado debe ser un número entre 1 y 6.');
+            return;
+        }
+        if (!editForm.firstName || editForm.firstName.length < 2 || editForm.firstName.length > 100 || /\d/.test(editForm.firstName)) {
+            setUpdateStudentError('El nombre debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        if (!editForm.lastName || editForm.lastName.length < 2 || editForm.lastName.length > 100 || /\d/.test(editForm.lastName)) {
+            setUpdateStudentError('El apellido debe tener entre 2 y 100 caracteres y no contener números.');
+            return;
+        }
+        setIsUpdatingStudent(true);
+        setUpdateStudentError('');
+        try {
+            const body = {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                grade: gradeNum,
+                listNumber: parseInt(editForm.listNumber)
+            };
+            if (editForm.password) {
+                body.password = editForm.password;
+            }
+            await AdminService.updateStudent(editForm.username, body);
+            closeEditModal();
+            fetchStudents();
+            showAlert({
+                mode: 'success',
+                title: '¡Estudiante Actualizado!',
+                message: `El estudiante ${editForm.firstName} ${editForm.lastName} ha sido actualizado exitosamente.`,
+                buttons: [{ text: 'Entendido', type: 'accept' }]
+            });
+        } catch (error) {
+            console.error('Error updating student:', error);
+            setUpdateStudentError(error.message || 'Ocurrió un error al actualizar el estudiante.');
+        } finally {
+            setIsUpdatingStudent(false);
+        }
     };
 
     const toggleMultiSelect = () => {
@@ -200,7 +280,7 @@ const StudentsSection = () => {
                     </div>
 
                     {isLoadingStudents ? (
-                        <div className="text-center py-8 text-gray-500">Cargando estudiantes...</div>
+                        <LoadingState message="Cargando estudiantes..." />
                     ) : studentFetchError ? (
                         <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center">
                             <span className="material-symbols-outlined block text-4xl mb-2">error</span>
@@ -258,6 +338,13 @@ const StudentsSection = () => {
                                             </td>
                                             <td className="py-3 px-4 text-gray-600 font-mono text-sm">{s.password || '******'}</td>
                                             <td className="py-3 px-4 text-right">
+                                                <button
+                                                    onClick={() => openEditModal(s)}
+                                                    className="text-blue-500 hover:text-blue-700 font-medium p-2 rounded-full hover:bg-blue-50 transition-colors mr-1"
+                                                    title="Editar estudiante"
+                                                >
+                                                    <span className="material-symbols-outlined align-middle" style={{ fontSize: '20px' }}>edit</span>
+                                                </button>
                                                 <button
                                                     onClick={() => deleteUser(s.username)}
                                                     disabled={isDeleting}
@@ -349,6 +436,110 @@ const StudentsSection = () => {
                                                 Creando...
                                             </>
                                         ) : 'Crear Estudiante'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Student Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-gray-800">Editar Estudiante</h3>
+                            <button onClick={closeEditModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto w-full max-w-md">
+                            <form onSubmit={handleUpdateStudent} className="space-y-4">
+                                {updateStudentError && (
+                                    <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm">{updateStudentError}</div>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre(s)</label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        required
+                                        value={editForm.firstName}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Ej: Maria"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        required
+                                        value={editForm.lastName}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Ej: Gómez"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Grado</label>
+                                    <select
+                                        name="grade"
+                                        required
+                                        value={editForm.grade}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none bg-white"
+                                    >
+                                        <option value="" disabled>Selecciona un grado</option>
+                                        {[1, 2, 3, 4, 5, 6].map(num => (
+                                            <option key={num} value={num}>{num}º Grado</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">No. de Lista</label>
+                                    <input
+                                        type="number"
+                                        name="listNumber"
+                                        required
+                                        value={editForm.listNumber}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Ej: 5"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña (opcional)</label>
+                                    <input
+                                        type="text"
+                                        name="password"
+                                        value={editForm.password}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                        placeholder="Dejar vacío para no cambiar"
+                                    />
+                                </div>
+                                <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={closeEditModal}
+                                        className="px-5 py-2.5 text-gray-600 bg-gray-100 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isUpdatingStudent}
+                                        className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors disabled:opacity-70 flex items-center gap-2"
+                                    >
+                                        {isUpdatingStudent ? (
+                                            <>
+                                                <span className="material-symbols-outlined animate-spin align-middle" style={{ fontSize: '20px' }}>progress_activity</span>
+                                                Actualizando...
+                                            </>
+                                        ) : 'Actualizar Estudiante'}
                                     </button>
                                 </div>
                             </form>

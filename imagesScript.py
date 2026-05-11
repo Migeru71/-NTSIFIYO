@@ -2,7 +2,7 @@ from pathlib import Path
 from PIL import Image
 
 # Constante para indicar el porcentaje de calidad (0 a 100)
-CALIDAD_WEBP = 40
+CALIDAD_WEBP = 60
 # Opciones: "full", 1080, 720, 480 (se refiere a la altura máxima)
 RESOLUCION = 720
 
@@ -51,6 +51,6 @@ def convertir_imagenes_a_webp(ruta_carpeta):
 # Ejecución del código
 if __name__ == "__main__":
     # Sustituye el valor por la ruta absoluta o relativa de tu carpeta
-    directorio_imagenes = "./client/src/assets/landing/" 
+    directorio_imagenes = "./client/src/assets/map/" 
     
     convertir_imagenes_a_webp(directorio_imagenes)

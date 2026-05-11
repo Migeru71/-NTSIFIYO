@@ -2,7 +2,7 @@ import React from 'react';
 import apiConfig from '../../services/apiConfig';
 import ActivityApiService from '../../services/ActivityApiService';
 import ActivitiesPanel from '../../components/common/ActivitiesPanel';
-import { useTeacherActivitiesQuery, useTeacherInstancesQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
+import { useTeacherActivitiesQuery, useTeacherInstancesQuery, useAllGamesQuery, useTeacherInvalidate } from '../../hooks/useTeacherQueries';
 
 /**
  * Página de Recursos del Maestro.
@@ -11,6 +11,7 @@ import { useTeacherActivitiesQuery, useTeacherInstancesQuery, useTeacherInvalida
 const TeacherResources = () => {
     const { data: activities = [], isLoading: loadingAct, error: errorAct } = useTeacherActivitiesQuery();
     const { data: instances  = [], isLoading: loadingInst }                 = useTeacherInstancesQuery();
+    const { data: allGames = [], isLoading: loadingGames }                   = useAllGamesQuery();
     const { reloadResources }                                                = useTeacherInvalidate();
 
     const loading = loadingAct || loadingInst;
@@ -36,7 +37,9 @@ const TeacherResources = () => {
         <ActivitiesPanel
             activities={activities}
             instances={instances}
+            allGames={allGames}
             loading={loading}
+            loadingAllGames={loadingGames}
             error={error}
             onReload={reloadResources}
             onDeleteActivity={handleDelete}

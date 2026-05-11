@@ -83,7 +83,30 @@ class AuthService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message || 'Error desconocido'
+                error: error.message || 'Error desconocido',
+                status: error.status
+            };
+        }
+    }
+
+    /**
+     * Verificación de email de visitante
+     * GET /api/auth/verify-email?token={token}
+     * @param {string} token - Token de verificación
+     * @returns {Promise<Object>}
+     */
+    async verifyEmail(token) {
+        try {
+            const response = await apiConfig.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+            return {
+                success: true,
+                message: response
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message || 'Error desconocido',
+                status: error.status
             };
         }
     }

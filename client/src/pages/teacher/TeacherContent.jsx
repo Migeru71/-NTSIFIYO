@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SectionHeader from '../../components/common/SectionHeader';
+import PageShell from '../../components/common/PageShell';
 import IconConstruction from '../../assets/svgs/construction.svg';
 
 /**
@@ -9,10 +10,8 @@ import IconConstruction from '../../assets/svgs/construction.svg';
  */
 const TeacherContent = () => {
     return (
-        <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-50">
-            <div className="w-full">
-                <div className="max-w-6xl mx-auto p-8">
-                    <SectionHeader
+        <PageShell>
+            <SectionHeader
                         title="Contenido del Curso"
                         subtitle="Gestiona la estructura de los temas, lecciones y materiales teóricos."
                     />
@@ -25,15 +24,14 @@ const TeacherContent = () => {
                             Próximamente podrás estructurar aquí el contenido teórico para tus estudiantes.
                         </p>
                         <Link
-                            to="/maestro/recursos"
-                            className="px-6 py-3 bg-green-50 text-green-600 font-semibold rounded-xl hover:bg-green-100 transition-colors inline-block"
+                            to="/dashboard"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all"
                         >
-                            Ir a Mis Recursos
+                            <span className="material-symbols-outlined text-lg">arrow_back</span>
+                            Volver al Dashboard
                         </Link>
                     </div>
-                </div>
-            </div>
-        </div>
+        </PageShell>
     );
 };
 

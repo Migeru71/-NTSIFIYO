@@ -1,7 +1,5 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import SideBar from '../../components/Dashboard/SideBar';
-import Roles from '../../utils/roles';
 import TeachersSection from './TeachersSection';
 import StudentsSection from './StudentsSection';
 import GroupsSection from './GroupsSection';
@@ -36,21 +34,18 @@ const AdminDashboard = () => {
     const sectionName = currentPath.split('/').filter(Boolean).pop() || 'Dashboard';
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            <SideBar role={Roles.ADMIN} userName={user.firstname} />
-            <main className="flex-1 ml-4 p-8 min-h-screen">
-                <div className="flex items-center justify-between mb-6">
-                    <Breadcrumb />
-                    <div className="ml-auto">
-                        <Link to="/" className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[18px]">logout</span>
-                            Cerrar Sesión / Salir
-                        </Link>
-                    </div>
+        <div className="p-4 lg:p-8">
+            <div className="flex items-center justify-between mb-6">
+                <Breadcrumb />
+                <div className="ml-auto">
+                    <Link to="/" className="text-sm text-gray-500 hover:text-red-600 transition-colors flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        Cerrar Sesión / Salir
+                    </Link>
                 </div>
+            </div>
 
-                {renderSection()}
-            </main>
+            {renderSection()}
         </div>
     );
 };

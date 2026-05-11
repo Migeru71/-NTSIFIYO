@@ -18,7 +18,7 @@ export const ActivityTypes = Object.freeze({
     QUESTIONNAIRE: "QUESTIONNAIRE",
     FAST_MEMORY: "FAST_MEMORY",
     INTRUDER: "INTRUDER",
-    FIND_THE_WORD: "FIND_THE_WORD",
+    // FIND_THE_WORD: "FIND_THE_WORD",
     MEDIA_SONG: "MEDIA_SONG",
     MEDIA_ANECDOTE: "MEDIA_ANECDOTE",
     MEDIA_LEGEND: "MEDIA_LEGEND",
@@ -157,6 +157,7 @@ export const ACTIVITY_CONFIG = {
             { icon: 'emoji_events', label: 'XP' }
         ]
     },
+    /*
     [ActivityTypes.FIND_THE_WORD]: {
         id: 'encuentra_palabra',
         value: ActivityTypes.FIND_THE_WORD,
@@ -174,6 +175,7 @@ export const ACTIVITY_CONFIG = {
             { icon: 'emoji_events', label: 'XP' }
         ]
     },
+    */
     [ActivityTypes.MEDIA_SONG]: {
         id: 'cancion',
         value: ActivityTypes.MEDIA_SONG,
@@ -266,7 +268,7 @@ export const ACTIVITY_CONFIG = {
 export const QUESTIONNAIRE_TYPES = [
     ActivityTypes.QUESTIONNAIRE,
     ActivityTypes.INTRUDER,
-    ActivityTypes.FIND_THE_WORD,
+    // ActivityTypes.FIND_THE_WORD,
     ActivityTypes.PUZZLE,
 ];
 
@@ -288,7 +290,12 @@ export const MEDIA_TYPES = [
 /** Helpers */
 export const getGameBasePath = (type) => ACTIVITY_CONFIG[type]?.basePath || '/dashboard';
 export const getGameIcon = (type) => ACTIVITY_CONFIG[type]?.icon || '🎮';
-export const getActivitiesList = () => Object.values(ACTIVITY_CONFIG);
+export const getActivitiesList = () => Object.values(ACTIVITY_CONFIG).filter(
+    a => a.type !== ActivityTypes.MEDIA_SONG &&
+         a.type !== ActivityTypes.MEDIA_ANECDOTE &&
+         a.type !== ActivityTypes.MEDIA_LEGEND &&
+         a.type !== ActivityTypes.MEDIA_POEM
+);
 
 export const getGameTypeInfo = (type) => {
     const activity = ACTIVITY_CONFIG[type];

@@ -16,7 +16,7 @@ import subprocess
 ICONS = sorted(set([
     # --- Inline JSX usage (>icon_name</span>) ---
     "add", "add_circle", "admin_panel_settings", "apple", "arrow_back", "arrow_forward",
-    "assignment", "auto_stories", "badge", "bolt",
+    "assignment", "auto_stories", "badge", "block","bolt", "mark_email_read",
     "calendar_today", "cancel", "category", "check", "check_circle","checklist",
     "chevron_right", "close", "delete", "edit", "error",
     "expand_less", "expand_more", "extension", "fast_forward", "favorite",

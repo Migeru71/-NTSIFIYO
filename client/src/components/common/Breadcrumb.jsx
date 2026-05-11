@@ -33,6 +33,7 @@ const Breadcrumb = () => {
         '/maestro/estudiantes': 'Estudiantes',
         '/maestro/asignaciones': 'Asignaciones',
         '/maestro/recursos': 'Recursos',
+        '/maestro/contenido': 'Contenido',
         '/maestro/diccionario': 'Diccionario',
         '/admin/grupos': 'Grupos',
         '/admin/estudiantes': 'Estudiantes',
@@ -46,6 +47,15 @@ const Breadcrumb = () => {
     const matchingPath = Object.keys(sections).find(key => path === key || path.startsWith(key + '/'));
     if (matchingPath) {
         baseSection = { label: sections[matchingPath], path: matchingPath };
+    }
+
+    // Generic fallback for game routes
+    if (!baseSection && path.startsWith('/games/')) {
+        const isTeacher = user?.userType === Roles.TEACHER;
+        baseSection = {
+            label: isTeacher ? 'Mis Recursos' : 'Actividades',
+            path: isTeacher ? '/maestro/recursos' : '/estudiante/actividades'
+        };
     }
 
     // El breadcrumb completo será: Root -> Base Section -> ...breadcrumbs dinámicos

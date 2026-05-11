@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingState from './LoadingState';
 import { useAlert } from '../../context/AlertContext';
 import { QUESTIONNAIRE_TYPES, PAIR_TYPES, ACTIVITY_CONFIG, getGameTypeInfo } from '../../config/activityConfig';
 import { getDifficultyBadge } from '../../utils/difficultyBadges';
@@ -41,7 +42,9 @@ const TABS = [
  * @param {object}   props
  * @param {Array}    props.activities        Lista de actividades
  * @param {Array}    props.instances         Instancias del maestro ([] para admin)
+ * @param {Array}    props.allGames          Lista de todos los juegos disponibles
  * @param {boolean}  props.loading
+ * @param {boolean}  props.loadingAllGames
  * @param {string}   props.error
  * @param {Function} props.onReload          Invalida la query y recarga
  * @param {Function} props.onDeleteActivity  async (id) => void — sin confirmación, el panel la maneja
@@ -56,7 +59,9 @@ const TABS = [
 const ActivitiesPanel = ({
     activities = [],
     instances  = [],
+    allGames   = [],
     loading    = false,
+    loadingAllGames = false,
     error      = '',
     onReload,
     onDeleteActivity,
@@ -76,6 +81,7 @@ const ActivitiesPanel = ({
     const [deletingId,  setDeletingId]  = useState(null);
     const [assigningId, setAssigningId] = useState(null);
     const [togglingId,  setTogglingId]  = useState(null);
+    const [assigningAllId, setAssigningAllId] = useState(null);
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleDelete = (id, actTitle) => {
@@ -142,6 +148,23 @@ const ActivitiesPanel = ({
         }
     };
 
+    const handleAssignFromAll = async (game) => {
+        if (!onAssignActivity) return;
+        setAssigningAllId(game.id);
+        try {
+            await onAssignActivity(game);
+            onReload();
+            showAlert({ mode: 'success', title: 'Asignada', message: `"${game.title}" asignada al grupo exitosamente.` });
+        } catch (err) {
+            const status = err?.status || err?.response?.status;
+            if (status === 404)       showAlert({ mode: 'error', title: 'Error', message: 'Juego o grupo no encontrado.' });
+            else if (status === 409)  showAlert({ mode: 'alert', title: 'Atención', message: 'Este juego ya está asignado o el grupo no te pertenece.' });
+            else                      showAlert({ mode: 'error', title: 'Error', message: `Error al asignar: ${err.message || 'Error desconocido'}` });
+        } finally {
+            setAssigningAllId(null);
+        }
+    };
+
     // ── Stats ─────────────────────────────────────────────────────────────────
     const quizValues    = new Set(QUESTIONNAIRE_TYPES);
     const pairValues    = new Set(PAIR_TYPES);
@@ -154,6 +177,10 @@ const ActivitiesPanel = ({
     // ── Filtering ─────────────────────────────────────────────────────────────
     const filteredActivities = activities.filter(
         a => filterType === 'ALL' || a.gameType === filterType
+    );
+
+    const filteredAllGames = allGames.filter(
+        g => filterType === 'ALL' || g.gameType === filterType
     );
 
     const findInst = (a) => instances.find(i => i.gameId === a.id || i.game?.id === a.id);
@@ -320,12 +347,7 @@ const ActivitiesPanel = ({
 
     // ── Content area ──────────────────────────────────────────────────────────
     const renderContent = () => {
-        if (loading) return (
-            <div className="text-center py-16">
-                <div className="w-10 h-10 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-gray-500">Cargando actividades...</p>
-            </div>
-        );
+        if (loading) return <LoadingState message="Cargando actividades..." />;
 
         if (error) return (
             <div className="text-center py-16 bg-white rounded-2xl border border-red-100">
@@ -442,14 +464,144 @@ const ActivitiesPanel = ({
                         </div>
                     )}
 
-                    {/* Tab "all" — placeholder */}
+                    {/* Tab "all" — all available games */}
                     {showTabs && activeTab === 'all' ? (
-                        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <img src={IconConstruction} alt="En construcción" className="w-20 h-20 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-700 mb-2">Próximamente</h3>
-                            <p className="text-gray-400 text-sm">
-                                La vista de todas las actividades estará disponible en una próxima versión.
-                            </p>
+                        <div>
+                            {loadingAllGames ? (
+                                <LoadingState message="Cargando todas las actividades..." />
+                            ) : filteredAllGames.length === 0 ? (
+                                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                                    <img src={IconEmptyBox} alt="Vacío" className="w-20 h-20 mx-auto mb-4" />
+                                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                        {filterType !== 'ALL' ? 'Sin resultados' : 'No hay actividades disponibles'}
+                                    </h3>
+                                    <p className="text-gray-500 mb-6">
+                                        {filterType !== 'ALL'
+                                            ? 'Intenta con otro filtro.'
+                                            : 'Aún no hay actividades creadas por otros maestros.'}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">🌐 Todas las Actividades Disponibles</h3>
+                                    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {filteredAllGames.map(game => {
+                                            const typeInfo = getGameTypeInfo(game.gameType);
+                                            const diffBadge = getDifficultyBadge(game.difficult);
+                                            const configSummary = game.assignActivityGameConfigDTO || [];
+                                            const inst = instances.find(i => i.game?.id === game.id || i.gameId === game.id);
+
+                                            return (
+                                                <div
+                                                    key={game.id}
+                                                    className={`bg-white rounded-2xl border ${
+                                                        inst
+                                                            ? (inst.isActive ? 'border-green-200 shadow-green-100' : 'border-red-100 shadow-red-50')
+                                                            : 'border-gray-100'
+                                                    } shadow-sm overflow-hidden hover:shadow-md transition-all flex flex-col`}
+                                                >
+                                                    <div className="h-2" style={{ background: typeInfo.color }} />
+                                                    <div className="p-5 flex flex-col flex-1">
+                                                        <div className="flex items-start gap-3 mb-3">
+                                                            <div
+                                                                className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                                                                style={{ background: typeInfo.color + '15' }}
+                                                            >
+                                                                {typeInfo.icon}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h3 className="font-bold text-gray-800 leading-tight truncate">{game.title}</h3>
+                                                                <span
+                                                                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-1 inline-block"
+                                                                    style={{ background: typeInfo.color + '15', color: typeInfo.color }}
+                                                                >
+                                                                    {typeInfo.label}
+                                                                </span>
+                                                            </div>
+                                                            {inst && (
+                                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center ${inst.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                    {inst.isActive ? (
+                                                                        <><img src={IconSuccess} alt="Activa" className="inline w-3 h-3 mr-1" /> Activa</>
+                                                                    ) : (
+                                                                        <><img src={IconInactive} alt="Inactiva" className="inline w-3 h-3 mr-1" /> Inactiva</>
+                                                                    )}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-gray-500 mb-4 line-clamp-2">{game.description}</p>
+                                                        {game.teacher && (
+                                                            <p className="text-xs text-gray-400 mb-3">
+                                                                👤 {game.teacher.firstName} {game.teacher.lastName}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+                                                            <span style={{ color: diffBadge.hexColor, fontWeight: 600 }}>
+                                                                {diffBadge.dot} {diffBadge.label}
+                                                            </span>
+                                                            <span className="w-px h-3 bg-gray-200" />
+                                                            <span>⭐ {game.experience} XP</span>
+                                                            <span className="w-px h-3 bg-gray-200" />
+                                                            <span>
+                                                                📝 {game.totalQuestions}{' '}
+                                                                {game.gameType === 'FAST_MEMORY' ? 'pares' : 'preguntas'}
+                                                            </span>
+                                                        </div>
+                                                        {configSummary.length > 0 && (
+                                                            <div className="flex gap-2 mb-4 flex-wrap mt-auto">
+                                                                {configSummary.map((cfg, i) => (
+                                                                    <div key={i} className="flex gap-1 text-[10px] bg-gray-50 rounded-lg px-2 py-1">
+                                                                        {cfg.showImage && <span title="Imagen">🖼️</span>}
+                                                                        {cfg.showText  && <span title="Texto">📝</span>}
+                                                                        {cfg.playAudio && <span title="Audio">🔊</span>}
+                                                                        <span className="text-gray-400 ml-1">{cfg.isMazahua ? 'MAZ' : 'ESP'}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex gap-2 pt-1 mt-auto">
+                                                            {!inst ? (
+                                                                <button
+                                                                    onClick={() => handleAssignFromAll(game)}
+                                                                    disabled={assigningAllId === game.id}
+                                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors disabled:opacity-50"
+                                                                    title="Asignar"
+                                                                >
+                                                                    {assigningAllId === game.id
+                                                                        ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                                                                        : <span className="material-symbols-outlined text-[16px]">group_add</span>
+                                                                    }
+                                                                    <span className="hidden sm:inline lg:hidden xl:inline">Asignar</span>
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleToggle(game.id, inst)}
+                                                                    disabled={togglingId === game.id}
+                                                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 ${
+                                                                        inst.isActive
+                                                                            ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                                                                            : 'text-green-600 bg-green-50 hover:bg-green-100'
+                                                                    }`}
+                                                                    title={inst.isActive ? 'Desactivar' : 'Activar'}
+                                                                >
+                                                                    {togglingId === game.id
+                                                                        ? <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                                                                        : <span className="material-symbols-outlined text-[16px]">
+                                                                            {inst.isActive ? 'block' : 'check_circle'}
+                                                                        </span>
+                                                                    }
+                                                                    <span className="hidden sm:inline lg:hidden xl:inline">
+                                                                        {inst.isActive ? 'Desactivar' : 'Activar'}
+                                                                    </span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </section>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <>

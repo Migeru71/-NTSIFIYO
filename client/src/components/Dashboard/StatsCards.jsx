@@ -1,7 +1,9 @@
 import React from 'react';
+import StatCard from '../common/StatCard';
 
 /**
- * Tarjetas de estadísticas del estudiante
+ * Tarjetas de estadísticas del estudiante.
+ * Usa el componente StatCard normalizado.
  */
 const StatsCards = ({ level, experience, inrow, finished }) => {
     const cards = [
@@ -10,70 +12,51 @@ const StatsCards = ({ level, experience, inrow, finished }) => {
             label: 'Nivel Actual',
             value: level || 1,
             subText: 'Rango actual',
-            subLabel: '',
             icon: 'verified',
-            iconBg: 'bg-green-100',
-            iconColor: 'text-green-500',
-            accentColor: 'text-green-500'
+            iconBg: 'bg-emerald-50',
+            iconColor: 'text-emerald-500',
+            accentColor: 'text-emerald-500',
+            gradient: 'from-emerald-500 to-teal-600',
         },
         {
             id: 'streak',
             label: 'Racha de Días',
             value: `${inrow || 0} Días`,
             subText: inrow > 0 ? '¡En racha!' : 'Vuelve mañana',
-            subLabel: '',
             icon: 'local_fire_department',
-            iconBg: 'bg-orange-100',
+            iconBg: 'bg-orange-50',
             iconColor: 'text-orange-500',
-            accentColor: 'text-orange-500'
+            accentColor: 'text-orange-500',
+            gradient: 'from-orange-500 to-red-500',
         },
         {
             id: 'xp',
             label: 'Total XP',
             value: (experience || 0).toLocaleString(),
             subText: 'Puntos globales',
-            subLabel: '',
             icon: 'emoji_events',
-            iconBg: 'bg-amber-100',
+            iconBg: 'bg-amber-50',
             iconColor: 'text-amber-500',
-            accentColor: 'text-amber-500'
+            accentColor: 'text-amber-500',
+            gradient: 'from-amber-500 to-yellow-500',
         },
         {
             id: 'finished',
-            label: 'Actividades Completadas',
+            label: 'Actividades',
             value: finished || 0,
-            subText: 'Lecciones domindas',
-            subLabel: '',
+            subText: 'Completadas',
             icon: 'fact_check',
-            iconBg: 'bg-purple-100',
-            iconColor: 'text-purple-500',
-            accentColor: 'text-purple-500'
-        }
+            iconBg: 'bg-violet-50',
+            iconColor: 'text-violet-500',
+            accentColor: 'text-violet-500',
+            gradient: 'from-violet-500 to-purple-600',
+        },
     ];
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {cards.map((card) => (
-                <div
-                    key={card.id}
-                    className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                >
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">{card.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-800 mt-1">{card.value}</h3>
-                            <p className="text-xs mt-2">
-                                <span className={`font-semibold ${card.accentColor}`}>{card.subText}</span>
-                                <span className="text-gray-400 ml-1">{card.subLabel}</span>
-                            </p>
-                        </div>
-                        <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center`}>
-                            <span className={`material-symbols-outlined ${card.iconColor}`}>
-                                {card.icon}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+            {cards.map((card, i) => (
+                <StatCard key={card.id} {...card} animDelay={i * 80} />
             ))}
         </div>
     );
